@@ -144,7 +144,8 @@ export default function ClientReadMore({
         });
     };
 
-    // ✅ Same as ClientHome
+    // Rule: Color has one meaning. Red is for urgent/errors only.
+    // Rule: Category colors always come with the text label.
     const getCategoryColor = (cat: string) => {
         switch (cat) {
             case 'Academic':
@@ -152,7 +153,7 @@ export default function ClientReadMore({
             case 'Event':
                 return 'bg-emerald-100 text-emerald-700 border-emerald-200';
             case 'Service':
-                return 'bg-rose-100 text-rose-700 border-rose-200';
+                return 'bg-purple-100 text-purple-700 border-purple-200';
             default:
                 return 'bg-slate-100 text-slate-700 border-slate-200';
         }
@@ -190,54 +191,67 @@ export default function ClientReadMore({
         <>
             <Head title={`${announcement.title} | COTIFY`} />
 
-            {/* ✅ SAME ANIMATIONS AS CLIENT HOME */}
+            {/* ✅ SAME ANIMATIONS & MOVEMENT AS CLIENT HOME */}
             <style>{`
-                @keyframes move-around-1 {
-                    0% { transform: translate(0, 0) rotate(0deg); }
-                    25% { transform: translate(-15vw, 10vh) rotate(15deg); }
-                    50% { transform: translate(-5vw, 25vh) rotate(-10deg); }
-                    75% { transform: translate(10vw, 15vh) rotate(5deg); }
-                    100% { transform: translate(0, 0) rotate(0deg); }
-                }
-                @keyframes move-around-2 {
-                    0% { transform: translate(0, 0) rotate(0deg); }
-                    25% { transform: translate(10vw, -15vh) rotate(-20deg); }
-                    50% { transform: translate(-20vw, -10vh) rotate(10deg); }
-                    75% { transform: translate(-10vw, 15vh) rotate(-5deg); }
-                    100% { transform: translate(0, 0) rotate(0deg); }
-                }
-                @keyframes move-around-3 {
-                    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-                    33% { transform: translate(15vw, -20vh) rotate(45deg) scale(1.2); }
-                    66% { transform: translate(-15vw, 10vh) rotate(90deg) scale(0.8); }
-                    100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-                }
-                @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 @keyframes slideUpText { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-                .shape-move-1 { animation: move-around-1 25s ease-in-out infinite; }
-                .shape-move-2 { animation: move-around-2 30s ease-in-out infinite; }
-                .shape-move-3 { animation: move-around-3 35s ease-in-out infinite; }
-                .animate-spin-slow { animation: spin-slow 20s linear infinite; }
-
-                .clip-hexagon { clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
-                .clip-octagon { clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); }
-                .clip-diamond { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
+                @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                
+                @keyframes move-around-1 { 
+                    0% { transform: translate(0, 0) rotate(0deg); } 
+                    25% { transform: translate(-35vw, 25vh) rotate(25deg); } 
+                    50% { transform: translate(-15vw, 50vh) rotate(-15deg); } 
+                    75% { transform: translate(25vw, 30vh) rotate(15deg); } 
+                    100% { transform: translate(0, 0) rotate(0deg); } 
+                }
+                @keyframes move-around-2 { 
+                    0% { transform: translate(0, 0) rotate(0deg); } 
+                    25% { transform: translate(30vw, -30vh) rotate(-25deg); } 
+                    50% { transform: translate(-40vw, -20vh) rotate(15deg); } 
+                    75% { transform: translate(-25vw, 30vh) rotate(-15deg); } 
+                    100% { transform: translate(0, 0) rotate(0deg); } 
+                }
+                @keyframes move-around-3 { 
+                    0% { transform: translate(0, 0) rotate(0deg) scale(1); } 
+                    33% { transform: translate(35vw, -40vh) rotate(55deg) scale(1.3); } 
+                    66% { transform: translate(-30vw, 25vh) rotate(110deg) scale(0.9); } 
+                    100% { transform: translate(0, 0) rotate(0deg) scale(1); } 
+                }
+                @keyframes move-around-4 {
+                    0% { transform: translate(0, 0) scale(1); }
+                    50% { transform: translate(-20vw, 30vh) scale(1.2); }
+                    100% { transform: translate(0, 0) scale(1); }
+                }
 
                 .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
                 .animate-slide-up { animation: slideUpText 0.5s ease-out forwards; }
+                .animate-spin-slow { animation: spin-slow 25s linear infinite; }
+                
+                .shape-move-1 { animation: move-around-1 35s ease-in-out infinite; }
+                .shape-move-2 { animation: move-around-2 45s ease-in-out infinite; }
+                .shape-move-3 { animation: move-around-3 40s ease-in-out infinite; }
+                .shape-move-4 { animation: move-around-4 30s ease-in-out infinite; }
+
+                .clip-hexagon { clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
+                .clip-diamond { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
             `}</style>
 
             <div className="relative flex min-h-screen flex-col overflow-hidden bg-slate-50 font-sans text-slate-800 antialiased">
-                {/* ✅ SAME MOVING SHAPES BACKGROUND */}
+                
+                {/* ✅ MORE VISIBLE MOVING SHAPES ACROSS THE SCREEN */}
                 <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-                    <div className="shape-move-2 absolute top-[5%] right-[10%] h-[35rem] w-[35rem] rounded-full bg-blue-500/5 blur-3xl"></div>
-                    <div className="shape-move-1 absolute bottom-[10%] left-[5%] h-[40rem] w-[40rem] rounded-full bg-indigo-500/5 blur-3xl"></div>
-                    <div className="shape-move-3 absolute top-[30%] right-[30%] h-[25rem] w-[25rem] rounded-full bg-purple-500/5 blur-3xl"></div>
-                    <div className="clip-diamond animate-spin-slow absolute top-[20%] left-[10%] h-40 w-40 border-[3px] border-blue-500/10"></div>
-                    <div className="shape-move-1 absolute right-[15%] bottom-[25%] h-32 w-32 rotate-12 border-[4px] border-indigo-500/10"></div>
-                    <div className="clip-hexagon shape-move-3 absolute top-[50%] right-[5%] h-56 w-56 bg-blue-400/5"></div>
+                    <div className="absolute top-[5%] left-[5%] w-[30rem] h-[30rem] bg-blue-500/15 rounded-full blur-3xl shape-move-1"></div>
+                    <div className="absolute bottom-[5%] right-[5%] w-[35rem] h-[35rem] bg-purple-500/15 rounded-full blur-3xl shape-move-2"></div>
+                    <div className="absolute top-[40%] left-[30%] w-[25rem] h-[25rem] bg-indigo-500/10 rounded-full blur-3xl shape-move-3"></div>
+                    
+                    <div className="absolute top-[10%] right-[15%] w-64 h-64 bg-blue-600/20 clip-hexagon shape-move-3"></div>
+                    <div className="absolute bottom-[15%] left-[10%] w-48 h-48 border-[6px] border-purple-500/30 clip-diamond animate-spin-slow"></div>
+                    <div className="absolute top-[45%] right-[10%] w-40 h-40 border-[5px] border-blue-500/25 rotate-12 shape-move-1"></div>
+                    <div className="absolute bottom-[20%] right-[40%] w-56 h-56 border-[8px] border-indigo-500/20 clip-hexagon shape-move-2 bg-transparent">
+                        <div className="w-full h-full bg-blue-500/10 clip-hexagon scale-[0.95]"></div>
+                    </div>
+                    <div className="absolute top-[60%] left-[5%] w-32 h-32 border-[4px] border-blue-500/30 rounded-full shape-move-4"></div>
+                    <div className="absolute top-[20%] left-[40%] w-24 h-24 bg-indigo-600/15 clip-diamond shape-move-4"></div>
                 </div>
 
                 {/* ✅ SAME DARK HEADER AS CLIENT HOME */}
@@ -247,40 +261,45 @@ export default function ClientReadMore({
                             <div className="flex items-center gap-8">
                                 <Link
                                     href="/client"
-                                    className="flex shrink-0 items-center"
+                                    className="flex shrink-0 items-center group focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
                                 >
                                     <img
                                         src="/images/3rdLogo.png"
-                                        alt="Cotify"
-                                        className="-mr-3 -ml-1 h-10 w-10 object-contain sm:h-12 sm:w-12"
+                                        alt="Cotify Logo"
+                                           className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8" 
                                     />
-                                    <span className="hidden text-xl font-extrabold text-white sm:block">
-                                        Cotify
-                                    </span>
+                                    <div className="hidden sm:block">
+                                        <span className="text-xl font-extrabold text-white leading-tight block">
+                                            Cotify
+                                        </span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                                            College of Technology
+                                        </span>
+                                    </div>
                                 </Link>
 
                                 <nav className="hidden items-center gap-6 md:flex">
                                     <Link
                                         href="/client"
-                                        className="text-sm font-semibold text-slate-400 transition-colors hover:text-white"
+                                        className="text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-1"
                                     >
                                         Home
                                     </Link>
                                     <Link
                                         href="/client/announcements"
-                                        className="border-ctu-lightblue border-b-2 pb-1 text-sm font-bold text-white"
+                                        className="border-ctu-lightblue border-b-2 pb-1 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t-md px-1"
                                     >
                                         Announcements
                                     </Link>
                                     <Link
                                         href="/client/events"
-                                        className="text-sm font-semibold text-slate-400 transition-colors hover:text-white"
+                                        className="text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-1"
                                     >
                                         Events
                                     </Link>
                                     <Link
                                         href="/client/saved"
-                                        className="text-sm font-semibold text-slate-400 transition-colors hover:text-white"
+                                        className="text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-1"
                                     >
                                         Saved
                                     </Link>
@@ -294,14 +313,16 @@ export default function ClientReadMore({
                                         type="text"
                                         placeholder="Search announcements..."
                                         value={searchTerm}
-                                        onChange={(e) =>
-                                            setSearchTerm(e.target.value)
-                                        }
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        aria-label="Search announcements"
                                         className="focus:ring-ctu-lightblue w-64 rounded-lg border border-slate-700 bg-slate-800/50 py-2 pr-4 pl-9 text-sm text-white placeholder-slate-400 transition-all outline-none focus:ring-2"
                                     />
                                 </div>
 
-                                <button className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800">
+                                <button 
+                                    aria-label={`View notifications. ${unreadCount} unread.`}
+                                    className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
                                     <i className="fa-regular fa-bell text-xl"></i>
                                     {unreadCount > 0 && (
                                         <span className="border-ctu-dark absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 bg-red-500 text-[10px] font-bold text-white">
@@ -312,20 +333,17 @@ export default function ClientReadMore({
 
                                 <div className="relative" ref={profileRef}>
                                     <button
-                                        onClick={() =>
-                                            setIsProfileOpen(!isProfileOpen)
-                                        }
-                                        className="group flex cursor-pointer items-center gap-2 border-l border-slate-700 pl-2 sm:pl-4"
+                                        onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                        aria-label="Toggle profile menu"
+                                        className="group flex cursor-pointer items-center gap-2 border-l border-slate-700 pl-2 sm:pl-4 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
                                     >
-                                        <div className="bg-ctu-lightblue flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white">
-                                            {currentUser
-                                                .charAt(0)
-                                                .toUpperCase()}
+                                        <div className="bg-ctu-lightblue flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white ring-2 ring-transparent group-hover:ring-white/20 transition-all">
+                                            {currentUser.charAt(0).toUpperCase()}
                                         </div>
                                         <span className="hidden text-sm font-semibold text-white lg:block">
                                             {currentUser.split(' ')[0]} D.
                                         </span>
-                                        <i className="fa-solid fa-chevron-down text-xs text-slate-400"></i>
+                                        
                                     </button>
 
                                     {isProfileOpen && (
@@ -333,27 +351,24 @@ export default function ClientReadMore({
                                             <div className="p-2">
                                                 <Link
                                                     href="/client/profile"
-                                                    className="hover:text-ctu-lightblue flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+                                                    className="hover:text-ctu-lightblue flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 >
-                                                    <i className="fa-regular fa-user w-4 text-center"></i>{' '}
-                                                    My Profile
+                                                    <i className="fa-regular fa-user w-4 text-center"></i> My Profile
                                                 </Link>
                                                 <Link
                                                     href="/client/settings"
-                                                    className="hover:text-ctu-lightblue flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+                                                    className="hover:text-ctu-lightblue flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 >
-                                                    <i className="fa-solid fa-gear w-4 text-center"></i>{' '}
-                                                    Settings
+                                                    <i className="fa-solid fa-gear w-4 text-center"></i> Settings
                                                 </Link>
                                                 <hr className="my-2 border-slate-100" />
                                                 <Link
                                                     href="/logout"
                                                     method="post"
                                                     as="button"
-                                                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
+                                                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
                                                 >
-                                                    <i className="fa-solid fa-arrow-right-from-bracket w-4 text-center"></i>{' '}
-                                                    Log Out
+                                                    <i className="fa-solid fa-arrow-right-from-bracket w-4 text-center"></i> Log Out
                                                 </Link>
                                             </div>
                                         </div>
@@ -365,18 +380,18 @@ export default function ClientReadMore({
                 </header>
 
                 <main className="relative z-10 mx-auto w-full max-w-[1400px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
-                    {/* BREADCRUMB (issue #3 — replaces header "Back") */}
+                    {/* BREADCRUMB */}
                     <nav className="animate-fade-in mb-6 flex items-center gap-2 text-xs font-bold text-slate-500">
                         <Link
                             href="/client"
-                            className="hover:text-ctu-lightblue transition-colors"
+                            className="hover:text-ctu-lightblue transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
                         >
                             Home
                         </Link>
                         <i className="fa-solid fa-chevron-right text-[8px] text-slate-400"></i>
                         <Link
                             href="/client/announcements"
-                            className="hover:text-ctu-lightblue transition-colors"
+                            className="hover:text-ctu-lightblue transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
                         >
                             Announcements
                         </Link>
@@ -390,80 +405,64 @@ export default function ClientReadMore({
                         {/* LEFT COLUMN: MAIN CONTENT */}
                         <div className="space-y-6 lg:col-span-8">
                             <article className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
-                                {/* TITLE + SINGLE BYLINE (issue #4 — one byline, no Quick Info card) */}
+                                
                                 <div className="mb-8 flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
                                     <div>
                                         <div className="mb-3 flex items-center gap-2">
-                                            <span
-                                                className={`rounded border px-2 py-0.5 text-[10px] font-extrabold tracking-widest uppercase ${getCategoryColor(announcement.category)}`}
-                                            >
-                                                {categoryLabel(
-                                                    announcement.category,
-                                                )}
+                                            <span className={`rounded border px-2.5 py-1 text-[12px] font-bold tracking-wider uppercase ${getCategoryColor(announcement.category)}`}>
+                                                {categoryLabel(announcement.category)}
                                             </span>
                                             {announcement.is_new && (
-                                                <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[9px] font-bold text-white uppercase">
+                                                <span className="rounded bg-slate-800 px-2 py-1 text-[10px] font-bold text-white uppercase">
                                                     New
                                                 </span>
                                             )}
                                         </div>
-                                        <h1 className="text-2xl leading-tight font-extrabold text-slate-900 sm:text-3xl">
+                                        
+                                        <h1 className="text-3xl leading-tight font-extrabold text-slate-900">
                                             {announcement.title}
                                         </h1>
 
-                                        {/* Byline: office · date · reading time (issue #4, #6 — avatar from office) */}
-                                        <div className="mt-5 flex items-center gap-3">
-                                            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 font-bold text-slate-500">
+                                        <div className="mt-6 flex items-center gap-4">
+                                            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 font-bold text-slate-500">
                                                 {announcement.posted_by_logo ? (
                                                     <img
-                                                        src={
-                                                            announcement.posted_by_logo
-                                                        }
-                                                        alt={
-                                                            announcement.posted_by
-                                                        }
+                                                        src={announcement.posted_by_logo}
+                                                        alt={announcement.posted_by}
                                                         className="h-full w-full object-cover"
                                                     />
                                                 ) : (
-                                                    announcement.posted_by
-                                                        .charAt(0)
-                                                        .toUpperCase()
+                                                    announcement.posted_by.charAt(0).toUpperCase()
                                                 )}
                                             </div>
                                             <div>
-                                                <p className="text-sm font-extrabold text-slate-900">
+                                                <p className="text-base font-extrabold text-slate-900">
                                                     {announcement.posted_by}
                                                 </p>
-                                                <p className="text-xs font-medium text-slate-500">
-                                                    {formatDate(
-                                                        announcement.date,
-                                                    )}{' '}
-                                                    · {readingTime}
+                                                <p className="mt-0.5 text-sm font-medium text-slate-500">
+                                                    {formatDate(announcement.date)} · {readingTime}
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Save (dark) + Share (outline) — kept good pattern from audit */}
+                                    {/* Rule: Buttons set (Primary + Secondary) */}
                                     <div className="flex shrink-0 gap-2 sm:flex-col">
                                         <button
                                             type="button"
-                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-slate-700 sm:flex-none"
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:flex-none"
                                         >
-                                            <i className="fa-regular fa-bookmark"></i>{' '}
-                                            Save
+                                            <i className="fa-regular fa-bookmark"></i> Save
                                         </button>
                                         <button
                                             type="button"
-                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 sm:flex-none"
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:flex-none"
                                         >
-                                            <i className="fa-solid fa-link"></i>{' '}
-                                            Copy link
+                                            <i className="fa-solid fa-link"></i> Copy link
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* COVER IMAGE — title above (no contrast issue); default banner per category (issue #7 fix pattern) */}
                                 <div className="relative mb-8 flex h-64 w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-slate-100 to-slate-200 sm:h-80">
                                     {announcement.image ? (
                                         <img
@@ -473,319 +472,201 @@ export default function ClientReadMore({
                                         />
                                     ) : (
                                         <div className="flex flex-col items-center text-slate-400">
-                                            <i
-                                                className={`mb-3 text-5xl ${
-                                                    announcement.category ===
-                                                    'Academic'
-                                                        ? 'fa-solid fa-graduation-cap'
-                                                        : announcement.category ===
-                                                            'Event'
-                                                          ? 'fa-regular fa-calendar'
-                                                          : announcement.category ===
-                                                              'Service'
-                                                            ? 'fa-solid fa-hand-holding-heart'
-                                                            : 'fa-regular fa-newspaper'
+                                            <i className={`mb-3 text-5xl ${
+                                                    announcement.category === 'Academic' ? 'fa-solid fa-graduation-cap'
+                                                    : announcement.category === 'Event' ? 'fa-regular fa-calendar'
+                                                    : announcement.category === 'Service' ? 'fa-solid fa-hand-holding-heart'
+                                                    : 'fa-regular fa-newspaper'
                                                 }`}
                                             ></i>
-                                            <span className="text-xs font-bold tracking-widest uppercase">
-                                                {categoryLabel(
-                                                    announcement.category,
-                                                )}
+                                            <span className="text-sm font-bold tracking-widest uppercase">
+                                                {categoryLabel(announcement.category)}
                                             </span>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* BODY */}
-                                <div className="mb-8 text-sm leading-relaxed whitespace-pre-line text-slate-700 sm:text-base">
+                                <div className="mb-10 text-base leading-relaxed whitespace-pre-line text-slate-700">
                                     {announcement.content}
                                 </div>
 
-                                {/* ATTACHMENTS (issue #8) */}
-                                {announcement.attachments &&
-                                    announcement.attachments.length > 0 && (
-                                        <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                            <h4 className="mb-3 text-xs font-extrabold tracking-widest text-slate-500 uppercase">
-                                                Attachments
-                                            </h4>
-                                            <div className="flex flex-wrap gap-3">
-                                                {announcement.attachments.map(
-                                                    (file, idx) => (
-                                                        <a
-                                                            key={idx}
-                                                            href={file.url}
-                                                            className="hover:border-ctu-lightblue group flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 transition-all hover:shadow-sm"
-                                                        >
-                                                            <i className="fa-solid fa-file-pdf text-rose-500"></i>
-                                                            <span className="group-hover:text-ctu-lightblue text-xs font-bold text-slate-700">
-                                                                {file.name}
-                                                            </span>
-                                                            <span className="text-[10px] text-slate-400">
-                                                                {file.size}
-                                                            </span>
-                                                        </a>
-                                                    ),
-                                                )}
-                                            </div>
+                                {announcement.attachments && announcement.attachments.length > 0 && (
+                                    <div className="mb-10 rounded-xl border border-slate-200 bg-slate-50 p-5">
+                                        <h4 className="mb-4 text-xs font-extrabold tracking-widest text-slate-500 uppercase">
+                                            Attachments
+                                        </h4>
+                                        <div className="flex flex-wrap gap-3">
+                                            {announcement.attachments.map((file, idx) => (
+                                                <a
+                                                    key={idx}
+                                                    href={file.url}
+                                                    className="group flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 transition-all hover:border-blue-400 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                >
+                                                    <i className="fa-solid fa-file-pdf text-rose-500"></i>
+                                                    <span className="text-sm font-bold text-slate-700 group-hover:text-blue-600">
+                                                        {file.name}
+                                                    </span>
+                                                    <span className="text-xs text-slate-400">
+                                                        {file.size}
+                                                    </span>
+                                                </a>
+                                            ))}
                                         </div>
-                                    )}
+                                    </div>
+                                )}
 
                                 {/* ANNOUNCEMENT DISCUSSION */}
-                                <div
-                                    ref={commentsRef}
-                                    className="mt-10 border-t border-slate-200 pt-8"
-                                >
-                                    <div className="mb-4">
-                                        <h3 className="text-lg font-extrabold text-slate-900">
+                                <div ref={commentsRef} className="mt-10 border-t border-slate-200 pt-8">
+                                    <div className="mb-6">
+                                        <h3 className="text-xl font-extrabold text-slate-900">
                                             Comments & discussion
                                         </h3>
-                                        <p className="mt-1 text-xs font-medium text-slate-500">
-                                            Ask a question or join the
-                                            discussion about this announcement.
+                                        <p className="mt-1 text-sm font-medium text-slate-500">
+                                            Ask a question or join the discussion about this announcement.
                                         </p>
                                     </div>
 
                                     {isLoggedIn ? (
-                                        <form
-                                            onSubmit={handleSubmitQuestion}
-                                            className="mb-8"
-                                        >
+                                        <form onSubmit={handleSubmitQuestion} className="mb-8">
                                             <textarea
                                                 value={data.content}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'content',
-                                                        e.target.value,
-                                                    )
-                                                }
+                                                onChange={(e) => setData('content', e.target.value)}
                                                 placeholder="Write a comment..."
                                                 rows={3}
                                                 maxLength={5000}
-                                                className="focus:border-ctu-lightblue focus:ring-ctu-lightblue/10 w-full resize-none rounded-xl border border-slate-300 bg-white p-3 text-sm font-medium shadow-sm transition-all outline-none focus:ring-4"
+                                                className="w-full resize-none rounded-xl border border-slate-300 bg-white p-4 text-base font-medium shadow-sm transition-all outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                                             />
                                             {errors.content && (
-                                                <p className="mt-1 text-xs font-bold text-red-600">
-                                                    {errors.content}
-                                                </p>
+                                                <p className="mt-1.5 text-sm font-bold text-red-600">{errors.content}</p>
                                             )}
-                                            <div className="mt-2 flex items-center justify-between">
-                                                <span className="text-[11px] font-semibold text-slate-400">
+                                            
+                                            <div className="mt-3 flex items-center justify-between">
+                                                <span className="text-xs font-semibold text-slate-400">
                                                     {data.content.length} / 5000
                                                 </span>
-                                                <div className="flex items-center gap-3">
-                                                    {/* Accessibility: show why disabled */}
+                                                <div className="flex items-center gap-4">
                                                     {!data.content.trim() && (
-                                                        <span className="text-[11px] font-semibold text-slate-400">
-                                                            Write something
-                                                            first
+                                                        <span className="text-xs font-semibold text-slate-400">
+                                                            Write something first
                                                         </span>
                                                     )}
                                                     <button
                                                         type="submit"
-                                                        disabled={
-                                                            !data.content.trim() ||
-                                                            processing
-                                                        }
-                                                        className={`rounded-lg px-5 py-2 text-xs font-bold shadow-sm transition-colors ${
-                                                            !data.content.trim() ||
-                                                            processing
+                                                        disabled={!data.content.trim() || processing}
+                                                        className={`rounded-lg px-6 py-2.5 text-sm font-bold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                                            !data.content.trim() || processing
                                                                 ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-                                                                : 'bg-slate-800 text-white hover:bg-slate-700'
+                                                                : 'bg-blue-600 text-white hover:bg-blue-700'
                                                         }`}
                                                     >
-                                                        {processing
-                                                            ? 'Sending...'
-                                                            : 'Post comment'}
+                                                        {processing ? 'Posting...' : 'Post comment'}
                                                     </button>
                                                 </div>
                                             </div>
                                         </form>
                                     ) : (
-                                        <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50 p-4 text-center">
-                                            <p className="mb-2 text-sm font-bold text-slate-700">
+                                        <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
+                                            <p className="mb-3 text-base font-bold text-slate-700">
                                                 Log in to join the discussion.
                                             </p>
                                             <Link
                                                 href="/auth/login"
-                                                className="inline-block rounded-lg bg-slate-800 px-5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-slate-700"
+                                                className="inline-block rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                             >
                                                 Log In
                                             </Link>
                                         </div>
                                     )}
 
-                                    <div
-                                        className="space-y-3"
-                                        aria-live="polite"
-                                    >
+                                    <div className="space-y-4" aria-live="polite">
                                         {messages.length === 0 ? (
-                                            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
-                                                <i
-                                                    className="fa-regular fa-comments mb-2 text-2xl text-slate-400"
-                                                    aria-hidden="true"
-                                                ></i>
-                                                <p className="text-sm font-semibold text-slate-600">
-                                                    No comments yet
-                                                </p>
-                                                <p className="mt-1 text-xs text-slate-500">
-                                                    Be the first to start the
-                                                    discussion.
-                                                </p>
+                                            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center">
+                                                <i className="fa-regular fa-comments mb-3 text-3xl text-slate-400" aria-hidden="true"></i>
+                                                <p className="text-base font-semibold text-slate-600">No comments yet</p>
+                                                <p className="mt-1 text-sm text-slate-500">Be the first to start the discussion.</p>
                                             </div>
                                         ) : (
                                             messages.map((message) => (
                                                 <article
                                                     key={message.id}
-                                                    className={`rounded-xl border p-4 ${
+                                                    className={`rounded-xl border p-5 ${
                                                         message.role === 'Admin'
-                                                            ? 'border-blue-100 bg-blue-50/70'
+                                                            ? 'border-blue-200 bg-blue-50/50'
                                                             : 'border-slate-200 bg-white'
-                                                    } ${message.parent_message_id ? 'ml-5 sm:ml-10' : ''}`}
+                                                    } ${message.parent_message_id ? 'ml-6 sm:ml-12' : ''}`}
                                                 >
-                                                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                                                        <span className="text-sm font-bold text-slate-800">
+                                                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                                                        <span className="text-sm font-bold text-slate-900">
                                                             {message.author}
                                                         </span>
-                                                        <span
-                                                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                                                message.role ===
-                                                                'Admin'
+                                                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                                                                message.role === 'Admin'
                                                                     ? 'bg-blue-100 text-blue-700'
                                                                     : 'bg-slate-100 text-slate-600'
                                                             }`}
                                                         >
-                                                            {message.role ===
-                                                            'Admin'
-                                                                ? announcement.posted_by
-                                                                : 'Student'}
+                                                            {message.role === 'Admin' ? announcement.posted_by : 'Student'}
                                                         </span>
                                                         {message.is_mine && (
-                                                            <span className="text-[10px] font-semibold text-slate-400">
-                                                                You
-                                                            </span>
+                                                            <span className="text-xs font-semibold text-slate-400">You</span>
                                                         )}
                                                         {message.sent_at && (
-                                                            <time
-                                                                className="ml-auto text-[10px] font-medium text-slate-400"
-                                                                dateTime={
-                                                                    message.sent_at
-                                                                }
-                                                            >
-                                                                {new Date(
-                                                                    message.sent_at,
-                                                                ).toLocaleString()}
+                                                            <time className="ml-auto text-xs font-medium text-slate-400" dateTime={message.sent_at}>
+                                                                {new Date(message.sent_at).toLocaleString()}
                                                             </time>
                                                         )}
                                                     </div>
-                                                    <p className="text-sm leading-6 break-words whitespace-pre-wrap text-slate-700">
+                                                    <p className="text-base leading-relaxed break-words whitespace-pre-wrap text-slate-700">
                                                         {message.content}
                                                     </p>
+                                                    
                                                     {isLoggedIn && (
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                if (
-                                                                    replyingTo ===
-                                                                    message.id
-                                                                ) {
-                                                                    setReplyingTo(
-                                                                        null,
-                                                                    );
+                                                                if (replyingTo === message.id) {
+                                                                    setReplyingTo(null);
                                                                     replyForm.reset();
                                                                     replyForm.clearErrors();
                                                                     return;
                                                                 }
-
-                                                                setReplyingTo(
-                                                                    message.id,
-                                                                );
-                                                                replyForm.setData(
-                                                                    {
-                                                                        content:
-                                                                            '',
-                                                                        parent_message_id:
-                                                                            message.id,
-                                                                    },
-                                                                );
+                                                                setReplyingTo(message.id);
+                                                                replyForm.setData({
+                                                                    content: '',
+                                                                    parent_message_id: message.id,
+                                                                });
                                                                 replyForm.clearErrors();
                                                             }}
-                                                            className="text-ctu-lightblue mt-3 text-xs font-bold transition hover:text-blue-700"
+                                                            className="mt-3 rounded text-sm font-bold text-blue-600 transition hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                         >
-                                                            {replyingTo ===
-                                                            message.id
-                                                                ? 'Cancel reply'
-                                                                : 'Reply'}
+                                                            {replyingTo === message.id ? 'Cancel reply' : 'Reply'}
                                                         </button>
                                                     )}
-                                                    {replyingTo ===
-                                                        message.id && (
-                                                        <form
-                                                            onSubmit={
-                                                                handleSubmitReply
-                                                            }
-                                                            className="mt-3 border-t border-slate-200 pt-3"
-                                                        >
-                                                            <label
-                                                                className="sr-only"
-                                                                htmlFor={`reply-${message.id}`}
-                                                            >
-                                                                Reply to{' '}
-                                                                {message.author}
+                                                    
+                                                    {replyingTo === message.id && (
+                                                        <form onSubmit={handleSubmitReply} className="mt-4 border-t border-slate-200/60 pt-4">
+                                                            <label className="sr-only" htmlFor={`reply-${message.id}`}>
+                                                                Reply to {message.author}
                                                             </label>
                                                             <textarea
                                                                 id={`reply-${message.id}`}
-                                                                value={
-                                                                    replyForm
-                                                                        .data
-                                                                        .content
-                                                                }
-                                                                onChange={(
-                                                                    event,
-                                                                ) =>
-                                                                    replyForm.setData(
-                                                                        'content',
-                                                                        event
-                                                                            .target
-                                                                            .value,
-                                                                    )
-                                                                }
+                                                                value={replyForm.data.content}
+                                                                onChange={(event) => replyForm.setData('content', event.target.value)}
                                                                 placeholder={`Reply to ${message.author}...`}
                                                                 rows={2}
                                                                 maxLength={5000}
-                                                                className="focus:border-ctu-lightblue focus:ring-ctu-lightblue/10 w-full resize-none rounded-lg border border-slate-300 bg-white p-3 text-sm outline-none focus:ring-4"
+                                                                className="w-full resize-none rounded-lg border border-slate-300 bg-white p-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                                                             />
-                                                            {replyForm.errors
-                                                                .content && (
-                                                                <p className="mt-1 text-xs font-bold text-red-600">
-                                                                    {
-                                                                        replyForm
-                                                                            .errors
-                                                                            .content
-                                                                    }
-                                                                </p>
+                                                            {replyForm.errors.content && (
+                                                                <p className="mt-1.5 text-xs font-bold text-red-600">{replyForm.errors.content}</p>
                                                             )}
-                                                            {replyForm.errors
-                                                                .parent_message_id && (
-                                                                <p className="mt-1 text-xs font-bold text-red-600">
-                                                                    {
-                                                                        replyForm
-                                                                            .errors
-                                                                            .parent_message_id
-                                                                    }
-                                                                </p>
-                                                            )}
-                                                            <div className="mt-2 flex justify-end">
+                                                            <div className="mt-3 flex justify-end">
                                                                 <button
                                                                     type="submit"
-                                                                    disabled={
-                                                                        !replyForm.data.content.trim() ||
-                                                                        replyForm.processing
-                                                                    }
-                                                                    className="rounded-lg bg-slate-800 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+                                                                    disabled={!replyForm.data.content.trim() || replyForm.processing}
+                                                                    className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                                                 >
-                                                                    {replyForm.processing
-                                                                        ? 'Sending...'
-                                                                        : 'Post reply'}
+                                                                    {replyForm.processing ? 'Posting...' : 'Post reply'}
                                                                 </button>
                                                             </div>
                                                         </form>
@@ -798,60 +679,49 @@ export default function ClientReadMore({
                             </article>
                         </div>
 
-                        {/* RIGHT COLUMN: SIDEBAR (issue #5 — no dark activity card; useful only) */}
+                        {/* RIGHT COLUMN: SIDEBAR */}
                         <aside className="space-y-6 lg:col-span-4">
-                            {/* AUDIENCE (issue #8) */}
-                            <div className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                            
+                            {/* AUDIENCE */}
+                            <div className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style={{ animationDelay: '0.1s' }}>
                                 <h3 className="mb-2 text-xs font-extrabold tracking-widest text-slate-400 uppercase">
                                     For
                                 </h3>
-                                <p className="text-sm font-bold text-slate-800">
+                                <p className="text-base font-bold text-slate-900">
                                     {announcement.audience || 'All Students'}
                                 </p>
                             </div>
 
-                            {/* EVENT BOX (issue #8) — only for Event category */}
+                            {/* EVENT BOX */}
                             {isEvent && (
                                 <div
-                                    className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-                                    style={{ animationDelay: '0.05s' }}
+                                    className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                                    style={{ animationDelay: '0.15s' }}
                                 >
-                                    <h3 className="mb-3 text-xs font-extrabold tracking-widest text-slate-400 uppercase">
+                                    <h3 className="mb-4 text-xs font-extrabold tracking-widest text-slate-400 uppercase">
                                         Event details
                                     </h3>
 
-                                    <div className="mb-3 flex gap-3">
-                                        <div className="h-fit min-w-[50px] shrink-0 rounded-lg bg-slate-100 p-2 text-center">
-                                            <p className="text-[9px] font-extrabold text-slate-500 uppercase">
-                                                {new Date(
-                                                    `${announcement.event_date}T00:00:00`,
-                                                ).toLocaleDateString(
-                                                    undefined,
-                                                    { month: 'short' },
-                                                )}
+                                    <div className="mb-5 flex gap-4">
+                                        <div className="h-fit min-w-[56px] shrink-0 rounded-lg border border-slate-200 bg-slate-100 p-2.5 text-center">
+                                            <p className="text-[10px] font-extrabold text-slate-500 uppercase">
+                                                {new Date(`${announcement.event_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}
                                             </p>
-                                            <p className="mt-0.5 text-lg leading-none font-black text-slate-800">
-                                                {new Date(
-                                                    `${announcement.event_date}T00:00:00`,
-                                                ).getDate()}
+                                            <p className="mt-0.5 text-xl leading-none font-black text-slate-800">
+                                                {new Date(`${announcement.event_date}T00:00:00`).getDate()}
                                             </p>
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-bold text-slate-900">
-                                                {formatDate(
-                                                    announcement.event_date!,
-                                                )}
+                                            <p className="text-base font-bold text-slate-900">
+                                                {formatDate(announcement.event_date!)}
                                             </p>
-                                            <p className="mt-0.5 text-[11px] font-semibold text-slate-500">
-                                                {formatTime(
-                                                    announcement.start_time,
-                                                )}
-                                                {announcement.end_time &&
-                                                    ` – ${formatTime(announcement.end_time)}`}
+                                            <p className="mt-1 text-sm font-medium text-slate-500">
+                                                {formatTime(announcement.start_time)}
+                                                {announcement.end_time && ` – ${formatTime(announcement.end_time)}`}
                                             </p>
                                             {announcement.location && (
-                                                <p className="mt-0.5 text-[11px] font-semibold text-slate-500">
-                                                    <i className="fa-solid fa-location-dot mr-1"></i>
+                                                <p className="mt-1 text-sm font-medium text-slate-500">
+                                                    <i className="fa-solid fa-location-dot mr-1.5"></i>
                                                     {announcement.location}
                                                 </p>
                                             )}
@@ -860,16 +730,16 @@ export default function ClientReadMore({
 
                                     <button
                                         disabled
-                                        className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-bold text-slate-500"
+                                        className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500"
                                     >
                                         RSVP coming soon
                                     </button>
                                 </div>
                             )}
 
-                            {/* RELATED ANNOUNCEMENTS (issue #8) */}
+                            {/* RELATED ANNOUNCEMENTS */}
                             <div
-                                className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                                className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
                                 style={{ animationDelay: '0.1s' }}
                             >
                                 <h3 className="mb-4 text-xs font-extrabold tracking-widest text-slate-400 uppercase">
@@ -885,9 +755,9 @@ export default function ClientReadMore({
                                             <Link
                                                 key={related.id}
                                                 href={`/client/announcements/${related.id}`}
-                                                className="group block"
+                                                className="group block focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
                                             >
-                                                <p className="group-hover:text-ctu-lightblue line-clamp-2 text-sm font-bold text-slate-700 transition-colors">
+                                                <p className="line-clamp-2 text-sm font-bold text-slate-700 transition-colors group-hover:text-blue-600">
                                                     {related.title}
                                                 </p>
                                             </Link>

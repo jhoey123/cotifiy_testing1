@@ -9,6 +9,8 @@ type UpcomingEvent = {
     start_time: string | null;
     end_time: string | null;
     location: string | null;
+    rsvp_count?: number;
+    capacity?: number;
 };
 
 type DiscussionMessage = {
@@ -69,10 +71,7 @@ export default function admin({
     const [selectedCategory, setSelectedCategory] = useState('General');
     const [activeFilter, setActiveFilter] = useState('all');
     
-    // REACT STATE FOR SIDEBAR
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-    // NEW STATE: To force the logout button hover effect via React
     const [isLogoutHovered, setIsLogoutHovered] = useState(false);
 
     const filteredAnnouncements = activeFilter === 'all'
@@ -105,7 +104,6 @@ export default function admin({
                     to { opacity: 1; transform: scale(1); }
                 }
                 
-                /* Moving Shapes Keyframes */
                 @keyframes move-around-1 {
                     0% { transform: translate(0, 0) rotate(0deg); }
                     25% { transform: translate(-15vw, 10vh) rotate(15deg); }
@@ -145,68 +143,80 @@ export default function admin({
                 <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                     <div className="absolute top-[10%] left-[10%] w-[30rem] h-[30rem] bg-blue-500/5 rounded-full blur-3xl shape-move-1"></div>
                     <div className="absolute bottom-[10%] right-[10%] w-[35rem] h-[35rem] bg-indigo-500/5 rounded-full blur-3xl shape-move-2"></div>
-
                     <div className="absolute top-[15%] right-[15%] w-[25rem] h-[25rem] border-[2px] border-blue-500/10 rounded-full shape-move-1"></div>
                     <div className="absolute bottom-[20%] left-[10%] w-32 h-32 border-[3px] border-indigo-500/10 rounded-full shape-move-2"></div>
                     <div className="absolute top-[60%] right-[30%] w-20 h-20 border-[2px] border-blue-500/15 rounded-full shape-move-3"></div>
-
                     <div className="absolute top-[20%] left-[30%] w-40 h-40 bg-blue-500/5 clip-hexagon shape-move-2"></div>
                     <div className="absolute bottom-[15%] right-[20%] w-56 h-56 border-[3px] border-indigo-500/10 clip-hexagon shape-move-1 bg-transparent">
                         <div className="w-full h-full bg-blue-500/5 clip-hexagon scale-[0.95]"></div>
                     </div>
-
                     <div className="absolute top-[45%] left-[15%] w-32 h-32 bg-indigo-500/5 clip-octagon shape-move-3"></div>
-                    
                     <div className="absolute top-[70%] right-[10%] w-28 h-28 border-[2px] border-blue-500/10 rotate-45 shape-move-2"></div>
                     <div className="absolute bottom-[10%] left-[40%] w-16 h-16 bg-indigo-500/5 rotate-12 shape-move-3"></div>
-
-                    <div className="absolute top-[10%] right-[40%] w-0 h-0 border-l-[40px] border-l-transparent border-r-[40px] border-r-transparent border-b-[60px] border-b-blue-500/5 shape-move-2"></div>
-                    <div className="absolute top-[30%] right-[5%] w-3 h-48 bg-gradient-to-b from-blue-500/10 to-transparent rounded-full shape-move-1"></div>
                 </div>
 
                 {/* SIDEBAR */}
                 <aside 
-                    className={`bg-ctu-dark flex flex-col justify-between shrink-0 absolute md:relative z-40 h-full transition-all duration-300 shadow-2xl md:shadow-none 
-                    ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden'}`}
+                    className={`bg-ctu-dark flex flex-col justify-between shrink-0 absolute md:relative z-40 h-full transition-transform duration-300 shadow-2xl w-64 
+                    ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
                 >
-                    <div className="w-64">
-                        {/* CHANGED: Replaced icon with larger logo and adjusted margins */}
+                    <div className="flex-1 overflow-y-auto no-scrollbar w-64">
                         <div className="p-6 flex items-center">
-                            <img 
-                                src="/images/3rdLogo.png" 
-                                alt="Cotify Logo" 
-                                className="w-30 h-30 object-contain -ml-3 -mr-6" 
-                            />
+                            <img src="/images/3rdLogo.png" alt="Cotify Logo" className="w-16 h-16 object-contain -ml-2 -mr-4" />
                             <div className="text-white">
-                                <h1 className="font-extrabold text-lg leading-tight tracking-tight">Cotify</h1>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Admin Portal</p>
+                                <h1 className="font-extrabold text-xl leading-tight tracking-tight">Cotify</h1>
                             </div>
                         </div>
-                        
-                        <div className="px-6 py-4 flex items-center gap-3">
+
+                        <nav className="mt-2 space-y-6 px-3">
+                            <div>
+                                <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Main</p>
+                                <a href="#dashboard" className="flex items-center gap-3 px-3 py-2.5 bg-ctu-lightblue text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-900/30">
+                                    <i className="fa-solid fa-house w-5 text-center"></i> Dashboard
+                                </a>
+                                <a href="#announcements" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                    <i className="fa-solid fa-bullhorn w-5 text-center group-hover:scale-110 transition-transform"></i> Announcements
+                                </a>
+                                <a href="#" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                    <i className="fa-regular fa-calendar w-5 text-center group-hover:scale-110 transition-transform"></i> Events
+                                </a>
+                            </div>
+
+                            <div>
+                                <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">People</p>
+                                <Link href="/admin/users" prefetch="mount" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                    <i className="fa-solid fa-users w-5 text-center group-hover:scale-110 transition-transform"></i> Students
+                                </Link>
+                                <Link href="/admin/admins" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                    <i className="fa-solid fa-user-shield w-5 text-center group-hover:scale-110 transition-transform"></i> Staff & Admins
+                                </Link>
+                            </div>
+
+                            <div>
+                                <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">System</p>
+                                <Link href="/admin/categories" prefetch="mount" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                    <i className="fa-solid fa-tags w-5 text-center group-hover:scale-110 transition-transform"></i> Categories
+                                </Link>
+                                <Link href="/admin/logs" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                    <i className="fa-solid fa-clock-rotate-left w-5 text-center group-hover:scale-110 transition-transform"></i> Activity Log
+                                </Link>
+                                <Link href="/admin/settings" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                    <i className="fa-solid fa-gear w-5 text-center group-hover:rotate-90 transition-transform duration-300"></i> Settings
+                                </Link>
+                            </div>
+                        </nav>
+                    </div>
+
+                    <div className="p-4 border-t border-slate-800/50 w-64">
+                        <div className="flex items-center gap-3 px-3 py-2 mb-2">
                             <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 text-sm ring-2 ring-slate-700">
                                 <i className="fa-solid fa-user"></i>
                             </div>
                             <div>
                                 <p className="text-white text-sm font-bold">Admin</p>
-                                <p className="text-slate-400 text-xs font-medium">Administrator</p>
+                                <p className="text-slate-400 text-[11px] font-medium">Registrar's Office</p>
                             </div>
                         </div>
-
-                        <nav className="mt-6 space-y-1.5 px-3" id="sidebarNav">
-                            <a href="#dashboard" data-target="dashboard" className="nav-link flex items-center gap-3 px-3 py-2.5 bg-ctu-lightblue text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-900/30">
-                                <i className="fa-solid fa-house w-5 text-center"></i> Dashboard
-                            </a>
-                            <Link href="/admin/users" prefetch="mount" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
-                                <i className="fa-solid fa-users w-5 text-center group-hover:scale-110 transition-transform"></i> Users
-                            </Link>
-                            <Link href="/admin/settings" prefetch="mount" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
-                                <i className="fa-solid fa-gear w-5 text-center group-hover:rotate-90 transition-transform duration-300"></i> Settings
-                            </Link>
-                        </nav>
-                    </div>
-
-                    <div className="p-4 border-t border-slate-800/50 w-64">
                         <Form method="post" action="/admin/logout">
                             {({ processing }) => (
                                 <button 
@@ -215,7 +225,7 @@ export default function admin({
                                     onMouseEnter={() => setIsLogoutHovered(true)}
                                     onMouseLeave={() => setIsLogoutHovered(false)}
                                     className={`flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-bold rounded-xl transition-all disabled:opacity-60
-                                        ${isLogoutHovered ? 'bg-red-600 text-white' : 'text-slate-400'}
+                                        ${isLogoutHovered ? 'bg-red-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
                                     `}
                                 >
                                     <i className={`fa-solid fa-arrow-right-from-bracket w-5 text-center transition-colors ${isLogoutHovered ? 'text-white' : 'text-slate-400'}`}></i> 
@@ -226,7 +236,7 @@ export default function admin({
                     </div>
                 </aside>
 
-                {/* Overlay */}
+                {/* Overlay for mobile */}
                 {isSidebarOpen && (
                     <div 
                         className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 md:hidden animate-fade-in"
@@ -237,132 +247,165 @@ export default function admin({
                 {/* MAIN CONTENT */}
                 <div className="flex-1 flex flex-col bg-transparent overflow-hidden relative w-full z-10">
                     
-                    <header className="h-20 bg-ctu-dark border-b border-slate-800 flex items-center justify-between px-6 shrink-0 z-20 shadow-md transition-colors">
+                    {/* TOP BAR */}
+                    <header className="h-20 bg-transparent border-b border-slate-200/50 flex items-center justify-between px-6 shrink-0 z-20">
                         <div className="flex items-center gap-4">
                             <button 
                                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors border border-slate-700" 
-                                title="Toggle Navigation Bar"
+                                aria-label="Toggle sidebar"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors md:hidden" 
                             >
                                 <i className="fa-solid fa-bars"></i>
                             </button>
-
-                            <div className="relative w-72 hidden sm:block group">
-                                <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm group-focus-within:text-ctu-lightblue transition-colors"></i>
-                                <input type="text" id="globalSearch" placeholder="Search anything..." className="w-full pl-11 pr-4 py-2.5 bg-slate-800/80 border border-slate-700/80 text-white rounded-xl text-sm focus:bg-slate-900 focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/20 outline-none transition-all placeholder-slate-400 font-medium"></input>
-                            </div>
+                            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight hidden sm:block">Dashboard</h2>
                         </div>
                         
-                        <div className="flex items-center gap-4">
-                            <button className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 relative transition-colors">
-                                <i className="fa-regular fa-bell text-lg"></i>
-                                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-ctu-dark animate-pulse"></span>
-                            </button>
-                            
-                            <div className="flex items-center gap-3 cursor-pointer pl-5 border-l border-slate-700 group">
-                                <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-slate-300 group-hover:bg-ctu-lightblue group-hover:text-white group-hover:border-ctu-lightblue transition-all">
-                                    <i className="fa-solid fa-user text-xs"></i>
-                                </div>
-                                <span className="text-sm font-bold text-slate-200 hidden sm:block group-hover:text-white transition-colors">Admin</span>
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="relative w-64 hidden md:block group">
+                                <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm group-focus-within:text-ctu-lightblue transition-colors"></i>
+                                <input type="text" placeholder="Search..." className="w-full pl-11 pr-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl text-sm focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder-slate-400 font-medium shadow-sm" />
                             </div>
+
+                            <button aria-label="View notifications" className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-ctu-lightblue hover:bg-slate-50 transition-colors shadow-sm">
+                                <i className="fa-regular fa-bell text-lg"></i>
+                                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                            </button>
+
+                            <button 
+                                type="button" 
+                                onClick={() => { setEditingAnnouncement(null); setSelectedCategory('General'); setIsNewModalOpen(true); }} 
+                                className="bg-ctu-dark hover:bg-slate-800 text-white text-sm font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 shrink-0"
+                            >
+                                <i className="fa-solid fa-plus"></i> <span className="hidden sm:inline">New announcement</span>
+                            </button>
                         </div>
                     </header>
 
                     <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
                         
-                        <section id="dashboard" className="mb-12 section-content animate-fade-up">
+                        <section className="mb-8 animate-fade-up">
+                            
+                            {/* NEEDS ATTENTION */}
                             <div className="mb-8">
-                                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard Overview</h2>
-                                <p className="text-sm font-medium text-slate-500 mt-1">Welcome back. Here is the latest system activity.</p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-                                <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-3xl border border-blue-100 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div>
-                                            <p className="text-xs text-blue-600 font-bold uppercase tracking-widest mb-1">Announcements</p>
-                                            <h3 className="text-4xl font-extrabold text-slate-900" id="statTotalAnnouncements">{announcementCount}</h3>
-                                        </div>
-                                        <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
-                                            <i className="fa-solid fa-bullhorn text-xl"></i>
-                                        </div>
-                                    </div>
-                                    <p className="text-xs text-blue-600 font-bold flex items-center gap-1.5"><i className="fa-solid fa-arrow-trend-up"></i> Published posts</p>
-                                </div>
-
-                                <div className="bg-gradient-to-br from-emerald-50 to-white p-6 rounded-3xl border border-emerald-100 shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div>
-                                            <p className="text-xs text-emerald-600 font-bold uppercase tracking-widest mb-1">Total Events</p>
-                                            <h3 className="text-4xl font-extrabold text-slate-900">{eventCount}</h3>
-                                        </div>
-                                        <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-sm">
-                                            <i className="fa-regular fa-calendar text-xl"></i>
-                                        </div>
-                                    </div>
-                                    <p className="text-xs text-emerald-600 font-bold flex items-center gap-1.5"><i className="fa-solid fa-arrow-trend-up"></i> Scheduled events</p>
-                                </div>
-
-                                <div className="bg-gradient-to-br from-purple-50 to-white p-6 rounded-3xl border border-purple-100 shadow-sm hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div>
-                                            <p className="text-xs text-purple-600 font-bold uppercase tracking-widest mb-1">Total Users</p>
-                                            <h3 className="text-4xl font-extrabold text-slate-900">{userCount}</h3>
-                                        </div>
-                                        <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300 shadow-sm">
-                                            <i className="fa-solid fa-users text-xl"></i>
-                                        </div>
-                                    </div>
-                                    <p className="text-xs text-purple-600 font-bold flex items-center gap-1.5"><i className="fa-solid fa-user-plus"></i> Registered accounts</p>
+                                <h3 className="text-sm font-bold text-slate-500 mb-3">Needs attention</h3>
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <button className="px-4 py-1.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-colors shadow-sm">
+                                        2 drafts
+                                    </button>
+                                    <button className="px-4 py-1.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-colors shadow-sm">
+                                        1 scheduled for tomorrow
+                                    </button>
+                                    <button className="px-4 py-1.5 rounded-full border border-red-200 bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 transition-colors shadow-sm">
+                                        4 students not verified
+                                    </button>
                                 </div>
                             </div>
 
+                            {/* STATS ROW */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                    <p className="text-sm font-semibold text-slate-500 mb-1">Published this month</p>
+                                    <div className="flex items-end justify-between">
+                                        <h3 className="text-3xl font-extrabold text-slate-900">{announcementCount}</h3>
+                                        <span className="text-xs font-bold text-emerald-600 mb-1">+4 vs last month</span>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                    <p className="text-sm font-semibold text-slate-500 mb-1">Average read rate</p>
+                                    <div className="flex items-end justify-between">
+                                        <h3 className="text-3xl font-extrabold text-slate-900">68%</h3>
+                                        <span className="text-xs font-semibold text-slate-500 mb-1">of targeted students</span>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                    <p className="text-sm font-semibold text-slate-500 mb-1">Upcoming events</p>
+                                    <div className="flex items-end justify-between">
+                                        <h3 className="text-3xl font-extrabold text-slate-900">{eventCount}</h3>
+                                        <span className="text-xs font-semibold text-slate-500 mb-1">58 RSVPs</span>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                    <p className="text-sm font-semibold text-slate-500 mb-1">Active students</p>
+                                    <div className="flex items-end justify-between">
+                                        <h3 className="text-3xl font-extrabold text-slate-900">{userCount}</h3>
+                                        <span className="text-xs font-bold text-emerald-600 mb-1">+18 this week</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* TWO PANEL LAYOUT */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                                    <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                                        <h4 className="font-extrabold text-slate-900">Recent Announcements</h4>
-                                        <a href="#announcements" className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">View All</a>
+                                
+                                {/* RECENT ANNOUNCEMENTS */}
+                                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                    <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                                        <h4 className="font-extrabold text-slate-900">Recent announcements</h4>
+                                        <a href="#announcements" className="text-xs font-bold text-slate-500 hover:text-ctu-lightblue transition-colors">View all</a>
                                     </div>
-                                    <div className="p-3 space-y-2 flex-1">
-                                        {recentAnnouncements.length === 0 ? (
-                                            <p className="p-4 text-sm font-medium text-slate-500 text-center">No announcements yet.</p>
-                                        ) : recentAnnouncements.map((announcement) => (
-                                            <div key={announcement.id} className="p-4 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer group border border-transparent hover:border-slate-100">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-blue-100 text-blue-700">{announcement.category}</span>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setSelectedAnnouncement(announcement)}
-                                                    className="mb-1.5 block text-left text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1"
-                                                >
-                                                    {announcement.title}
-                                                </button>
-                                                <p className="text-xs font-semibold text-slate-500"><i className="fa-regular fa-clock mr-1"></i> {formatDate(announcement.date)} • {announcement.posted_by}</p>
-                                            </div>
-                                        ))}
+                                    
+                                    <div className="flex-1">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="text-[10px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+                                                    <th className="px-6 py-2">Title</th>
+                                                    <th className="px-4 py-2">Status</th>
+                                                    <th className="px-6 py-2 w-32">Read</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-50">
+                                                {recentAnnouncements.map((announcement) => (
+                                                    <tr key={announcement.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                        <td className="px-6 py-3">
+                                                            <div className="flex items-start gap-2">
+                                                                {announcement.is_pinned && <i className="fa-solid fa-thumbtack text-[10px] text-rose-500 mt-1"></i>}
+                                                                <div>
+                                                                    <button 
+                                                                        onClick={() => setSelectedAnnouncement(announcement)}
+                                                                        className="text-left font-bold text-slate-800 hover:text-ctu-lightblue transition-colors text-sm line-clamp-1"
+                                                                    >
+                                                                        {announcement.title}
+                                                                    </button>
+                                                                    <p className="text-xs font-semibold text-slate-500 mt-0.5">{formatDate(announcement.date)}</p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded border border-slate-200 bg-white text-[10px] font-bold text-slate-600">
+                                                                Published
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-3">
+                                                            <div className="w-full bg-slate-100 rounded-full h-2">
+                                                                <div className="bg-slate-400 h-2 rounded-full" style={{ width: `${Math.random() * 60 + 40}%` }}></div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
 
-                                <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                                    <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                                        <h4 className="font-extrabold text-slate-900">Upcoming Events</h4>
-                                        <a href="#announcements" className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">View All</a>
+                                {/* UPCOMING EVENTS */}
+                                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                    <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                                        <h4 className="font-extrabold text-slate-900">Upcoming events</h4>
+                                        <a href="#" className="text-xs font-bold text-slate-500 hover:text-ctu-lightblue transition-colors">+ New event</a>
                                     </div>
+                                    
                                     <div className="p-4 space-y-4 flex-1">
                                         {upcomingEvents.length === 0 ? (
                                             <p className="p-4 text-sm font-medium text-slate-500 text-center">No upcoming events scheduled.</p>
                                         ) : upcomingEvents.map((event) => (
-                                            <div key={event.id} className="flex items-start gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer group border border-transparent hover:border-slate-100">
-                                                <div className="bg-blue-50 text-blue-700 rounded-xl p-3 text-center min-w-[60px] group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-sm">
-                                                    <p className="text-[10px] font-extrabold uppercase tracking-widest">{new Date(`${event.event_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}</p>
-                                                    <p className="text-xl font-black leading-none mt-0.5">{new Date(`${event.event_date}T00:00:00`).getDate().toString().padStart(2, '0')}</p>
+                                            <div key={event.id} className="flex items-start gap-4 p-2 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group">
+                                                <div className="bg-slate-100 rounded-lg p-2 text-center min-w-[50px] shrink-0 h-fit">
+                                                    <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">{new Date(`${event.event_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}</p>
+                                                    <p className="text-xl font-black leading-none mt-0.5 text-slate-800">{new Date(`${event.event_date}T00:00:00`).getDate()}</p>
                                                 </div>
                                                 <div className="pt-1">
-                                                    <p className="text-sm font-bold text-slate-900 mb-1.5 group-hover:text-blue-600 transition-colors line-clamp-1">{event.title}</p>
+                                                    <p className="text-sm font-bold text-slate-900 mb-1 group-hover:text-ctu-lightblue transition-colors line-clamp-1">{event.title}</p>
                                                     <p className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
-                                                        <i className="fa-regular fa-clock text-slate-400"></i>
-                                                        {[event.start_time && event.end_time ? `${formatTime(event.start_time)} - ${formatTime(event.end_time)}` : formatTime(event.start_time), event.location].filter(Boolean).join(' • ')}
+                                                        {event.rsvp_count || 0} / {event.capacity || 100} going
                                                     </p>
                                                 </div>
                                             </div>
@@ -372,15 +415,13 @@ export default function admin({
                             </div>
                         </section>
 
+                        {/* ANNOUNCEMENTS TABLE (Retained below dashboard) */}
                         <section id="announcements" className="section-content animate-fade-up" style={{ animationDelay: '0.1s' }}>
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
                                 <div>
                                     <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Manage Announcements</h2>
                                     <p className="text-sm font-medium text-slate-500 mt-1">Create, edit, and manage all campus updates.</p>
                                 </div>
-                                <button id="btnNewAnnouncement" type="button" onClick={() => { setEditingAnnouncement(null); setSelectedCategory('General'); setIsNewModalOpen(true); }} className="bg-ctu-dark hover:bg-slate-800 text-white text-sm font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 shrink-0">
-                                    <i className="fa-solid fa-plus"></i> New Announcement
-                                </button>
                             </div>
 
                             <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar" id="filterTabs">
@@ -506,7 +547,7 @@ export default function admin({
                                         }, {
                                             onSuccess: () => setAnnouncementToDelete(null),
                                             onFinish: () => setIsDeletingAnnouncement(false),
-                                        });
+                                                                                    });
                                     }}
                                     className="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 disabled:opacity-60 transition-all shadow-lg shadow-red-500/30"
                                 >

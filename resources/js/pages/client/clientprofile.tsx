@@ -9,7 +9,7 @@ interface ClientProfileProps {
         course?: string | null;
         year_level?: string | null;
         section?: string | null;
-        contact_number?: string | null;
+        student_number?: string | null; // Changed from contact_number
         preferences?: {
             email_all: boolean;
             email_urgent: boolean;
@@ -28,7 +28,7 @@ export default function ClientProfile({ user }: ClientProfileProps) {
         course: user.course || 'BSIT',
         year_level: user.year_level || '3rd Year',
         section: user.section || '',
-        contact_number: user.contact_number || '',
+        student_number: user.student_number || '', // Changed from contact_number
     });
 
     // Password Form
@@ -121,8 +121,15 @@ export default function ClientProfile({ user }: ClientProfileProps) {
                             <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
                                 <div className="flex items-center gap-8">
                                     <Link href="/client" className="flex items-center shrink-0 group">
-                                        <img src="/images/3rdLogo.png" alt="Cotify" className="w-10 h-10 sm:w-12 sm:h-12 object-contain -ml-1 -mr-3 group-hover:scale-105 transition-transform" />
-                                        <span className="font-extrabold text-xl text-white hidden sm:block">Cotify</span>
+                                        <img src="/images/3rdLogo.png" alt="Cotify"    className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8"  />
+                                       <div className="hidden sm:block">
+                                        <span className="block text-xl leading-tight font-extrabold text-white">
+                                            Cotify
+                                        </span>
+                                        <span className="block text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                                            College of Technology
+                                        </span>
+                                    </div>
                                     </Link>
                                     <nav className="hidden md:flex items-center gap-6">
                                         <Link href="/client" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Home</Link>
@@ -205,7 +212,7 @@ export default function ClientProfile({ user }: ClientProfileProps) {
                                                 <div>
                                                     <h2 className="text-2xl font-extrabold text-slate-900">{user.name}</h2>
                                                     <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mt-1">
-                                                        <span>{user.student_id || '2023-00123'}</span>
+                                                        <span>{user.student_id || '123456'}</span>
                                                         <span>·</span>
                                                         <span>{user.email}</span>
                                                     </div>
@@ -260,15 +267,15 @@ export default function ClientProfile({ user }: ClientProfileProps) {
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wide mb-2">Contact Number</label>
+                                                    <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wide mb-2">Student Number</label>
                                                     <input
                                                         type="text"
-                                                        value={profileForm.data.contact_number}
-                                                        onChange={e => profileForm.setData('contact_number', e.target.value)}
-                                                        placeholder="09XX XXX XXXX"
+                                                        value={profileForm.data.student_number}
+                                                        onChange={e => profileForm.setData('student_number', e.target.value)}
+                                                        placeholder="e.g. 123456"
                                                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-ctu-lightblue focus:ring-4 focus:ring-ctu-lightblue/10 outline-none transition-all"
                                                     />
-                                                    {profileForm.errors.contact_number && <p className="mt-1.5 text-xs font-bold text-red-600">{profileForm.errors.contact_number}</p>}
+                                                    {profileForm.errors.student_number && <p className="mt-1.5 text-xs font-bold text-red-600">{profileForm.errors.student_number}</p>}
                                                 </div>
                                             </div>
 

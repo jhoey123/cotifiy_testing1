@@ -115,7 +115,7 @@ export default function Register() {
                     <div className="absolute inset-0 z-0 overflow-hidden">
                         <img 
                             src="/images/download.jpg" 
-                            alt="Campus" 
+                            alt="College of Technology Campus" 
                             className="w-full h-full object-cover opacity-20 animate-slow-zoom origin-center" 
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent"></div>
@@ -139,7 +139,7 @@ export default function Register() {
                         </div>
 
                         <h2 className="text-4xl font-extrabold mb-4 leading-tight">Join the Community!</h2>
-                        <p className="text-slate-400 mb-10 leading-relaxed text-lg">
+                        <p className="text-slate-400 mb-8 leading-relaxed text-lg">
                             Create an account to stay updated with announcements, events, and important campus information.
                         </p>
 
@@ -150,9 +150,6 @@ export default function Register() {
                                 </div>
                                 Access all announcements
                             </li>
-                            
-                            {/* FIXED: Removed the "Register for events" line entirely as requested */}
-                            
                             <li className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
                                     <i className="fa-solid fa-check text-blue-400 text-lg"></i>
@@ -169,7 +166,7 @@ export default function Register() {
                     <Link 
                         href="/" 
                         aria-label="Back to home"
-                        className="absolute top-6 left-6 sm:top-8 sm:left-8 w-11 h-11 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all shadow-sm z-20 group" 
+                        className="absolute top-6 left-6 sm:top-8 sm:left-8 w-11 h-11 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all shadow-sm z-20 group focus:outline-none focus:ring-2 focus:ring-blue-500" 
                         title="Back to Home"
                     >
                         <i className="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
@@ -180,7 +177,6 @@ export default function Register() {
                             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
                         }`}
                     >
-                        {/* Background Image & Dark Overlay (Original Design) */}
                         <div className="absolute inset-0 z-0">
                             <img 
                                 src="/images/download.jpg" 
@@ -258,10 +254,36 @@ export default function Register() {
                                                         className="w-full pl-11 pr-4 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium appearance-none cursor-pointer"
                                                     >
                                                         <option value="" disabled>Select Course</option>
-                                                        <option value="BSIT">BS Information Technology (BSIT)</option>
-                                                        <option value="BSCS">BS Computer Science (BSCS)</option>
-                                                        <option value="BSIS">BS Information Systems (BSIS)</option>
-                                                        <option value="ACT">Associate in Computer Technology (ACT)</option>
+                                                        
+                                                        <optgroup label="College of Education">
+                                                            <option value="BEEd">Bachelor of Elementary Education (BEEd)</option>
+                                                            <option value="BTLEd">Bachelor of Technology and Livelihood Education (BTLEd)</option>
+                                                            <option value="BSEd">Bachelor of Secondary Education (BSEd)</option>
+                                                            <option value="DipPE">Diploma in Professional Education</option>
+                                                        </optgroup>
+
+                                                        <optgroup label="College of Engineering">
+                                                            <option value="BSIE">BS Industrial Engineering (BSIE)</option>
+                                                            <option value="BSME">BS Mechanical Engineering (BSME)</option>
+                                                            <option value="BSCE">BS Civil Engineering (BSCE)</option>
+                                                            <option value="BSEE">BS Electrical Engineering (BSEE)</option>
+                                                            <option value="BSCpE">BS Computer Engineering (BSCpE)</option>
+                                                        </optgroup>
+
+                                                        <optgroup label="College of Technology">
+                                                            <option value="BSIT">BS Information Technology (BSIT)</option>
+                                                            <option value="BSMx">BS Mechatronics (BSMx)</option>
+                                                            <option value="BIT">BIT Computer </option>
+                                                            <option value="BIT">BIT Drafting </option>
+                                                            <option value="BIT">BIT Electrical </option>
+                                                            <option value="BIT">BIT Electronics </option>
+                                                        </optgroup>
+
+                                                        <optgroup label="College of Management and Entrepreneurship">
+                                                            <option value="BSHM">BS Hospitality Management (BSHM)</option>
+                                                            <option value="BSTM">BS Tourism Management (BSTM)</option>
+                                                            <option value="BSBA">BS Business Administration (BSBA)</option>
+                                                        </optgroup>
                                                     </select>
                                                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                                                         <i className="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
@@ -319,7 +341,6 @@ export default function Register() {
                                                     id="password" 
                                                     type={showPassword ? "text" : 'password'} 
                                                     name="password" 
-                                                    /* FIXED: Placeholder changed to "Create a strong password" */
                                                     placeholder="Create a strong password" 
                                                     onChange={handlePasswordChange}
                                                     className="w-full pl-11 pr-11 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium"
@@ -329,13 +350,12 @@ export default function Register() {
                                                     type="button"
                                                     onClick={() => setShowPassword(!showPassword)}
                                                     aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                                    className="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer"
+                                                    className="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-r-xl"
                                                 >
                                                     <i className={`fa-regular ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-slate-400 hover:text-blue-400 transition-colors`}></i>
                                                 </button>
                                             </div>
                                             
-                                            {/* FIXED: Helper text is now below the field so it doesn't disappear when typing */}
                                             <div className="mt-2 space-y-1.5">
                                                 <p className="text-[10px] font-semibold text-slate-400">
                                                     Must be 8+ characters with letters and numbers.
@@ -368,7 +388,7 @@ export default function Register() {
                                                     type="button"
                                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                     aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                                                    className="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer"
+                                                    className="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-r-xl"
                                                 >
                                                     <i className={`fa-regular ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'} text-slate-400 hover:text-blue-400 transition-colors`}></i>
                                                 </button>

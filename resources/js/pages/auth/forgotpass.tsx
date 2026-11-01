@@ -82,12 +82,12 @@ export default function ForgotPassword() {
                     <div className="absolute top-[85%] right-[10%] w-56 h-2 bg-gradient-to-r from-transparent via-blue-600/25 to-transparent rounded-full shape-move-1"></div>
                 </div>
 
-                {/* LEFT SIDE: Info Panel — identical treatment to Register */}
+                {/* LEFT SIDE: Info Panel */}
                 <div className="hidden lg:flex w-1/2 bg-slate-900 text-white flex-col justify-center px-16 relative overflow-hidden z-10 border-r border-slate-200 shadow-2xl">
                     <div className="absolute inset-0 z-0 overflow-hidden">
                         <img
                             src="/images/download.jpg"
-                            alt="Campus"
+                            alt="College of Technology Campus"
                             className="w-full h-full object-cover opacity-20 animate-slow-zoom origin-center"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent"></div>
@@ -111,7 +111,7 @@ export default function ForgotPassword() {
                         </div>
 
                         <h2 className="text-4xl font-extrabold mb-4 leading-tight">Forgot your password?</h2>
-                        <p className="text-slate-400 mb-10 leading-relaxed text-lg">
+                        <p className="text-slate-400 mb-8 leading-relaxed text-lg">
                             No worries — it happens to everyone. Enter the email you registered with and we'll send you a secure link to set a new password.
                         </p>
 
@@ -144,7 +144,7 @@ export default function ForgotPassword() {
                     <Link
                         href="/auth/login"
                         aria-label="Back to login"
-                        className="absolute top-6 left-6 sm:top-8 sm:left-8 w-11 h-11 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all shadow-sm z-20 group"
+                        className="absolute top-6 left-6 sm:top-8 sm:left-8 w-11 h-11 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all shadow-sm z-20 group focus:outline-none focus:ring-2 focus:ring-blue-500"
                         title="Back to Login"
                     >
                         <i className="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
@@ -155,7 +155,6 @@ export default function ForgotPassword() {
                             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
                         }`}
                     >
-                        {/* Background image + overlay — same as Register card */}
                         <div className="absolute inset-0 z-0">
                             <img
                                 src="/images/download.jpg"
@@ -187,7 +186,6 @@ export default function ForgotPassword() {
                             <Form method="POST" action="/forgot-password" className="space-y-5">
                                 {({ errors, processing, status }) => (
                                     <>
-                                        {/* Success banner (Laravel returns a generic status message) */}
                                         {status && (
                                             <div className="flex items-start gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
                                                 <i className="fa-solid fa-circle-check text-green-400 mt-0.5"></i>
@@ -226,7 +224,7 @@ export default function ForgotPassword() {
                                         <button
                                             type="submit"
                                             disabled={processing}
-                                            className="w-full block text-center bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-[0_8px_20px_-6px_rgba(37,99,235,0.5)] hover:-translate-y-0.5 hover:shadow-[0_12px_25px_-6px_rgba(37,99,235,0.6)] mt-6"
+                                            className="w-full block text-center bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-[0_8px_20px_-6px_rgba(37,99,235,0.5)] hover:-translate-y-0.5 hover:shadow-[0_12px_25px_-6px_rgba(37,99,235,0.6)] mt-6 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                                         >
                                             {processing ? (
                                                 <span className="flex items-center justify-center gap-2">
@@ -241,13 +239,13 @@ export default function ForgotPassword() {
                             <div className="mt-8 pt-6 border-t border-white/10 space-y-3 text-center text-sm font-semibold">
                                 <p className="text-slate-300">
                                     Remembered it?{' '}
-                                    <Link href="/auth/login" className="text-blue-400 hover:text-blue-300 hover:underline font-extrabold transition-colors">
+                                    <Link href="/auth/login" className="text-blue-400 hover:text-blue-300 hover:underline font-extrabold transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
                                         Back to log in
                                     </Link>
                                 </p>
                                 <p className="text-slate-400">
                                     New here?{' '}
-                                    <Link href="/auth/register" className="text-blue-400 hover:text-blue-300 hover:underline font-extrabold transition-colors">
+                                    <Link href="/auth/register" className="text-blue-400 hover:text-blue-300 hover:underline font-extrabold transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
                                         Create an account
                                     </Link>
                                 </p>

@@ -54,21 +54,23 @@ export default function ClientNotifications({
     const NotificationRow = ({ item }: { item: Notification }) => (
         <div 
             onClick={() => handleNotificationClick(item.id, item.link, item.is_read)}
-            className={`relative p-4 sm:p-5 border-b border-slate-100 last:border-0 cursor-pointer transition-colors flex gap-4 ${item.is_read ? 'bg-white hover:bg-slate-50' : 'bg-slate-50 hover:bg-slate-100'}`}
+            className={`relative flex cursor-pointer gap-4 border-b border-slate-100 p-4 transition-colors last:border-0 sm:p-5 ${
+                item.is_read ? 'bg-white hover:bg-slate-50' : 'bg-slate-50 hover:bg-slate-100'
+            }`}
         >
             {/* Unread Dot */}
             {!item.is_read && (
-                <div className="absolute left-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500"></div>
+                <div className="absolute top-1/2 left-2 h-2 w-2 -translate-y-1/2 rounded-full bg-blue-500"></div>
             )}
 
-            <div className="flex-1 min-w-0 pl-2">
-                <div className="flex items-center gap-2 mb-1">
-                    <h3 className={`text-sm truncate ${item.is_read ? 'font-bold text-slate-700' : 'font-extrabold text-slate-900'}`}>
+            <div className="min-w-0 flex-1 pl-2">
+                <div className="mb-1 flex items-center gap-2">
+                    <h3 className={`truncate text-base ${item.is_read ? 'font-bold text-slate-700' : 'font-extrabold text-slate-900'}`}>
                         {item.title}
                     </h3>
                 </div>
-                <p className="text-sm text-slate-500 line-clamp-1">{item.message}</p>
-                <div className="flex items-center gap-2 mt-2 text-[11px] font-semibold text-slate-400">
+                <p className="line-clamp-1 text-sm text-slate-500">{item.message}</p>
+                <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-slate-400">
                     <span>{item.office}</span>
                     <span>·</span>
                     <span>{item.time_ago}</span>
@@ -80,90 +82,178 @@ export default function ClientNotifications({
     return (
         <>
             <Head title="Notifications | COTIFY" />
+            
+            {/* ✅ SAME ANIMATIONS & MOVEMENT AS CLIENT HOME */}
             <style>{`
-                @keyframes move-around-1 { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(-15vw, 10vh) rotate(15deg); } 50% { transform: translate(-5vw, 25vh) rotate(-10deg); } 75% { transform: translate(10vw, 15vh) rotate(5deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
-                @keyframes move-around-2 { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(10vw, -15vh) rotate(-20deg); } 50% { transform: translate(-20vw, -10vh) rotate(10deg); } 75% { transform: translate(-10vw, 15vh) rotate(-5deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
-                @keyframes move-around-3 { 0% { transform: translate(0, 0) rotate(0deg) scale(1); } 33% { transform: translate(15vw, -20vh) rotate(45deg) scale(1.2); } 66% { transform: translate(-15vw, 10vh) rotate(90deg) scale(0.8); } 100% { transform: translate(0, 0) rotate(0deg) scale(1); } }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes slideUpText { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
                 @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                .shape-move-1 { animation: move-around-1 25s ease-in-out infinite; }
-                .shape-move-2 { animation: move-around-2 30s ease-in-out infinite; }
-                .shape-move-3 { animation: move-around-3 35s ease-in-out infinite; }
-                .animate-spin-slow { animation: spin-slow 20s linear infinite; }
+                
+                @keyframes move-around-1 { 
+                    0% { transform: translate(0, 0) rotate(0deg); } 
+                    25% { transform: translate(-35vw, 25vh) rotate(25deg); } 
+                    50% { transform: translate(-15vw, 50vh) rotate(-15deg); } 
+                    75% { transform: translate(25vw, 30vh) rotate(15deg); } 
+                    100% { transform: translate(0, 0) rotate(0deg); } 
+                }
+                @keyframes move-around-2 { 
+                    0% { transform: translate(0, 0) rotate(0deg); } 
+                    25% { transform: translate(30vw, -30vh) rotate(-25deg); } 
+                    50% { transform: translate(-40vw, -20vh) rotate(15deg); } 
+                    75% { transform: translate(-25vw, 30vh) rotate(-15deg); } 
+                    100% { transform: translate(0, 0) rotate(0deg); } 
+                }
+                @keyframes move-around-3 { 
+                    0% { transform: translate(0, 0) rotate(0deg) scale(1); } 
+                    33% { transform: translate(35vw, -40vh) rotate(55deg) scale(1.3); } 
+                    66% { transform: translate(-30vw, 25vh) rotate(110deg) scale(0.9); } 
+                    100% { transform: translate(0, 0) rotate(0deg) scale(1); } 
+                }
+                @keyframes move-around-4 {
+                    0% { transform: translate(0, 0) scale(1); }
+                    50% { transform: translate(-20vw, 30vh) scale(1.2); }
+                    100% { transform: translate(0, 0) scale(1); }
+                }
+
+                .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+                .animate-slide-up { animation: slideUpText 0.5s ease-out forwards; }
+                .animate-spin-slow { animation: spin-slow 25s linear infinite; }
+                
+                .shape-move-1 { animation: move-around-1 35s ease-in-out infinite; }
+                .shape-move-2 { animation: move-around-2 45s ease-in-out infinite; }
+                .shape-move-3 { animation: move-around-3 40s ease-in-out infinite; }
+                .shape-move-4 { animation: move-around-4 30s ease-in-out infinite; }
+
                 .clip-hexagon { clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
                 .clip-diamond { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
             `}</style>
 
-            <div className="font-sans text-slate-800 bg-slate-50 antialiased min-h-screen flex flex-col relative overflow-hidden">
-                {/* Background Shapes */}
-                <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                    <div className="absolute top-[5%] right-[10%] w-[35rem] h-[35rem] bg-blue-500/5 rounded-full blur-3xl shape-move-2"></div>
-                    <div className="absolute bottom-[10%] left-[5%] w-[40rem] h-[40rem] bg-indigo-500/5 rounded-full blur-3xl shape-move-1"></div>
-                    <div className="absolute top-[30%] right-[30%] w-[25rem] h-[25rem] bg-purple-500/5 rounded-full blur-3xl shape-move-3"></div>
-                    <div className="absolute top-[20%] left-[10%] w-40 h-40 border-[3px] border-blue-500/10 clip-diamond animate-spin-slow"></div>
-                    <div className="absolute bottom-[25%] right-[15%] w-32 h-32 border-[4px] border-indigo-500/10 rotate-12 shape-move-1"></div>
-                    <div className="absolute top-[50%] right-[5%] w-56 h-56 bg-blue-400/5 clip-hexagon shape-move-3"></div>
+            <div className="relative flex min-h-screen flex-col overflow-hidden bg-slate-50 font-sans text-slate-800 antialiased">
+                
+                {/* ✅ MORE VISIBLE MOVING SHAPES ACROSS THE SCREEN */}
+                <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+                    <div className="absolute top-[5%] left-[5%] w-[30rem] h-[30rem] bg-blue-500/15 rounded-full blur-3xl shape-move-1"></div>
+                    <div className="absolute bottom-[5%] right-[5%] w-[35rem] h-[35rem] bg-purple-500/15 rounded-full blur-3xl shape-move-2"></div>
+                    <div className="absolute top-[40%] left-[30%] w-[25rem] h-[25rem] bg-indigo-500/10 rounded-full blur-3xl shape-move-3"></div>
+                    
+                    <div className="absolute top-[10%] right-[15%] w-64 h-64 bg-blue-600/20 clip-hexagon shape-move-3"></div>
+                    <div className="absolute bottom-[15%] left-[10%] w-48 h-48 border-[6px] border-purple-500/30 clip-diamond animate-spin-slow"></div>
+                    <div className="absolute top-[45%] right-[10%] w-40 h-40 border-[5px] border-blue-500/25 rotate-12 shape-move-1"></div>
+                    <div className="absolute bottom-[20%] right-[40%] w-56 h-56 border-[8px] border-indigo-500/20 clip-hexagon shape-move-2 bg-transparent">
+                        <div className="w-full h-full bg-blue-500/10 clip-hexagon scale-[0.95]"></div>
+                    </div>
+                    <div className="absolute top-[60%] left-[5%] w-32 h-32 border-[4px] border-blue-500/30 rounded-full shape-move-4"></div>
+                    <div className="absolute top-[20%] left-[40%] w-24 h-24 bg-indigo-600/15 clip-diamond shape-move-4"></div>
                 </div>
 
-                {/* Header */}
-                <header className="relative z-50 bg-ctu-dark/95 backdrop-blur-xl border-b border-white/10 shadow-lg">
-                    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
+                {/* DARK HEADER */}
+                <header className="bg-ctu-dark/95 relative z-50 border-b border-white/10 shadow-lg backdrop-blur-xl">
+                    <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+                        <div className="flex h-16 items-center justify-between gap-4 sm:h-20">
                             <div className="flex items-center gap-8">
-                                <Link href="/client" className="flex items-center shrink-0">
-                                    <img src="/images/3rdLogo.png" alt="Cotify" className="w-10 h-10 sm:w-12 sm:h-12 object-contain -ml-1 -mr-3" />
-                                    <span className="font-extrabold text-xl text-white hidden sm:block">Cotify</span>
+                                <Link
+                                    href="/client"
+                                    className="group flex shrink-0 items-center rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <img
+                                        src="/images/3rdLogo.png"
+                                        alt="Cotify Logo"
+                                        className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8" 
+                                    />
+                                    <div className="hidden sm:block">
+                                        <span className="block text-xl leading-tight font-extrabold text-white">
+                                            Cotify
+                                        </span>
+                                        <span className="block text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                                            College of Technology
+                                        </span>
+                                    </div>
                                 </Link>
-                                <nav className="hidden md:flex items-center gap-6">
-                                    <Link href="/client" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Home</Link>
-                                    <Link href="/client/announcements" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Announcements</Link>
-                                    <Link href="/client/events" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Events</Link>
-                                    <Link href="/client/saved" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Saved</Link>
+
+                                <nav className="hidden items-center gap-6 md:flex">
+                                    <Link
+                                        href="/client"
+                                        className="rounded-md px-1 text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        Home
+                                    </Link>
+                                    <Link
+                                        href="/client/announcements"
+                                        className="rounded-md px-1 text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        Announcements
+                                    </Link>
+                                    <Link
+                                        href="/client/events"
+                                        className="rounded-md px-1 text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        Events
+                                    </Link>
+                                    <Link
+                                        href="/client/saved"
+                                        className="rounded-md px-1 text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        Saved
+                                    </Link>
                                 </nav>
                             </div>
+
                             <div className="flex items-center gap-3 sm:gap-4">
-                                <button className="relative w-10 h-10 flex items-center justify-center rounded-full bg-slate-800 text-white transition-colors">
+                                <button 
+                                    aria-label={`View notifications. ${currentUnread} unread.`}
+                                    className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-800"
+                                >
                                     <i className="fa-regular fa-bell text-xl"></i>
                                     {currentUnread > 0 && (
-                                        <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-ctu-dark">
+                                        <span className="border-ctu-dark absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 bg-red-500 text-[10px] font-bold text-white">
                                             {currentUnread}
                                         </span>
                                     )}
                                 </button>
-                                <div className="flex items-center gap-2 pl-2 sm:pl-4 border-l border-slate-700 cursor-pointer group">
-                                    <div className="w-8 h-8 rounded-full bg-ctu-lightblue text-white flex items-center justify-center font-bold text-sm">
+
+                                <Link
+                                    href="/client/profile"
+                                    className="group flex cursor-pointer items-center gap-2 rounded-md border-l border-slate-700 pl-2 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:pl-4"
+                                >
+                                    <div className="bg-ctu-lightblue flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white ring-2 ring-transparent transition-all group-hover:ring-white/20">
                                         {userName.charAt(0).toUpperCase()}
                                     </div>
-                                    <span className="text-sm font-semibold text-white hidden lg:block">{userName.split(' ')[0]} D.</span>
-                                </div>
+                                    <span className="hidden text-sm font-semibold text-white lg:block">
+                                        {userName.split(' ')[0]} D.
+                                    </span>
+                                </Link>
                             </div>
                         </div>
                     </div>
                 </header>
 
-                <main className="relative z-10 flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-                    <div className="flex items-center justify-between mb-8">
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Notifications</h1>
+                <main className="relative z-10 mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8 animate-slide-up">
+                    <div className="mb-8 flex items-center justify-between">
+                        <h1 className="text-3xl font-extrabold text-slate-900">Notifications</h1>
                         {currentUnread > 0 && (
-                            <button onClick={handleMarkAllRead} className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors">
+                            <button 
+                                onClick={handleMarkAllRead} 
+                                className="rounded text-sm font-bold text-blue-600 transition-colors hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
                                 Mark all as read
                             </button>
                         )}
                     </div>
 
                     {items.length === 0 ? (
-                        <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
-                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i className="fa-regular fa-bell-slash text-2xl text-slate-300"></i>
+                        <div className="animate-fade-in rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50">
+                                <i className="fa-regular fa-bell-slash text-2xl text-slate-300" aria-hidden="true"></i>
                             </div>
                             <h3 className="text-lg font-bold text-slate-800">You're all caught up.</h3>
                         </div>
                     ) : (
-                        <div className="space-y-8">
+                        <div className="animate-fade-in space-y-8">
                             {/* TODAY */}
                             {todayItems.length > 0 && (
                                 <div>
-                                    <h2 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-3 px-1">Today</h2>
-                                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                    <h2 className="mb-3 px-1 text-xs font-extrabold tracking-widest text-slate-400 uppercase">Today</h2>
+                                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                         {todayItems.map(item => <NotificationRow key={item.id} item={item} />)}
                                     </div>
                                 </div>
@@ -172,8 +262,8 @@ export default function ClientNotifications({
                             {/* EARLIER */}
                             {earlierItems.length > 0 && (
                                 <div>
-                                    <h2 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-3 px-1">Earlier</h2>
-                                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                    <h2 className="mb-3 px-1 text-xs font-extrabold tracking-widest text-slate-400 uppercase">Earlier</h2>
+                                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                         {earlierItems.map(item => <NotificationRow key={item.id} item={item} />)}
                                     </div>
                                 </div>
@@ -182,14 +272,20 @@ export default function ClientNotifications({
                     )}
                 </main>
 
-                {/* Footer */}
-                <footer className="relative z-10 bg-ctu-dark text-white border-t border-slate-800 py-6 mt-auto">
-                    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <p className="text-xs text-slate-400">&copy; 2026 Cotify · College of Technology</p>
+                {/* FOOTER */}
+                <footer className="bg-ctu-dark relative z-10 mt-auto border-t border-slate-800 py-6 text-white">
+                    <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
+                        <div className="flex items-center gap-2">
+                            <p className="text-xs text-slate-400">
+                                &copy; 2026 Cotify · College of Technology
+                            </p>
+                        </div>
                         <div className="flex items-center gap-4 text-xs font-semibold text-slate-400">
-                            <a href="#" className="hover:text-white transition-colors">About</a><span>·</span>
-                            <a href="#" className="hover:text-white transition-colors">Contact</a><span>·</span>
-                            <a href="#" className="hover:text-white transition-colors">Privacy</a>
+                            <a href="#" className="rounded transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 p-1">About</a>
+                            <span>·</span>
+                            <a href="#" className="rounded transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 p-1">Contact</a>
+                            <span>·</span>
+                            <a href="#" className="rounded transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 p-1">Privacy</a>
                         </div>
                     </div>
                 </footer>
