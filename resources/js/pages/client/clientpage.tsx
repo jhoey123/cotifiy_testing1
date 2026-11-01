@@ -1,5 +1,5 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 interface Announcement {
     id: number;
@@ -43,6 +43,29 @@ export default function ClientHome({
         'all' | 'Academic' | 'Event' | 'General' | 'Service'
     >('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [notificationsOpen, setNotificationsOpen] = useState(false);
+    const notificationsRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!notificationsOpen) {
+            return;
+        }
+
+        const closeOnOutsideClick = (event: PointerEvent) => {
+            if (
+                event.target instanceof Node &&
+                !notificationsRef.current?.contains(event.target)
+            ) {
+                setNotificationsOpen(false);
+            }
+        };
+
+        document.addEventListener('pointerdown', closeOnOutsideClick);
+
+        return () => {
+            document.removeEventListener('pointerdown', closeOnOutsideClick);
+        };
+    }, [notificationsOpen]);
     
     const filteredAnnouncements = useMemo(() => {
         const query = searchTerm.trim().toLocaleLowerCase();
@@ -242,17 +265,79 @@ export default function ClientHome({
                                     />
                                 </div>
 
-                                <button 
-                                    className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    aria-label={`Notifications ${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
-                                >
-                                    <i className="fa-regular fa-bell text-xl" aria-hidden="true"></i>
-                                    {unreadCount > 0 && (
-                                        <span className="border-ctu-dark absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 bg-red-500 text-[10px] font-bold text-white">
-                                            {unreadCount}
-                                        </span>
+                                <div ref={notificationsRef} className="relative">
+                                    <button
+                                        type="button"
+                                        className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        aria-label={`Notifications ${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+                                        aria-expanded={notificationsOpen}
+                                        aria-controls="recent-announcements-menu"
+                                        onClick={() => {
+                                            const willOpen = !notificationsOpen;
+                                            setNotificationsOpen(willOpen);
+
+                                            if (willOpen) {
+                                                router.reload({ only: ['announcements'] });
+                                            }
+                                        }}
+                                    >
+                                        <i className="fa-regular fa-bell text-xl" aria-hidden="true"></i>
+                                        {unreadCount > 0 && (
+                                            <span className="border-ctu-dark absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 bg-red-500 text-[10px] font-bold text-white">
+                                                {unreadCount}
+                                            </span>
+                                        )}
+                                    </button>
+
+                                    {notificationsOpen && (
+                                        <div
+                                            id="recent-announcements-menu"
+                                            role="region"
+                                            aria-label="Recent announcements"
+                                            className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-xl"
+                                        >
+                                            <div className="border-b border-slate-100 px-4 py-3">
+                                                <h2 className="text-sm font-extrabold text-slate-900">
+                                                    Recent announcements
+                                                </h2>
+                                            </div>
+                                            <div className="max-h-96 overflow-y-auto">
+                                                {announcements.slice(0, 5).map((announcement) => (
+                                                    <Link
+                                                        key={announcement.id}
+                                                        href={`/client/announcements/${announcement.id}`}
+                                                        onClick={() => setNotificationsOpen(false)}
+                                                        className="block border-b border-slate-100 px-4 py-3 transition-colors last:border-b-0 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                                                    >
+                                                        <span className="flex items-center justify-between gap-3">
+                                                            <span className="truncate text-sm font-bold text-slate-800">
+                                                                {announcement.title}
+                                                            </span>
+                                                            <span className="shrink-0 text-[11px] font-medium text-slate-400">
+                                                                {formatDate(announcement.date)}
+                                                            </span>
+                                                        </span>
+                                                        <span className="mt-1 block text-xs text-slate-500">
+                                                            {announcement.category} · {announcement.posted_by_office}
+                                                        </span>
+                                                    </Link>
+                                                ))}
+                                                {announcements.length === 0 && (
+                                                    <p className="px-4 py-6 text-center text-sm text-slate-500">
+                                                        No announcements have been posted yet.
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <Link
+                                                href="/client/announcements"
+                                                onClick={() => setNotificationsOpen(false)}
+                                                className="block border-t border-slate-100 px-4 py-3 text-center text-xs font-bold text-blue-600 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                                            >
+                                                View all announcements
+                                            </Link>
+                                        </div>
                                     )}
-                                </button>
+                                </div>
 
                                 <Link 
                                     href="/client/profile"
