@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\AnnouncementPublished;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -48,41 +49,87 @@ class AnnouncementController extends Controller
             'announcementCount' => $announcements->count(),
             'eventCount' => Announcement::query()->where('category', 'Event')->count(),
             'userCount' => User::query()->count(),
-            'discussions' => Conversation::query()
-                ->whereNotNull('announcement_id')
-                ->whereNotNull('client_id')
-                ->with([
-                    'announcement:id,title',
-                    'client:id,name',
-                    'messages' => fn ($query) => $query
-                        ->with(['sender', 'adminSender'])
-                        ->orderBy('created_at')
-                        ->orderBy('id'),
-                ])
-                ->whereHas('messages')
-                ->orderByDesc('updated_at')
-                ->limit(50)
-                ->get()
-                ->map(fn (Conversation $conversation) => [
-                    'id' => $conversation->id,
-                    'announcement_id' => $conversation->announcement_id,
-                    'announcement_title' => $conversation->announcement->title,
-                    'client_name' => $conversation->client->name,
-                    'messages' => $conversation->messages
-                        ->map(fn (Message $message) => [
-                            'id' => $message->id,
-                            'parent_message_id' => $message->parent_message_id,
-                            'author' => $message->sender_admin_id === null
-                                ? $message->sender->name
-                                : $message->adminSender->name,
-                            'role' => $message->sender_admin_id === null ? 'Client' : 'Admin',
-                            'content' => $message->content,
-                            'sent_at' => $message->created_at?->toIso8601String(),
-                        ])
-                        ->values(),
-                ])
-                ->values(),
+            'discussions' => $this->discussionData(),
         ]);
+    }
+
+    public function announcements(): Response
+    {
+        $announcements = Announcement::query()
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->get();
+
+        return Inertia::render('admin/adminAnnouncemnt', [
+            'announcements' => $announcements->map(fn (Announcement $announcement) => $this->announcementData($announcement)),
+            'discussions' => $this->discussionData(),
+        ]);
+    }
+
+    public function events(): Response
+    {
+        $events = Announcement::query()
+            ->where('category', 'Event')
+            ->orderByDesc('event_date')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (Announcement $announcement) => [
+                'id' => $announcement->id,
+                'title' => $announcement->title,
+                'date' => $announcement->event_date?->toDateString() ?? $announcement->date->toDateString(),
+                'time' => $announcement->start_time ?? '',
+                'venue' => $announcement->location ?? '',
+                'rsvp_count' => 0,
+                'capacity' => null,
+                'audience' => 'All',
+                'status' => ($announcement->event_date?->toDateString() ?? $announcement->date->toDateString()) >= now()->toDateString()
+                    ? 'Upcoming'
+                    : 'Past',
+                'start_time' => $announcement->start_time ?? '',
+                'end_time' => $announcement->end_time ?? '',
+            ]);
+
+        return Inertia::render('admin/adminEvent', [
+            'events' => $events,
+        ]);
+    }
+
+    private function discussionData(): Collection
+    {
+        return Conversation::query()
+            ->whereNotNull('announcement_id')
+            ->whereNotNull('client_id')
+            ->with([
+                'announcement:id,title',
+                'client:id,name',
+                'messages' => fn ($query) => $query
+                    ->with(['sender', 'adminSender'])
+                    ->orderBy('created_at')
+                    ->orderBy('id'),
+            ])
+            ->whereHas('messages')
+            ->orderByDesc('updated_at')
+            ->limit(50)
+            ->get()
+            ->map(fn (Conversation $conversation) => [
+                'id' => $conversation->id,
+                'announcement_id' => $conversation->announcement_id,
+                'announcement_title' => $conversation->announcement->title,
+                'client_name' => $conversation->client->name,
+                'messages' => $conversation->messages
+                    ->map(fn (Message $message) => [
+                        'id' => $message->id,
+                        'parent_message_id' => $message->parent_message_id,
+                        'author' => $message->sender_admin_id === null
+                            ? $message->sender->name
+                            : $message->adminSender->name,
+                        'role' => $message->sender_admin_id === null ? 'Client' : 'Admin',
+                        'content' => $message->content,
+                        'sent_at' => $message->created_at?->toIso8601String(),
+                    ])
+                    ->values(),
+            ])
+            ->values();
     }
 
     public function store(Request $request): RedirectResponse

@@ -40,11 +40,6 @@ export default function AdminAnnouncements({
     
     // Editor State
     const [selectedCategory, setSelectedCategory] = useState('Academic');
-    const [isUrgent, setIsUrgent] = useState(false);
-    const [isPinned, setIsPinned] = useState(false);
-    const [publishType, setPublishType] = useState<'now' | 'schedule'>('now');
-    const [audienceType, setAudienceType] = useState<'all' | 'specific'>('all');
-
     // Table State
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('All');
@@ -76,10 +71,6 @@ export default function AdminAnnouncements({
     const openEditor = (announcement: Announcement | null = null) => {
         setEditingAnnouncement(announcement);
         setSelectedCategory(announcement?.category || 'Academic');
-        setIsUrgent(announcement?.is_pinned || false); // Assuming is_pinned maps to urgent for mockup
-        setIsPinned(announcement?.is_pinned || false);
-        setPublishType('now');
-        setAudienceType('all');
         setIsEditorOpen(true);
     };
 
@@ -183,12 +174,14 @@ export default function AdminAnnouncements({
                             {/* SEARCH & FILTERS (Simplified for brevity) */}
                             <div className="flex flex-wrap items-center gap-3 mb-6">
                                 <div className="relative flex-1 min-w-[200px] max-w-xs">
+                                    <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                                     <input 
                                         type="text" 
-                                        placeholder="Search title..." 
+                                        placeholder="Search announcements..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-4 pr-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg text-sm focus:border-ctu-lightblue outline-none shadow-sm"
+                                        aria-label="Search announcements"
+                                        className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg text-sm focus:border-ctu-lightblue outline-none shadow-sm"
                                     />
                                 </div>
                             </div>
@@ -266,14 +259,13 @@ export default function AdminAnnouncements({
                                             <button type="button" onClick={() => setIsEditorOpen(false)} className="text-slate-400 hover:text-slate-700">
                                                 <i className="fa-solid fa-arrow-left"></i>
                                             </button>
-                                            <h2 className="text-xl font-bold text-slate-900">— Announcements</h2>
+                                            <h2 className="text-xl font-bold text-slate-900">
+                                                {editingAnnouncement ? 'Edit announcement' : 'New announcement'}
+                                            </h2>
                                         </div>
                                         <div className="flex items-center gap-4">
-                                            <span className="text-xs font-semibold text-slate-400">Draft saved 10:42 AM</span>
-                                            <button type="button" className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">Preview</button>
-                                            <button type="button" className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">Save draft</button>
                                             <button type="submit" disabled={processing} className="px-4 py-2 bg-ctu-dark hover:bg-slate-800 text-white rounded-lg text-sm font-bold transition-colors disabled:opacity-50">
-                                                {processing ? 'Publishing...' : 'Publish'}
+                                                {processing ? 'Saving...' : editingAnnouncement ? 'Save changes' : 'Publish'}
                                             </button>
                                         </div>
                                     </div>
@@ -329,143 +321,123 @@ export default function AdminAnnouncements({
                                                 {errors.body && <p className="mt-1 text-xs font-bold text-red-600">{errors.body}</p>}
                                             </div>
 
-                                            {/* Media (Image & Attachments Grid) */}
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-                                                {/* Cover Image */}
-                                                <div>
-                                                    <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Cover Image</label>
-                                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer relative overflow-hidden group">
-                                                        {editingAnnouncement?.image_url ? (
-                                                            <img src={editingAnnouncement.image_url} alt="Cover" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="text-center p-4">
-                                                                <p className="text-sm font-bold text-slate-700 mb-1">Drag an image or browse</p>
-                                                                <p className="text-[10px] text-slate-500">JPG, PNG, WebP • up to 5 MB</p>
-                                                            </div>
-                                                        )}
-                                                        <input type="file" name="image" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" />
-                                                    </label>
-                                                </div>
-
-                                                {/* Attachments */}
-                                                <div>
-                                                    <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Attachments</label>
-                                                    <div className="flex flex-col gap-2">
-                                                        {/* Mock Attachment Item */}
-                                                        <div className="flex items-center justify-between px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg">
-                                                            <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                                                <i className="fa-solid fa-file-pdf text-slate-400"></i> Schedule.pdf
-                                                            </div>
-                                                            <button type="button" className="text-slate-400 hover:text-rose-600"><i className="fa-solid fa-xmark"></i></button>
-                                                        </div>
-                                                        
-                                                        <label className="flex items-center justify-center gap-2 w-full py-2.5 border border-slate-300 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
-                                                            <i className="fa-solid fa-plus text-xs"></i> Add file (PDF, DOCX • 10 MB)
-                                                            <input type="file" name="attachment" className="hidden" />
+                                                    {/* Cover image */}
+                                                    <div>
+                                                        <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Cover image</label>
+                                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer relative overflow-hidden group">
+                                                            {editingAnnouncement?.image_url ? (
+                                                                <img src={editingAnnouncement.image_url} alt="Announcement cover" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="text-center p-4">
+                                                                    <p className="text-sm font-bold text-slate-700 mb-1">Choose an image</p>
+                                                                    <p className="text-[10px] text-slate-500">JPG, PNG, GIF or WebP · up to 5 MB</p>
+                                                                </div>
+                                                            )}
+                                                            <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp" className="absolute inset-0 opacity-0 cursor-pointer" />
                                                         </label>
+                                                        {errors.image && <p className="mt-1 text-xs font-bold text-red-600">{errors.image}</p>}
                                                     </div>
-                                                </div>
-                                            </div>
 
                                         </div>
 
                                         {/* RIGHT COLUMN (Sidebar Settings) */}
                                         <div className="w-full md:w-[320px] bg-slate-50/50 p-6 space-y-6 shrink-0">
                                             
-                                            {/* Publish Box */}
+                                            {/* Database-backed announcement fields */}
                                             <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                                                <h4 className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-3 flex items-center justify-between">
-                                                    Publish <i className="fa-regular fa-circle-check text-slate-400"></i>
-                                                </h4>
-                                                
-                                                <div className="space-y-3 mb-4">
-                                                    <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
-                                                        <input type="radio" name="publish_type" checked={publishType === 'now'} onChange={() => setPublishType('now')} className="text-ctu-lightblue focus:ring-ctu-lightblue" /> Now
-                                                    </label>
-                                                    <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
-                                                        <input type="radio" name="publish_type" checked={publishType === 'schedule'} onChange={() => setPublishType('schedule')} className="text-ctu-lightblue focus:ring-ctu-lightblue" /> Schedule
-                                                    </label>
-                                                </div>
-
-                                                {publishType === 'schedule' && (
-                                                    <input type="text" placeholder="Nov 2, 2026 · 8:00 AM" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm mb-3" />
-                                                )}
-
-                                                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                                                    <span className="text-xs font-bold text-slate-700">Also send by email</span>
-                                                    <div className="relative inline-flex h-5 w-9 items-center rounded-full bg-slate-300 cursor-pointer">
-                                                        <span className="inline-block h-3.5 w-3.5 transform rounded-full bg-white translate-x-1" />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Category & Priority Box */}
-                                            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                                                <h4 className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-3 flex items-center justify-between">
-                                                    Category & priority <i className="fa-regular fa-circle-check text-slate-400"></i>
-                                                </h4>
-                                                
-                                                <select 
-                                                    name="category" 
-                                                    value={selectedCategory} 
+                                                <label htmlFor="category" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
+                                                    Category <span className="text-rose-500">*</span>
+                                                </label>
+                                                <select
+                                                    id="category"
+                                                    name="category"
+                                                    required
+                                                    value={selectedCategory}
                                                     onChange={(e) => setSelectedCategory(e.target.value)}
-                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium mb-3 focus:outline-none focus:border-ctu-lightblue"
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium mb-4 focus:outline-none focus:border-ctu-lightblue"
                                                 >
                                                     <option value="Academic">Academic</option>
                                                     <option value="General">General</option>
                                                     <option value="Event">Event</option>
                                                     <option value="Service">Service</option>
                                                 </select>
+                                                {errors.category && <p className="mb-3 text-xs font-bold text-red-600">{errors.category}</p>}
 
-                                                <div className="flex gap-2 mb-4">
-                                                    <button type="button" onClick={() => setIsUrgent(false)} className={`flex-1 py-1.5 rounded-lg border text-xs font-bold ${!isUrgent ? 'bg-slate-100 border-slate-300 text-slate-800' : 'bg-white border-slate-200 text-slate-500'}`}>Normal</button>
-                                                    <button type="button" onClick={() => setIsUrgent(true)} className={`flex-1 py-1.5 rounded-lg border text-xs font-bold ${isUrgent ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-white border-slate-200 text-slate-500'}`}>Urgent</button>
-                                                </div>
-
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
-                                                        <input type="checkbox" checked={isPinned} onChange={(e) => setIsPinned(e.target.checked)} className="rounded border-slate-300 text-ctu-lightblue" /> Pin to top until
-                                                    </label>
-                                                    <input type="text" placeholder="Nov 10" className="w-20 px-2 py-1 border border-slate-300 rounded text-xs" />
-                                                </div>
+                                                <label htmlFor="posted_by" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
+                                                    Posted by <span className="text-rose-500">*</span>
+                                                </label>
+                                                <input
+                                                    id="posted_by"
+                                                    type="text"
+                                                    name="posted_by"
+                                                    defaultValue={editingAnnouncement?.posted_by ?? "Registrar's Office"}
+                                                    required
+                                                    maxLength={255}
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium focus:outline-none focus:border-ctu-lightblue"
+                                                />
+                                                {errors.posted_by && <p className="mt-1 text-xs font-bold text-red-600">{errors.posted_by}</p>}
                                             </div>
 
-                                            {/* Audience Box */}
-                                            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                                                <h4 className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-3 flex items-center justify-between">
-                                                    Audience <i className="fa-regular fa-circle-check text-slate-400"></i>
-                                                </h4>
-                                                
-                                                <div className="flex gap-2 mb-4">
-                                                    <button type="button" onClick={() => setAudienceType('all')} className={`flex-1 py-1.5 rounded-full border text-xs font-bold ${audienceType === 'all' ? 'bg-slate-200 border-slate-300 text-slate-800' : 'bg-white border-slate-200 text-slate-500'}`}>All students</button>
-                                                    <button type="button" onClick={() => setAudienceType('specific')} className={`flex-1 py-1.5 rounded-full border text-xs font-bold ${audienceType === 'specific' ? 'bg-slate-200 border-slate-300 text-slate-800' : 'bg-white border-slate-200 text-slate-500'}`}>Specific</button>
-                                                </div>
-
-                                                {audienceType === 'specific' && (
-                                                    <div className="space-y-3 animate-fade-in">
-                                                        <div className="flex flex-wrap gap-1.5">
-                                                            {['BSIT', 'BSCS', 'BSIS'].map(course => (
-                                                                <button key={course} type="button" className={`px-3 py-1 rounded-full text-[10px] font-bold border ${course === 'BSIT' ? 'bg-slate-200 border-slate-300 text-slate-800' : 'bg-white border-slate-200 text-slate-600'}`}>{course} {course === 'BSIT' && '✓'}</button>
-                                                            ))}
+                                            {selectedCategory === 'Event' && (
+                                                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
+                                                    <h4 className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">
+                                                        Event details
+                                                    </h4>
+                                                    <div>
+                                                        <label htmlFor="event_date" className="block text-xs font-bold text-slate-700 mb-1">
+                                                            Event date <span className="text-rose-500">*</span>
+                                                        </label>
+                                                        <input
+                                                            id="event_date"
+                                                            type="date"
+                                                            name="event_date"
+                                                            defaultValue={editingAnnouncement?.event_date ?? ''}
+                                                            required
+                                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                                        />
+                                                        {errors.event_date && <p className="mt-1 text-xs font-bold text-red-600">{errors.event_date}</p>}
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div>
+                                                            <label htmlFor="start_time" className="block text-xs font-bold text-slate-700 mb-1">Start time</label>
+                                                            <input
+                                                                id="start_time"
+                                                                type="time"
+                                                                name="start_time"
+                                                                defaultValue={editingAnnouncement?.start_time?.slice(0, 5) ?? ''}
+                                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                                            />
+                                                            {errors.start_time && <p className="mt-1 text-xs font-bold text-red-600">{errors.start_time}</p>}
                                                         </div>
-                                                        <div className="flex flex-wrap gap-1.5">
-                                                            {['1st', '2nd', '3rd', '4th'].map(year => (
-                                                                <button key={year} type="button" className={`px-3 py-1 rounded-full text-[10px] font-bold border ${year === '3rd' ? 'bg-slate-200 border-slate-300 text-slate-800' : 'bg-white border-slate-200 text-slate-600'}`}>{year}</button>
-                                                            ))}
+                                                        <div>
+                                                            <label htmlFor="end_time" className="block text-xs font-bold text-slate-700 mb-1">End time</label>
+                                                            <input
+                                                                id="end_time"
+                                                                type="time"
+                                                                name="end_time"
+                                                                defaultValue={editingAnnouncement?.end_time?.slice(0, 5) ?? ''}
+                                                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                                            />
+                                                            {errors.end_time && <p className="mt-1 text-xs font-bold text-red-600">{errors.end_time}</p>}
                                                         </div>
                                                     </div>
-                                                )}
-                                                
-                                                <p className="text-[10px] font-semibold text-slate-500 mt-4">Reaches about 310 students</p>
-                                            </div>
-
-                                            {/* Posted As Box */}
-                                            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                                                <h4 className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 flex items-center justify-between">
-                                                    Posted as <i className="fa-regular fa-circle-check text-slate-400"></i>
-                                                </h4>
-                                                <p className="text-sm font-bold text-slate-800">Registrar's Office <span className="text-slate-500 font-medium">(from your account)</span></p>
-                                            </div>
+                                                    <div>
+                                                        <label htmlFor="location" className="block text-xs font-bold text-slate-700 mb-1">
+                                                            Location <span className="text-rose-500">*</span>
+                                                        </label>
+                                                        <input
+                                                            id="location"
+                                                            type="text"
+                                                            name="location"
+                                                            defaultValue={editingAnnouncement?.location ?? ''}
+                                                            required
+                                                            maxLength={255}
+                                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                                        />
+                                                        {errors.location && <p className="mt-1 text-xs font-bold text-red-600">{errors.location}</p>}
+                                                    </div>
+                                                </div>
+                                            )}
 
                                         </div>
                                     </div>

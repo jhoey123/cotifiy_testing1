@@ -56,6 +56,12 @@ Route::post('/client/announcements/{announcement}/messages', [AnnouncementDiscus
 Route::get('/admin', [AnnouncementController::class, 'index'])
     ->middleware(['auth:admin', 'private-cache'])
     ->name('admin');
+Route::get('/admin/announcements', [AnnouncementController::class, 'announcements'])
+    ->middleware(['auth:admin', 'private-cache'])
+    ->name('admin.announcements.index');
+Route::get('/admin/events', [AnnouncementController::class, 'events'])
+    ->middleware(['auth:admin', 'private-cache'])
+    ->name('admin.events');
 Route::post('/admin/discussions/{conversation}/messages', [AdminAnnouncementDiscussionController::class, 'store'])
     ->middleware(['auth:admin', 'private-cache', 'throttle:20,1'])
     ->name('admin.discussions.messages.store');

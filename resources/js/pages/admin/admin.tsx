@@ -239,22 +239,10 @@ export default function admin({
                         </div>
                         
                         <div className="flex items-center gap-3 sm:gap-4">
-                            <div className="relative w-64 hidden md:block group">
-                                <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm group-focus-within:text-ctu-lightblue transition-colors"></i>
-                                <input type="text" placeholder="Search..." className="w-full pl-11 pr-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl text-sm focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder-slate-400 font-medium shadow-sm" />
-                            </div>
-
                             <button aria-label="View notifications" className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-ctu-lightblue hover:bg-slate-50 transition-colors shadow-sm">
                                 <i className="fa-regular fa-bell text-lg"></i>
                                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
                             </button>
-
-                            <Link 
-                                href="/admin/announcements"
-                                className="bg-ctu-dark hover:bg-slate-800 text-white text-sm font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 shrink-0"
-                            >
-                                <i className="fa-solid fa-plus"></i> <span className="hidden sm:inline">New announcement</span>
-                            </Link>
                         </div>
                     </header>
 
