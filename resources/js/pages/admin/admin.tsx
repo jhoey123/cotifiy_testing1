@@ -36,18 +36,7 @@ const formatDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateSt
     year: 'numeric',
 });
 
-const formatTime = (time: string | null) => {
-    if (!time) return undefined;
-    const [hourText, minuteText] = time.split(':');
-    const hour = Number(hourText);
-    if (!/^\d{2}$/.test(hourText) || !/^\d{2}$/.test(minuteText ?? '') || hour > 23 || Number(minuteText) > 59) {
-        return time.slice(0, 5);
-    }
-    return `${hour % 12 || 12}:${minuteText} ${hour < 12 ? 'AM' : 'PM'}`;
-};
-
 export default function admin({
-    announcements,
     recentAnnouncements,
     upcomingEvents,
     discussions,
@@ -55,7 +44,6 @@ export default function admin({
     eventCount,
     userCount,
 }: {
-    announcements: Announcement[];
     recentAnnouncements: Announcement[];
     upcomingEvents: UpcomingEvent[];
     discussions: Discussion[];
@@ -63,21 +51,11 @@ export default function admin({
     eventCount: number;
     userCount: number;
 }) {
-    const [isNewModalOpen, setIsNewModalOpen] = useState(false);
-    const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
-    const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
     const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
-    const [isDeletingAnnouncement, setIsDeletingAnnouncement] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState('General');
-    const [activeFilter, setActiveFilter] = useState('all');
-    
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isLogoutHovered, setIsLogoutHovered] = useState(false);
 
-    const filteredAnnouncements = activeFilter === 'all'
-        ? announcements
-        : announcements.filter((announcement) => announcement.category === activeFilter);
-
+    // Polling for new discussions if needed
     useEffect(() => {
         const interval = window.setInterval(() => {
             router.reload({ only: ['discussions'] });
@@ -174,12 +152,12 @@ export default function admin({
                                 <a href="#dashboard" className="flex items-center gap-3 px-3 py-2.5 bg-ctu-lightblue text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-900/30">
                                     <i className="fa-solid fa-house w-5 text-center"></i> Dashboard
                                 </a>
-                                <a href="#announcements" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                <Link href="/admin/announcements" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-bullhorn w-5 text-center group-hover:scale-110 transition-transform"></i> Announcements
-                                </a>
-                                <a href="#" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                </Link>
+                                <Link href="/admin/events" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-regular fa-calendar w-5 text-center group-hover:scale-110 transition-transform"></i> Events
-                                </a>
+                                </Link>
                             </div>
 
                             <div>
@@ -213,10 +191,10 @@ export default function admin({
                                 <i className="fa-solid fa-user"></i>
                             </div>
                             <div>
-                                <p className="text-white text-sm font-bold">Admin</p>
+                                <p className="text-white text-sm font-bold">M. Santos</p>
                                 <p className="text-slate-400 text-[11px] font-medium">Registrar's Office</p>
                             </div>
-                        </div>
+                        </div> 
                         <Form method="post" action="/admin/logout">
                             {({ processing }) => (
                                 <button 
@@ -271,13 +249,12 @@ export default function admin({
                                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
                             </button>
 
-                            <button 
-                                type="button" 
-                                onClick={() => { setEditingAnnouncement(null); setSelectedCategory('General'); setIsNewModalOpen(true); }} 
+                            <Link 
+                                href="/admin/announcements"
                                 className="bg-ctu-dark hover:bg-slate-800 text-white text-sm font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 shrink-0"
                             >
                                 <i className="fa-solid fa-plus"></i> <span className="hidden sm:inline">New announcement</span>
-                            </button>
+                            </Link>
                         </div>
                     </header>
 
@@ -340,7 +317,7 @@ export default function admin({
                                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                                     <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                                         <h4 className="font-extrabold text-slate-900">Recent announcements</h4>
-                                        <a href="#announcements" className="text-xs font-bold text-slate-500 hover:text-ctu-lightblue transition-colors">View all</a>
+                                        <Link href="/admin/announcements" className="text-xs font-bold text-slate-500 hover:text-ctu-lightblue transition-colors">View all</Link>
                                     </div>
                                     
                                     <div className="flex-1">
@@ -390,7 +367,7 @@ export default function admin({
                                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                                     <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                                         <h4 className="font-extrabold text-slate-900">Upcoming events</h4>
-                                        <a href="#" className="text-xs font-bold text-slate-500 hover:text-ctu-lightblue transition-colors">+ New event</a>
+                                        <Link href="/admin/events" className="text-xs font-bold text-slate-500 hover:text-ctu-lightblue transition-colors">+ New event</Link>
                                     </div>
                                     
                                     <div className="p-4 space-y-4 flex-1">
@@ -414,109 +391,6 @@ export default function admin({
                                 </div>
                             </div>
                         </section>
-
-                        {/* ANNOUNCEMENTS TABLE (Retained below dashboard) */}
-                        <section id="announcements" className="section-content animate-fade-up" style={{ animationDelay: '0.1s' }}>
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-                                <div>
-                                    <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Manage Announcements</h2>
-                                    <p className="text-sm font-medium text-slate-500 mt-1">Create, edit, and manage all campus updates.</p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar" id="filterTabs">
-                                {[
-                                    { value: 'all', label: 'All Updates' },
-                                    { value: 'General', label: 'General' },
-                                    { value: 'Academic', label: 'Academic' },
-                                    { value: 'Event', label: 'Events' },
-                                    { value: 'Service', label: 'Service' },
-                                ].map((filter) => (
-                                    <button
-                                        key={filter.value}
-                                        type="button"
-                                        aria-pressed={activeFilter === filter.value}
-                                        onClick={() => setActiveFilter(filter.value)}
-                                        className={`px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                                            activeFilter === filter.value
-                                                ? 'bg-slate-900 text-white shadow-md'
-                                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
-                                        }`}
-                                    >
-                                        {filter.label}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-extrabold">
-                                                <th className="px-6 py-5">Title</th>
-                                                <th className="px-6 py-5">Body</th>
-                                                <th className="px-6 py-5">Category</th>
-                                                <th className="px-6 py-5">Posted By</th>
-                                                <th className="px-6 py-5">Date</th>
-                                                <th className="px-6 py-5 text-right">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {filteredAnnouncements.length === 0 ? (
-                                                <tr><td colSpan={6} className="px-6 py-16 text-center text-sm font-medium text-slate-500">
-                                                    {activeFilter === 'all' ? 'No announcements yet.' : `No ${activeFilter.toLowerCase()} announcements.`}
-                                                </td></tr>
-                                            ) : filteredAnnouncements.map((announcement) => (
-                                                <tr key={announcement.id} className="text-sm text-slate-700 hover:bg-slate-50 transition-colors group">
-                                                    <td className="px-6 py-4 font-bold text-slate-900">
-                                                        <button
-                                                            type="button"
-                                                            title={announcement.title}
-                                                            onClick={() => setSelectedAnnouncement(announcement)}
-                                                            className="text-left hover:text-ctu-lightblue transition-colors line-clamp-1"
-                                                        >
-                                                            {announcement.title}
-                                                        </button>
-                                                    </td>
-                                                    <td className="max-w-xs px-6 py-4 font-medium text-slate-500">
-                                                        <p title={announcement.body} className="line-clamp-1">
-                                                            {announcement.body}
-                                                        </p>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-widest ${
-                                                            announcement.category === 'Academic' ? 'bg-blue-100 text-blue-700' :
-                                                            announcement.category === 'Event' ? 'bg-emerald-100 text-emerald-700' :
-                                                            announcement.category === 'Service' ? 'bg-rose-100 text-rose-700' :
-                                                            'bg-slate-100 text-slate-700'
-                                                        }`}>
-                                                            {announcement.category}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 font-semibold text-slate-600">{announcement.posted_by}</td>
-                                                    <td className="px-6 py-4 font-medium text-slate-500">{formatDate(announcement.date)}</td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button type="button" onClick={() => { setEditingAnnouncement(announcement); setSelectedCategory(announcement.category); setIsNewModalOpen(true); }} className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-all shadow-sm" title="Edit"><i className="fa-solid fa-pen text-xs"></i></button>
-                                                            <button type="button" onClick={() => setAnnouncementToDelete(announcement)} className="w-9 h-9 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white flex items-center justify-center transition-all shadow-sm" title="Delete"><i className="fa-solid fa-trash text-xs"></i></button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                
-                                <div className="px-6 py-5 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs font-bold text-slate-500">
-                                    <span id="tableInfo">Showing {filteredAnnouncements.length === 0 ? 0 : 1}-{filteredAnnouncements.length} of {filteredAnnouncements.length} announcements</span>
-                                    <div className="flex items-center gap-1.5">
-                                        <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 transition-colors"><i className="fa-solid fa-chevron-left"></i></button>
-                                        <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-ctu-lightblue text-white shadow-sm">1</button>
-                                        <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 transition-colors"><i className="fa-solid fa-chevron-right"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
                     </main>
                 </div>
 
@@ -527,121 +401,6 @@ export default function admin({
                         onClose={() => setSelectedAnnouncement(null)}
                     />
                 )}
-
-                {announcementToDelete && <div id="deleteModal" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in" role="dialog" aria-modal="true">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full mx-4 p-8 animate-scale-in text-center">
-                        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mx-auto mb-5 border border-red-100">
-                            <i className="fa-solid fa-triangle-exclamation text-red-500 text-2xl"></i>
-                        </div>
-                        <h3 id="deleteAnnouncementTitle" className="text-xl font-extrabold text-slate-900 mb-2">Delete Announcement</h3>
-                        <p className="text-sm font-medium text-slate-500 mb-8 leading-relaxed">Are you sure you want to delete <strong className="text-slate-800">“{announcementToDelete.title}”</strong>? This action cannot be undone.</p>
-                        <div className="flex gap-3">
-                                <button type="button" onClick={() => setAnnouncementToDelete(null)} className="flex-1 border border-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
-                                <button
-                                    type="button"
-                                    disabled={isDeletingAnnouncement}
-                                    onClick={() => {
-                                        setIsDeletingAnnouncement(true);
-                                        router.post(`/admin/announcements/${announcementToDelete.id}`, {
-                                            _method: 'delete',
-                                        }, {
-                                            onSuccess: () => setAnnouncementToDelete(null),
-                                            onFinish: () => setIsDeletingAnnouncement(false),
-                                                                                    });
-                                    }}
-                                    className="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 disabled:opacity-60 transition-all shadow-lg shadow-red-500/30"
-                                >
-                                    {isDeletingAnnouncement ? 'Deleting...' : 'Delete'}
-                                </button>
-                        </div>
-                    </div>
-                </div>}
-
-                {isNewModalOpen && <div id="newModal" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in" role="dialog" aria-modal="true">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full p-8 sm:p-10 max-h-[95vh] overflow-y-auto animate-scale-in">
-                        <div className="flex items-center justify-between mb-8 border-b border-slate-100 pb-5">
-                            <h3 id="newAnnouncementTitle" className="text-2xl font-extrabold text-slate-900">{editingAnnouncement ? 'Edit Announcement' : 'New Announcement'}</h3>
-                            <button id="closeNewModal" type="button" onClick={() => { setIsNewModalOpen(false); setEditingAnnouncement(null); }} aria-label="Close" className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors"><i className="fa-solid fa-times text-lg"></i></button>
-                        </div>
-                        <Form key={editingAnnouncement?.id ?? 'new'} method="post" action={editingAnnouncement ? `/admin/announcements/${editingAnnouncement.id}` : '/admin/announcements'} onSuccess={() => { setIsNewModalOpen(false); setEditingAnnouncement(null); }} className="space-y-6">
-                            {({ errors, processing }) => (
-                                <>
-                            {editingAnnouncement && <input type="hidden" name="_method" value="put" />}
-                            
-                            <div>
-                                <label htmlFor="newTitle" className="block text-xs font-extrabold text-slate-700 mb-2 uppercase tracking-wide">Title</label>
-                                <input type="text" id="newTitle" name="title" defaultValue={editingAnnouncement?.title ?? ''} required maxLength={255} className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" placeholder="Enter announcement title"></input>
-                                {errors.title && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.title}</p>}
-                            </div>
-                            
-                            <div>
-                                <label htmlFor="newCategory" className="block text-xs font-extrabold text-slate-700 mb-2 uppercase tracking-wide">Category</label>
-                                <select id="newCategory" name="category" value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)} required className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all cursor-pointer">
-                                    <option value="General">General</option>
-                                    <option value="Academic">Academic</option>
-                                    <option value="Event">Event</option>
-                                    <option value="Service">Service</option>
-                                </select>
-                                {errors.category && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.category}</p>}
-                            </div>
-
-                            {selectedCategory === 'Event' && (
-                                <div className="p-5 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-5">
-                                    <div>
-                                        <label htmlFor="eventDate" className="block text-xs font-extrabold text-slate-700 mb-2 uppercase tracking-wide">Event Date</label>
-                                        <input type="date" id="eventDate" name="event_date" defaultValue={editingAnnouncement?.event_date ?? ''} required className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" />
-                                        {errors.event_date && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.event_date}</p>}
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                        <div>
-                                            <label htmlFor="eventStartTime" className="block text-xs font-extrabold text-slate-700 mb-2 uppercase tracking-wide">Start Time</label>
-                                            <input type="time" id="eventStartTime" name="start_time" defaultValue={editingAnnouncement?.start_time?.slice(0, 5) ?? ''} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" />
-                                            {errors.start_time && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.start_time}</p>}
-                                        </div>
-                                        <div>
-                                            <label htmlFor="eventEndTime" className="block text-xs font-extrabold text-slate-700 mb-2 uppercase tracking-wide">End Time</label>
-                                            <input type="time" id="eventEndTime" name="end_time" defaultValue={editingAnnouncement?.end_time?.slice(0, 5) ?? ''} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" />
-                                            {errors.end_time && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.end_time}</p>}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label htmlFor="eventLocation" className="block text-xs font-extrabold text-slate-700 mb-2 uppercase tracking-wide">Location</label>
-                                        <input type="text" id="eventLocation" name="location" defaultValue={editingAnnouncement?.location ?? ''} required maxLength={255} className="w-full px-5 py-3.5 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" placeholder="Event venue" />
-                                        {errors.location && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.location}</p>}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div>
-                                <label htmlFor="newPostedBy" className="block text-xs font-extrabold text-slate-700 mb-2 uppercase tracking-wide">Posted By</label>
-                                <input type="text" id="newPostedBy" name="posted_by" defaultValue={editingAnnouncement?.posted_by ?? ''} required maxLength={255} className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" placeholder="e.g. Office of the Registrar"></input>
-                                {errors.posted_by && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.posted_by}</p>}
-                            </div>
-                            
-                            <div>
-                                <label htmlFor="newBody" className="block text-xs font-extrabold text-slate-700 mb-2 uppercase tracking-wide">Announcement Details</label>
-                                <textarea id="newBody" name="body" defaultValue={editingAnnouncement?.body ?? ''} required rows={5} className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all resize-none" placeholder="Write the announcement details"></textarea>
-                                {errors.body && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.body}</p>}
-                            </div>
-                            
-                            <div>
-                                <label htmlFor="newImage" className="block text-xs font-extrabold text-slate-700 mb-2 uppercase tracking-wide">Cover Image (optional)</label>
-                                {editingAnnouncement?.image_url && <img src={editingAnnouncement.image_url} alt="Current announcement" className="mb-3 max-h-48 rounded-xl object-contain border border-slate-200 p-1 bg-white" />}
-                                <input type="file" id="newImage" name="image" accept="image/jpeg,image/png,image/gif,image/webp" className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium file:mr-4 file:border-0 file:bg-blue-100 file:text-blue-700 file:px-4 file:py-2 file:rounded-lg file:font-bold hover:file:bg-blue-200 transition-all cursor-pointer" />
-                                <p className="mt-2 text-xs font-medium text-slate-500">{editingAnnouncement ? 'Upload a replacement image, or leave blank to keep the current image.' : 'JPEG, PNG, GIF, or WebP; up to 5 MB.'}</p>
-                                {errors.image && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.image}</p>}
-                            </div>
-                            
-                            <div className="flex gap-4 pt-6 border-t border-slate-100">
-                                <button type="button" onClick={() => { setIsNewModalOpen(false); setEditingAnnouncement(null); }} className="flex-1 border border-slate-200 text-slate-700 font-bold py-4 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
-                                <button type="submit" disabled={processing} className="flex-1 bg-ctu-dark hover:bg-slate-800 disabled:opacity-60 text-white font-extrabold py-4 rounded-xl transition-all shadow-lg shadow-slate-900/20">{processing ? 'Saving...' : editingAnnouncement ? 'Save Changes' : 'Publish Announcement'}</button>
-                            </div>
-                                </>
-                            )}
-                        </Form>
-                    </div>
-                </div>}
-
             </div>
         </>
     )
