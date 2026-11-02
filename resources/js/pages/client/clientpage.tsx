@@ -44,7 +44,35 @@ export default function ClientHome({
     >('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [notificationsOpen, setNotificationsOpen] = useState(false);
+    const [newAnnouncementCount, setNewAnnouncementCount] = useState(0);
     const notificationsRef = useRef<HTMLDivElement>(null);
+    const knownAnnouncementIds = useRef(new Set(announcements.map(({ id }) => id)));
+
+    useEffect(() => {
+        const newAnnouncements = announcements.filter(
+            ({ id }) => !knownAnnouncementIds.current.has(id),
+        );
+
+        if (newAnnouncements.length > 0) {
+            newAnnouncements.forEach(({ id }) => knownAnnouncementIds.current.add(id));
+            setNewAnnouncementCount((count) => count + newAnnouncements.length);
+        }
+    }, [announcements]);
+
+    useEffect(() => {
+        const pollForAnnouncements = () => {
+            if (document.visibilityState === 'visible') {
+                router.reload({
+                    only: ['announcements'],
+                    preserveState: true,
+                    preserveScroll: true,
+                });
+            }
+        };
+        const intervalId = window.setInterval(pollForAnnouncements, 30_000);
+
+        return () => window.clearInterval(intervalId);
+    }, []);
 
     useEffect(() => {
         if (!notificationsOpen) {
@@ -269,7 +297,7 @@ export default function ClientHome({
                                     <button
                                         type="button"
                                         className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        aria-label={`Notifications ${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+                                        aria-label={`Notifications${newAnnouncementCount > 0 ? `, ${newAnnouncementCount} new announcements` : ''}`}
                                         aria-expanded={notificationsOpen}
                                         aria-controls="recent-announcements-menu"
                                         onClick={() => {
@@ -277,14 +305,17 @@ export default function ClientHome({
                                             setNotificationsOpen(willOpen);
 
                                             if (willOpen) {
-                                                router.reload({ only: ['announcements'] });
+                                                setNewAnnouncementCount(0);
                                             }
                                         }}
                                     >
                                         <i className="fa-regular fa-bell text-xl" aria-hidden="true"></i>
-                                        {unreadCount > 0 && (
-                                            <span className="border-ctu-dark absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 bg-red-500 text-[10px] font-bold text-white">
-                                                {unreadCount}
+                                        {newAnnouncementCount > 0 && (
+                                            <span
+                                                aria-live="polite"
+                                                className="border-ctu-dark absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 bg-red-500 px-1 text-[10px] font-bold text-white"
+                                            >
+                                                {newAnnouncementCount > 99 ? '99+' : newAnnouncementCount}
                                             </span>
                                         )}
                                     </button>
