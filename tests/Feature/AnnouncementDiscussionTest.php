@@ -276,6 +276,146 @@ test('admins can add top-level comments to a client discussion', function () {
     expect($adminComment->parent_message_id)->toBeNull();
 });
 
+test('admins can post announcement-wide comments visible to every client', function () {
+    $announcement = createDiscussionAnnouncement();
+    $firstClient = User::factory()->create();
+    $secondClient = User::factory()->create();
+    $admin = AdminUser::create([
+        'name' => 'Site Admin',
+        'email' => 'admin@example.com',
+        'password' => 'secret-password',
+    ]);
+
+    $this->actingAs($admin, 'admin')
+        ->post(route('admin.announcements.comments.store', $announcement), [
+            'content' => 'The event starts at 9 AM.',
+        ])
+        ->assertRedirect();
+
+    $announcementConversation = Conversation::query()
+        ->where('announcement_id', $announcement->id)
+        ->whereNull('client_id')
+        ->sole();
+    expect($announcementConversation->messages()->sole()->sender_admin_id)->toBe($admin->id);
+
+    foreach ([$firstClient, $secondClient] as $client) {
+        $this->actingAs($client, 'web')
+            ->get(route('client.announcements.show', $announcement))
+            ->assertInertia(fn ($page) => $page
+                ->has('messages', 1)
+                ->where('messages.0.content', 'The event starts at 9 AM.')
+                ->where('messages.0.role', 'Admin')
+                ->where('messages.0.is_announcement_wide', true));
+    }
+
+    $this->actingAs($admin, 'admin')
+        ->get(route('admin.announcements.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('announcementComments.0.announcement_id', $announcement->id)
+            ->where('announcementComments.0.messages.0.content', 'The event starts at 9 AM.'));
+});
+
+test('admins can reply to announcement-wide comments including their own replies', function () {
+    $announcement = createDiscussionAnnouncement();
+    $client = User::factory()->create();
+    $admin = AdminUser::create([
+        'name' => 'Site Admin',
+        'email' => 'admin@example.com',
+        'password' => 'secret-password',
+    ]);
+
+    $this->actingAs($admin, 'admin')
+        ->post(route('admin.announcements.comments.store', $announcement), [
+            'content' => 'Admin announcement comment',
+        ])
+        ->assertRedirect();
+    $conversation = Conversation::query()->sole();
+    $originalComment = $conversation->messages()->sole();
+
+    $this->post(route('admin.announcements.comments.store', $announcement), [
+        'content' => 'Admin reply to own comment',
+        'parent_message_id' => $originalComment->id,
+    ])->assertRedirect();
+    $reply = $conversation->messages()->where('parent_message_id', $originalComment->id)->sole();
+
+    $this->post(route('admin.announcements.comments.store', $announcement), [
+        'content' => 'Admin reply to own reply',
+        'parent_message_id' => $reply->id,
+    ])->assertRedirect();
+
+    expect($conversation->messages()->count())->toBe(3)
+        ->and($reply->sender_admin_id)->toBe($admin->id);
+
+    $this->actingAs($client, 'web')
+        ->get(route('client.announcements.show', $announcement))
+        ->assertInertia(fn ($page) => $page
+            ->has('messages', 3)
+            ->where('messages.1.parent_message_id', $originalComment->id)
+            ->where('messages.1.content', 'Admin reply to own comment')
+            ->where('messages.2.parent_message_id', $reply->id)
+            ->where('messages.2.content', 'Admin reply to own reply'));
+
+    $this->actingAs($admin, 'admin')
+        ->get(route('admin.announcements.index'))
+        ->assertInertia(fn ($page) => $page
+            ->has('announcementComments.0.messages', 3)
+            ->where('announcementComments.0.messages.1.parent_message_id', $originalComment->id)
+            ->where('announcementComments.0.messages.2.parent_message_id', $reply->id));
+});
+
+test('clients can reply to announcement-wide comments and their own replies', function () {
+    $announcement = createDiscussionAnnouncement();
+    $firstClient = User::factory()->create(['name' => 'Taylor Student']);
+    $secondClient = User::factory()->create(['name' => 'Jordan Student']);
+    $admin = AdminUser::create([
+        'name' => 'Site Admin',
+        'email' => 'admin@example.com',
+        'password' => 'secret-password',
+    ]);
+
+    $this->actingAs($admin, 'admin')
+        ->post(route('admin.announcements.comments.store', $announcement), [
+            'content' => 'Announcement-wide admin comment',
+        ])
+        ->assertRedirect();
+    $conversation = Conversation::query()->sole();
+    $adminComment = $conversation->messages()->sole();
+
+    $this->actingAs($firstClient, 'web')
+        ->post(route('client.announcements.messages.store', $announcement), [
+            'content' => 'Student reply',
+            'parent_message_id' => $adminComment->id,
+        ])
+        ->assertRedirect();
+    $studentReply = $conversation->messages()->where('sender_id', $firstClient->id)->sole();
+
+    $this->post(route('client.announcements.messages.store', $announcement), [
+        'content' => 'Student reply to own reply',
+        'parent_message_id' => $studentReply->id,
+    ])->assertRedirect();
+
+    expect($conversation->messages()->count())->toBe(3);
+
+    $this->actingAs($secondClient, 'web')
+        ->get(route('client.announcements.show', $announcement))
+        ->assertInertia(fn ($page) => $page
+            ->has('messages', 3)
+            ->where('messages.1.author', 'Taylor Student')
+            ->where('messages.1.role', 'Client')
+            ->where('messages.1.is_announcement_wide', true)
+            ->where('messages.1.parent_message_id', $adminComment->id)
+            ->where('messages.2.parent_message_id', $studentReply->id)
+            ->where('messages.2.content', 'Student reply to own reply'));
+
+    $this->actingAs($admin, 'admin')
+        ->get(route('admin.announcements.index'))
+        ->assertInertia(fn ($page) => $page
+            ->has('announcementComments.0.messages', 3)
+            ->where('announcementComments.0.messages.1.author', 'Taylor Student')
+            ->where('announcementComments.0.messages.1.role', 'Client')
+            ->where('announcementComments.0.messages.2.parent_message_id', $studentReply->id));
+});
+
 test('admins cannot reply to a comment outside the discussion', function () {
     $announcement = createDiscussionAnnouncement();
     $anotherAnnouncement = Announcement::create([

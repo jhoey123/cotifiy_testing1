@@ -118,26 +118,56 @@ class ClientPageController extends Controller
             ])
             ->first();
 
+        $announcementComments = Conversation::query()
+            ->where('announcement_id', $announcement->id)
+            ->whereNull('client_id')
+            ->with([
+                'messages' => fn ($query) => $query
+                    ->with(['sender', 'adminSender'])
+                    ->orderBy('created_at')
+                    ->orderBy('id'),
+            ])
+            ->first()
+            ?->messages
+            ->map(fn (Message $message) => [
+                'id' => $message->id,
+                'parent_message_id' => $message->parent_message_id,
+                'author' => $message->sender_admin_id === null
+                    ? $message->sender->name
+                    : $message->adminSender->name,
+                'role' => $message->sender_admin_id === null ? 'Client' : 'Admin',
+                'content' => $message->content,
+                'sent_at' => $message->created_at?->toIso8601String(),
+                'is_mine' => $message->sender_id === $request->user()->id,
+                'is_announcement_wide' => true,
+            ]) ?? collect();
+
+        $clientMessages = $conversation?->messages
+            ->map(fn (Message $message) => [
+                'id' => $message->id,
+                'parent_message_id' => $message->parent_message_id,
+                'author' => $message->sender_admin_id === null
+                    ? $message->sender->name
+                    : $message->adminSender->name,
+                'role' => $message->sender_admin_id === null ? 'Client' : 'Admin',
+                'content' => $message->content,
+                'sent_at' => $message->created_at?->toIso8601String(),
+                'is_mine' => $message->sender_id === $request->user()->id,
+                'is_announcement_wide' => false,
+            ])
+            ->values() ?? collect();
+
         return Inertia::render('client/clientReadmore', [
             'announcement' => $this->announcementData($announcement),
-            'messages' => $conversation?->messages
-                ->map(fn (Message $message) => [
-                    'id' => $message->id,
-                    'parent_message_id' => $message->parent_message_id,
-                    'author' => $message->sender_admin_id === null
-                        ? $message->sender->name
-                        : $message->adminSender->name,
-                    'role' => $message->sender_admin_id === null ? 'Client' : 'Admin',
-                    'content' => $message->content,
-                    'sent_at' => $message->created_at?->toIso8601String(),
-                    'is_mine' => $message->sender_id === $request->user()->id,
-                ])
+            'messages' => $announcementComments
+                ->concat($clientMessages)
+                ->sortBy('sent_at')
                 ->values() ?? [],
         ]);
     }
 
     /**
-     * @return array<string, int|string|null>
+     * @return array<string, mixed>
      */
     private function announcementData(Announcement $announcement): array
     {
@@ -149,9 +179,22 @@ class ClientPageController extends Controller
             'posted_by_office' => $announcement->posted_by,
             'date' => $announcement->date->toDateString(),
             'content' => $announcement->body,
+            'content_html' => $announcement->bodyAsHtml(),
             'image' => $announcement->image
                 ? Storage::disk('public')->url($announcement->image)
                 : null,
+            'attachments' => array_map(function (array $attachment): array {
+                $path = $attachment['path'];
+                $size = Storage::disk('public')->size($path);
+
+                return [
+                    'name' => $attachment['name'],
+                    'url' => Storage::disk('public')->url($path),
+                    'size' => $size >= 1048576
+                        ? number_format($size / 1048576, 1).' MB'
+                        : number_format($size / 1024, 0).' KB',
+                ];
+            }, $announcement->attachments ?? []),
             'event_date' => $announcement->event_date?->toDateString(),
             'start_time' => $announcement->start_time,
             'end_time' => $announcement->end_time,
@@ -160,7 +203,7 @@ class ClientPageController extends Controller
     }
 
     /**
-     * @return array<string, int|string|null>
+     * @return array<string, mixed>
      */
     private function announcementSummaryData(Announcement $announcement): array
     {
@@ -171,6 +214,7 @@ class ClientPageController extends Controller
             'posted_by_office' => $announcement->posted_by,
             'date' => $announcement->date->toDateString(),
             'content' => Str::limit(strip_tags($announcement->body), 180),
+            'content_html' => $announcement->bodyAsHtml(),
             'image' => $announcement->image
                 ? Storage::disk('public')->url($announcement->image)
                 : null,

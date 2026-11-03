@@ -30,6 +30,11 @@ type Discussion = {
     messages: DiscussionMessage[];
 };
 
+type AnnouncementComment = {
+    announcement_id: number;
+    messages: DiscussionMessage[];
+};
+
 const formatDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -40,6 +45,7 @@ export default function admin({
     recentAnnouncements,
     upcomingEvents,
     discussions,
+    announcementComments,
     announcementCount,
     eventCount,
     userCount,
@@ -47,6 +53,7 @@ export default function admin({
     recentAnnouncements: Announcement[];
     upcomingEvents: UpcomingEvent[];
     discussions: Discussion[];
+    announcementComments: AnnouncementComment[];
     announcementCount: number;
     eventCount: number;
     userCount: number;
@@ -261,19 +268,12 @@ export default function admin({
                             </div>
 
                             {/* STATS ROW */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                                     <p className="text-sm font-semibold text-slate-500 mb-1">Published this month</p>
                                     <div className="flex items-end justify-between">
                                         <h3 className="text-3xl font-extrabold text-slate-900">{announcementCount}</h3>
                                         <span className="text-xs font-bold text-emerald-600 mb-1">+4 vs last month</span>
-                                    </div>
-                                </div>
-                                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                                    <p className="text-sm font-semibold text-slate-500 mb-1">Average read rate</p>
-                                    <div className="flex items-end justify-between">
-                                        <h3 className="text-3xl font-extrabold text-slate-900">68%</h3>
-                                        <span className="text-xs font-semibold text-slate-500 mb-1">of targeted students</span>
                                     </div>
                                 </div>
                                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
@@ -380,6 +380,9 @@ export default function admin({
                     <AnnouncementPage
                         announcement={selectedAnnouncement}
                         discussions={discussions.filter((discussion) => discussion.announcement_id === selectedAnnouncement.id)}
+                        announcementComments={announcementComments
+                            .filter((comment) => comment.announcement_id === selectedAnnouncement.id)
+                            .flatMap((comment) => comment.messages)}
                         onClose={() => setSelectedAnnouncement(null)}
                     />
                 )}

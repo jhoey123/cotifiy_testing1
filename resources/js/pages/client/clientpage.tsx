@@ -8,6 +8,7 @@ interface Announcement {
     posted_by_office: string;
     date: string;
     content: string;
+    content_html: string;
     image: string | null;
     event_date: string | null;
     start_time: string | null;
@@ -514,9 +515,10 @@ export default function ClientHome({
                                                             {ann.title}
                                                         </Link>
                                                     </h3>
-                                                    <p className="line-clamp-1 text-sm text-slate-500">
-                                                        {ann.content}
-                                                    </p>
+                                                    <div
+                                                        dangerouslySetInnerHTML={{ __html: ann.content_html }}
+                                                        className="line-clamp-1 text-sm text-slate-900 [&_a]:text-blue-700 [&_a]:underline [&_a]:[text-shadow:0_0_8px_rgb(59_130_246_/_50%)] [&_p]:mb-0"
+                                                    />
                                                 </div>
 
                                                 <div className="mt-4 flex items-center justify-between">

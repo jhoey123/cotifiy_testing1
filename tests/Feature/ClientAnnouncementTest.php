@@ -34,6 +34,24 @@ test('the client page displays announcements from the database', function () {
             ->where('announcements.1.id', $olderAnnouncement->id));
 });
 
+test('the client announcement list renders markdown in announcement previews', function () {
+    $user = User::factory()->create();
+    Announcement::create([
+        'title' => 'Markdown announcement',
+        'category' => 'General',
+        'posted_by' => 'Student Affairs',
+        'date' => now()->toDateString(),
+        'body' => '**Important** [details](https://example.com)',
+    ]);
+
+    $this->actingAs($user, 'web')
+        ->get(route('client.clientpage'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('client/clientpage')
+            ->where('announcements.0.content_html', '<p><strong>Important</strong> <a href="https://example.com">details</a></p>'));
+});
+
 test('the client home loads a compact recent feed and upcoming events independently', function () {
     $user = User::factory()->create();
 

@@ -50,6 +50,7 @@ class AnnouncementController extends Controller
             'eventCount' => Announcement::query()->where('category', 'Event')->count(),
             'userCount' => User::query()->count(),
             'discussions' => $this->discussionData(),
+            'announcementComments' => $this->announcementCommentData(),
         ]);
     }
 
@@ -63,6 +64,7 @@ class AnnouncementController extends Controller
         return Inertia::render('admin/adminAnnouncemnt', [
             'announcements' => $announcements->map(fn (Announcement $announcement) => $this->announcementData($announcement)),
             'discussions' => $this->discussionData(),
+            'announcementComments' => $this->announcementCommentData(),
         ]);
     }
 
@@ -132,6 +134,37 @@ class AnnouncementController extends Controller
             ->values();
     }
 
+    private function announcementCommentData(): Collection
+    {
+        return Conversation::query()
+            ->whereNotNull('announcement_id')
+            ->whereNull('client_id')
+            ->with([
+                'messages' => fn ($query) => $query
+                    ->with(['sender', 'adminSender'])
+                    ->orderBy('created_at')
+                    ->orderBy('id'),
+            ])
+            ->whereHas('messages')
+            ->get()
+            ->map(fn (Conversation $conversation) => [
+                'announcement_id' => $conversation->announcement_id,
+                'messages' => $conversation->messages
+                    ->map(fn (Message $message) => [
+                        'id' => $message->id,
+                        'parent_message_id' => $message->parent_message_id,
+                        'author' => $message->sender_admin_id === null
+                            ? $message->sender->name
+                            : $message->adminSender->name,
+                        'role' => $message->sender_admin_id === null ? 'Client' : 'Admin',
+                        'content' => $message->content,
+                        'sent_at' => $message->created_at?->toIso8601String(),
+                    ])
+                    ->values(),
+            ])
+            ->values();
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -140,6 +173,8 @@ class AnnouncementController extends Controller
             'posted_by' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:5120'],
+            'attachments' => ['sometimes', 'array', 'max:10'],
+            'attachments.*' => ['file', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,odt,ods,odp', 'max:10240'],
             'event_date' => ['nullable', 'required_if:category,Event', 'date'],
             'start_time' => ['nullable', 'required_with:end_time', 'date_format:H:i'],
             'end_time' => ['nullable', 'required_with:start_time', 'date_format:H:i', 'after:start_time'],
@@ -155,10 +190,13 @@ class AnnouncementController extends Controller
             }
         }
 
+        $attachments = $this->storeAttachments($validated['attachments'] ?? []);
+
         $announcement = Announcement::create([
             ...$validated,
             'date' => now()->toDateString(),
             'image' => $imagePath,
+            'attachments' => $attachments,
             ...$this->eventFields($validated),
         ]);
 
@@ -177,6 +215,10 @@ class AnnouncementController extends Controller
             'posted_by' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:5120'],
+            'attachments' => ['sometimes', 'array', 'max:10'],
+            'attachments.*' => ['file', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,odt,ods,odp', 'max:10240'],
+            'remove_attachments' => ['sometimes', 'array'],
+            'remove_attachments.*' => ['string', Rule::in(array_column($announcement->attachments ?? [], 'path'))],
             'event_date' => ['nullable', 'required_if:category,Event', 'date'],
             'start_time' => ['nullable', 'required_with:end_time', 'date_format:H:i'],
             'end_time' => ['nullable', 'required_with:start_time', 'date_format:H:i', 'after:start_time'],
@@ -194,11 +236,28 @@ class AnnouncementController extends Controller
             }
         }
 
+        $removedAttachmentPaths = $validated['remove_attachments'] ?? [];
+        $attachments = array_values(array_filter(
+            $announcement->attachments ?? [],
+            fn (array $attachment) => ! in_array($attachment['path'], $removedAttachmentPaths, true),
+        ));
+        $attachments = [
+            ...$attachments,
+            ...$this->storeAttachments($validated['attachments'] ?? []),
+        ];
+
         $announcement->update([
             ...$validated,
             'image' => $imagePath,
+            'attachments' => $attachments,
             ...$this->eventFields($validated),
         ]);
+
+        foreach ($removedAttachmentPaths as $path) {
+            if (! Storage::disk('public')->delete($path)) {
+                throw new RuntimeException('Failed to remove a deleted announcement attachment.');
+            }
+        }
 
         if ($imagePath !== $oldImage && $oldImage !== null && ! Storage::disk('public')->delete($oldImage)) {
             throw new RuntimeException('Failed to remove the replaced announcement image.');
@@ -210,10 +269,17 @@ class AnnouncementController extends Controller
     public function destroy(Announcement $announcement): RedirectResponse
     {
         $image = $announcement->image;
+        $attachments = array_column($announcement->attachments ?? [], 'path');
         $announcement->delete();
 
         if ($image !== null && ! Storage::disk('public')->delete($image)) {
             throw new RuntimeException('Failed to remove the deleted announcement image.');
+        }
+
+        foreach ($attachments as $path) {
+            if (! Storage::disk('public')->delete($path)) {
+                throw new RuntimeException('Failed to remove a deleted announcement attachment.');
+            }
         }
 
         return back();
@@ -228,14 +294,48 @@ class AnnouncementController extends Controller
             'posted_by' => $announcement->posted_by,
             'date' => $announcement->date->toDateString(),
             'body' => $announcement->body,
+            'body_html' => $announcement->bodyAsHtml(),
             'image_url' => $announcement->image
                 ? Storage::disk('public')->url($announcement->image)
                 : null,
+            'attachments' => $this->attachmentData($announcement),
             'event_date' => $announcement->event_date?->toDateString(),
             'start_time' => $announcement->start_time,
             'end_time' => $announcement->end_time,
             'location' => $announcement->location,
         ];
+    }
+
+    private function storeAttachments(array $files): array
+    {
+        return array_map(function ($file): array {
+            $path = $file->store('announcements/attachments', 'public');
+
+            if ($path === false) {
+                throw new RuntimeException('Failed to store an announcement attachment.');
+            }
+
+            return [
+                'path' => $path,
+                'name' => $file->getClientOriginalName(),
+            ];
+        }, $files);
+    }
+
+    private function attachmentData(Announcement $announcement): array
+    {
+        return array_map(function (array $attachment): array {
+            $path = $attachment['path'];
+            $size = Storage::disk('public')->size($path);
+
+            return [
+                ...$attachment,
+                'url' => Storage::disk('public')->url($path),
+                'size' => $size >= 1048576
+                    ? number_format($size / 1048576, 1).' MB'
+                    : number_format($size / 1024, 0).' KB',
+            ];
+        }, $announcement->attachments ?? []);
     }
 
     private function eventFields(array $validated): array

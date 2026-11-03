@@ -8,6 +8,21 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
+test('announcement bodies render markdown without allowing raw html', function () {
+    $announcement = Announcement::create([
+        'title' => 'Markdown announcement',
+        'category' => 'General',
+        'posted_by' => 'Office of the Registrar',
+        'date' => now()->toDateString(),
+        'body' => '**Important** details. <script>alert(1)</script>',
+    ]);
+
+    $html = $announcement->bodyAsHtml();
+
+    expect($html)->toContain('<strong>Important</strong>')
+        ->and($html)->not->toContain('<script>');
+});
+
 test('an admin can publish an announcement', function () {
     Storage::fake('public');
     Notification::fake();
@@ -57,6 +72,62 @@ test('an admin can publish an announcement', function () {
             ->where('announcements.0.title', 'Campus closure')
             ->where('announcements.0.image_url', '/storage/'.$announcement->image)
             ->where('announcements.0.date', now()->toDateString()));
+});
+
+test('admins can upload downloadable documents and manage them when editing announcements', function () {
+    Storage::fake('public');
+    $admin = AdminUser::create([
+        'name' => 'Site Admin',
+        'email' => 'admin@example.com',
+        'password' => 'secret-password',
+    ]);
+
+    $this->actingAs($admin, 'admin')
+        ->post(route('admin.announcements.store'), [
+            'title' => 'Document announcement',
+            'category' => 'General',
+            'posted_by' => 'Office of the Registrar',
+            'body' => 'Review the attached documents.',
+            'attachments' => [
+                UploadedFile::fake()->create('schedule.pdf', 20, 'application/pdf'),
+                UploadedFile::fake()->create('guide.docx', 30, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+            ],
+        ])
+        ->assertRedirect();
+
+    $announcement = Announcement::query()->firstOrFail();
+    $originalAttachments = $announcement->attachments;
+    expect($originalAttachments)->toHaveCount(2);
+    foreach ($originalAttachments as $attachment) {
+        Storage::disk('public')->assertExists($attachment['path']);
+    }
+
+    $this->actingAs(User::factory()->create(), 'web')
+        ->get(route('client.announcements.show', $announcement))
+        ->assertInertia(fn ($page) => $page
+            ->where('announcement.attachments.0.name', 'schedule.pdf')
+            ->where('announcement.attachments.0.url', '/storage/'.$originalAttachments[0]['path']));
+
+    $this->actingAs($admin, 'admin')
+        ->post(route('admin.announcements.update', $announcement), [
+            '_method' => 'put',
+            'title' => 'Document announcement',
+            'category' => 'General',
+            'posted_by' => 'Office of the Registrar',
+            'body' => 'Review the attached documents.',
+            'remove_attachments' => [$originalAttachments[0]['path']],
+            'attachments' => [
+                UploadedFile::fake()->create('updated-notes.txt', 5, 'text/plain'),
+            ],
+        ])
+        ->assertRedirect();
+
+    $announcement->refresh();
+    expect(array_column($announcement->attachments, 'name'))
+        ->toBe(['guide.docx', 'updated-notes.txt']);
+    Storage::disk('public')->assertMissing($originalAttachments[0]['path']);
+    Storage::disk('public')->assertExists($originalAttachments[1]['path']);
+    Storage::disk('public')->assertExists($announcement->attachments[1]['path']);
 });
 
 test('an admin cannot publish an announcement with a non-image upload', function () {

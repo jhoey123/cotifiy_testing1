@@ -10,6 +10,7 @@ interface Announcement {
     posted_by_logo?: string | null;
     date: string;
     content: string;
+    content_html: string;
     image: string | null;
     is_new?: boolean;
     is_pinned?: boolean;
@@ -31,6 +32,7 @@ interface DiscussionMessage {
     content: string;
     sent_at: string | null;
     is_mine: boolean;
+    is_announcement_wide?: boolean;
 }
 
 interface ClientReadMoreProps {
@@ -486,9 +488,10 @@ export default function ClientReadMore({
                                     )}
                                 </div>
 
-                                <div className="mb-10 text-base leading-relaxed whitespace-pre-line text-slate-700">
-                                    {announcement.content}
-                                </div>
+                                <div
+                                    dangerouslySetInnerHTML={{ __html: announcement.content_html }}
+                                    className="mb-10 break-words text-base leading-relaxed text-slate-700 [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:my-4 [&_blockquote]:border-l-4 [&_blockquote]:border-slate-300 [&_blockquote]:pl-4 [&_h1]:mb-3 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-4 [&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-100 [&_pre]:p-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6"
+                                />
 
                                 {announcement.attachments && announcement.attachments.length > 0 && (
                                     <div className="mb-10 rounded-xl border border-slate-200 bg-slate-50 p-5">
@@ -500,6 +503,7 @@ export default function ClientReadMore({
                                                 <a
                                                     key={idx}
                                                     href={file.url}
+                                                    download={file.name}
                                                     className="group flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 transition-all hover:border-blue-400 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 >
                                                     <i className="fa-solid fa-file-pdf text-rose-500"></i>
@@ -586,15 +590,46 @@ export default function ClientReadMore({
                                                 <p className="mt-1 text-sm text-slate-500">Be the first to start the discussion.</p>
                                             </div>
                                         ) : (
-                                            messages.map((message) => (
-                                                <article
+                                            messages.map((message) => {
+                                                const parentMessage = message.parent_message_id
+                                                    ? messages.find((candidate) => candidate.id === message.parent_message_id)
+                                                    : null;
+                                                let messageDepth = 0;
+                                                let ancestorId = message.parent_message_id;
+                                                const visitedIds = new Set([message.id]);
+
+                                                while (ancestorId !== null && !visitedIds.has(ancestorId)) {
+                                                    const ancestor = messages.find((candidate) => candidate.id === ancestorId);
+                                                    if (!ancestor) break;
+
+                                                    visitedIds.add(ancestor.id);
+                                                    messageDepth += 1;
+                                                    ancestorId = ancestor.parent_message_id;
+                                                }
+
+                                                return (
+                                                <div
                                                     key={message.id}
-                                                    className={`rounded-xl border p-5 ${
+                                                    style={parentMessage ? { marginLeft: `${messageDepth * 16}px` } : undefined}
+                                                >
+                                                    {parentMessage && (
+                                                        <a
+                                                            href={`#comment-${parentMessage.id}`}
+                                                            className="relative mb-1 flex min-h-6 items-center gap-2 pl-4 text-xs text-slate-500 before:absolute before:top-0 before:bottom-0 before:left-0 before:border-l-2 before:border-blue-200 after:absolute after:bottom-1 after:left-0 after:w-3 after:border-t-2 after:border-blue-200 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        >
+                                                            <i className="fa-solid fa-reply text-blue-400" aria-hidden="true"></i>
+                                                            <span className="shrink-0">Replying to <strong className="font-bold text-slate-700">{parentMessage.author}</strong>:</span>
+                                                            <span className="min-w-0 truncate">{parentMessage.content}</span>
+                                                        </a>
+                                                    )}
+                                                    <article
+                                                    id={`comment-${message.id}`}
+                                                    className={`scroll-mt-24 rounded-xl border p-5 ${
                                                         message.role === 'Admin'
                                                             ? 'border-blue-200 bg-blue-50/50'
                                                             : 'border-slate-200 bg-white'
-                                                    } ${message.parent_message_id ? 'ml-6 sm:ml-12' : ''}`}
-                                                >
+                                                    }`}
+                                                    >
                                                     <div className="mb-3 flex flex-wrap items-center gap-2">
                                                         <span className="text-sm font-bold text-slate-900">
                                                             {message.author}
@@ -607,6 +642,11 @@ export default function ClientReadMore({
                                                         >
                                                             {message.role === 'Admin' ? announcement.posted_by : 'Student'}
                                                         </span>
+                                                        {message.is_announcement_wide && (
+                                                            <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-700">
+                                                                All clients
+                                                            </span>
+                                                        )}
                                                         {message.is_mine && (
                                                             <span className="text-xs font-semibold text-slate-400">You</span>
                                                         )}
@@ -671,8 +711,10 @@ export default function ClientReadMore({
                                                             </div>
                                                         </form>
                                                     )}
-                                                </article>
-                                            ))
+                                                    </article>
+                                                </div>
+                                                );
+                                            })
                                         )}
                                     </div>
                                 </div>

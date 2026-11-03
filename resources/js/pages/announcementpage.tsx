@@ -8,7 +8,9 @@ export type Announcement = {
     posted_by: string;
     date: string;
     body: string;
+    body_html: string;
     image_url: string | null;
+    attachments: { path: string; name: string; url: string; size: string }[];
     event_date: string | null;
     start_time: string | null;
     end_time: string | null;
@@ -18,6 +20,7 @@ export type Announcement = {
 type AnnouncementPageProps = {
     announcement?: Announcement;
     discussions?: Discussion[];
+    announcementComments?: DiscussionMessage[];
     onClose?: () => void;
 };
 
@@ -66,6 +69,7 @@ const formatTime = (time: string | null) => {
 export default function AnnouncementPage({
     announcement,
     discussions = [],
+    announcementComments = [],
     onClose,
 }: AnnouncementPageProps) {
     const isModal = Boolean(onClose);
@@ -73,13 +77,11 @@ export default function AnnouncementPage({
     const [activeTab, setActiveTab] = useState<'announcement' | 'comments'>(
         'announcement',
     );
-    const commentCount = discussions.reduce(
-        (count, discussion) =>
-            count +
-            discussion.messages.filter((message) => message.role === 'Client')
-                .length,
-        0,
-    );
+    const totalCommentCount =
+        discussions.reduce(
+            (count, discussion) => count + discussion.messages.length,
+            0,
+        ) + announcementComments.length;
 
     if (!announcement) {
         return (
@@ -102,7 +104,7 @@ export default function AnnouncementPage({
             ? `${formatTime(announcement.start_time)} - ${formatTime(announcement.end_time)}`
             : formatTime(announcement.start_time),
     ].filter(Boolean);
-    const hasModalImage = isModal && Boolean(announcement.image_url);
+    const hasModalImage = isModal;
     const announcementImage = announcement.image_url ? (
         failedImageUrl === announcement.image_url ? (
             <div
@@ -126,6 +128,11 @@ export default function AnnouncementPage({
                 onError={() => setFailedImageUrl(announcement.image_url)}
             />
         )
+    ) : isModal ? (
+        <div className="flex h-64 flex-col items-center justify-center gap-2 bg-slate-100 px-6 text-center text-sm font-medium text-slate-500 md:h-full md:min-h-[19rem]">
+            <i className="fa-regular fa-image text-3xl text-slate-400" aria-hidden="true"></i>
+            <span>No cover image</span>
+        </div>
     ) : null;
     const announcementHeading = (
         <>
@@ -267,7 +274,7 @@ export default function AnnouncementPage({
                                 <span className="flex items-center gap-2">
                                     Comments
                                     <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] text-slate-600">
-                                        {commentCount}
+                                        {totalCommentCount}
                                     </span>
                                 </span>
                             </button>
@@ -323,16 +330,36 @@ export default function AnnouncementPage({
                                 <h2 className="mb-3 text-3xl font-bold text-slate-900">
                                     Details
                                 </h2>
-                                <p
-                                    className={`whitespace-pre-wrap text-slate-700 ${
+                                <div
+                                    dangerouslySetInnerHTML={{ __html: announcement.body_html }}
+                                    className={`break-words text-slate-700 [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:my-4 [&_blockquote]:border-l-4 [&_blockquote]:border-slate-300 [&_blockquote]:pl-4 [&_h1]:mb-3 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-4 [&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-100 [&_pre]:p-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6 ${
                                         isModal
                                             ? 'text-base leading-8 sm:text-lg'
                                             : 'text-sm leading-7'
                                     }`}
-                                >
-                                    {announcement.body}
-                                </p>
+                                />
                             </section>
+                            {announcement.attachments.length > 0 && (
+                                <section aria-label="Downloadable documents" className="mt-8">
+                                    <h2 className="mb-3 text-lg font-bold text-slate-900">
+                                        Attachments
+                                    </h2>
+                                    <div className="flex flex-wrap gap-3">
+                                        {announcement.attachments.map((file) => (
+                                            <a
+                                                key={file.path}
+                                                href={file.url}
+                                                download={file.name}
+                                                className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-blue-400 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            >
+                                                <i className="fa-solid fa-file-arrow-down text-blue-600" aria-hidden="true"></i>
+                                                <span className="break-all">{file.name}</span>
+                                                <span className="shrink-0 text-xs font-medium text-slate-400">{file.size}</span>
+                                            </a>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
                         </div>
                     </div>
                 )}
@@ -357,15 +384,33 @@ export default function AnnouncementPage({
                                         Comments
                                     </h2>
                                     <p className="text-xs text-slate-500">
-                                        Student comments and admin replies
+                                        Announcement-wide discussion and student threads
                                     </p>
                                 </div>
                             </div>
                             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                                {commentCount}{' '}
-                                {commentCount === 1 ? 'comment' : 'comments'}
+                                {totalCommentCount}{' '}
+                                {totalCommentCount === 1 ? 'comment' : 'comments'}
                             </span>
                         </header>
+
+                        {announcementComments.length > 0 && (
+                            <div className="space-y-3 border-b border-slate-100 p-4 sm:p-6">
+                                <h3 className="text-sm font-bold text-slate-700">
+                                    Announcement-wide discussion
+                                </h3>
+                                {announcementComments
+                                    .filter((message) => message.parent_message_id === null)
+                                    .map((message) => (
+                                        <AnnouncementMessageThread
+                                            key={message.id}
+                                            announcementId={announcement.id}
+                                            message={message}
+                                            messages={announcementComments}
+                                        />
+                                    ))}
+                            </div>
+                        )}
 
                         {discussions.length === 0 ? (
                             <div className="flex min-h-64 flex-col items-center justify-center px-6 py-10 text-center">
@@ -389,6 +434,10 @@ export default function AnnouncementPage({
                                 ))}
                             </div>
                         )}
+
+                        <div className="border-t border-slate-100 bg-slate-50 p-4 sm:p-6">
+                            <AnnouncementCommentForm announcementId={announcement.id} />
+                        </div>
                     </section>
                 )}
             </article>
@@ -558,6 +607,126 @@ function DiscussionReplyForm({
                 className="bg-ctu-dark rounded-xl px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
             >
                 {processing ? 'Posting...' : comment ? 'Reply' : 'Post Comment'}
+            </button>
+        </form>
+    );
+}
+
+function AnnouncementCommentForm({ announcementId }: { announcementId: number }) {
+    return (
+        <AnnouncementCommentFormFields
+            announcementId={announcementId}
+            label="Post a comment for all clients"
+        />
+    );
+}
+
+function AnnouncementMessageThread({
+    announcementId,
+    message,
+    messages,
+}: {
+    announcementId: number;
+    message: DiscussionMessage;
+    messages: DiscussionMessage[];
+}) {
+    const [isReplyOpen, setIsReplyOpen] = useState(false);
+    const replies = messages.filter(
+        (reply) => reply.parent_message_id === message.id,
+    );
+
+    return (
+        <article className="rounded-xl border border-slate-200 bg-white p-3">
+            <MessageBubble message={message} />
+            <div className="ml-4 mt-2 border-l-2 border-blue-100 pl-4 sm:ml-8">
+                <button
+                    type="button"
+                    onClick={() => setIsReplyOpen((open) => !open)}
+                    className="text-sm font-bold text-ctu-lightblue hover:text-blue-700"
+                >
+                    {isReplyOpen ? 'Cancel reply' : 'Reply'}
+                </button>
+                {isReplyOpen && (
+                    <AnnouncementCommentFormFields
+                        announcementId={announcementId}
+                        parentMessageId={message.id}
+                        label={`Reply to ${message.author}`}
+                    />
+                )}
+                {replies.length > 0 && (
+                    <div className="mt-3 space-y-3">
+                        {replies.map((reply) => (
+                            <AnnouncementMessageThread
+                                key={reply.id}
+                                announcementId={announcementId}
+                                message={reply}
+                                messages={messages}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+        </article>
+    );
+}
+
+function AnnouncementCommentFormFields({
+    announcementId,
+    parentMessageId,
+    label,
+}: {
+    announcementId: number;
+    parentMessageId?: number;
+    label: string;
+}) {
+    const { data, setData, post, processing, errors, reset } = useForm({
+        content: '',
+        parent_message_id: parentMessageId ?? null,
+    });
+    const formId = `announcement-comment-${announcementId}-${parentMessageId ?? 'new'}`;
+
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        if (!data.content.trim() || processing) {
+            return;
+        }
+
+        post(`/admin/announcements/${announcementId}/comments`, {
+            preserveScroll: true,
+            onSuccess: () => reset(),
+        });
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="mt-3 flex items-end gap-3">
+            <div className="flex-1">
+                <label
+                    htmlFor={formId}
+                    className="mb-1 block text-xs font-semibold text-slate-600"
+                >
+                    {label}
+                </label>
+                <textarea
+                    id={formId}
+                    value={data.content}
+                    onChange={(event) => setData('content', event.target.value)}
+                    rows={2}
+                    maxLength={5000}
+                    placeholder="Write a comment..."
+                    className="w-full resize-y rounded-xl border border-slate-300 bg-white p-3 text-sm font-medium outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                />
+                {errors.content && (
+                    <p className="mt-1 text-xs font-semibold text-red-600">
+                        {errors.content}
+                    </p>
+                )}
+            </div>
+            <button
+                type="submit"
+                disabled={!data.content.trim() || processing}
+                className="rounded-xl bg-ctu-dark px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+            >
+                {processing ? 'Posting...' : parentMessageId ? 'Reply' : 'Post Comment'}
             </button>
         </form>
     );

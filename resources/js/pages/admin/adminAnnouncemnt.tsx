@@ -1,5 +1,5 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import AnnouncementPage, { type Announcement } from '../announcementpage';
 
 type DiscussionMessage = {
@@ -19,6 +19,11 @@ type Discussion = {
     messages: DiscussionMessage[];
 };
 
+type AnnouncementComment = {
+    announcement_id: number;
+    messages: DiscussionMessage[];
+};
+
 const formatDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -28,15 +33,21 @@ const formatDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateSt
 export default function AdminAnnouncements({
     announcements = [],
     discussions = [],
+    announcementComments = [],
 }: {
     announcements: Announcement[];
     discussions: Discussion[];
+    announcementComments: AnnouncementComment[];
 }) {
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
     const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null);
     const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
     const [isDeletingAnnouncement, setIsDeletingAnnouncement] = useState(false);
+    const [selectedImageName, setSelectedImageName] = useState('');
+    const [selectedAttachmentNames, setSelectedAttachmentNames] = useState<string[]>([]);
+    const [removedAttachmentPaths, setRemovedAttachmentPaths] = useState<string[]>([]);
+    const bodyTextareaRef = useRef<HTMLTextAreaElement>(null);
     
     // Editor State
     const [selectedCategory, setSelectedCategory] = useState('Academic');
@@ -73,7 +84,44 @@ export default function AdminAnnouncements({
     const openEditor = (announcement: Announcement | null = null) => {
         setEditingAnnouncement(announcement);
         setSelectedCategory(announcement?.category || 'Academic');
+        setSelectedImageName('');
+        setSelectedAttachmentNames([]);
+        setRemovedAttachmentPaths([]);
         setIsEditorOpen(true);
+    };
+
+    const insertMarkdown = (prefix: string, suffix = '', placeholder = 'text') => {
+        const textarea = bodyTextareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = textarea.value.slice(start, end);
+        const insertedText = selectedText || placeholder;
+        textarea.setRangeText(`${prefix}${insertedText}${suffix}`, start, end, 'select');
+        textarea.focus();
+        textarea.setSelectionRange(start + prefix.length, start + prefix.length + insertedText.length);
+    };
+
+    const prefixMarkdownLines = (prefix: string, ordered = false) => {
+        const textarea = bodyTextareaRef.current;
+        if (!textarea) return;
+
+        let start = textarea.selectionStart;
+        let end = textarea.selectionEnd;
+        if (start === end) {
+            start = textarea.value.lastIndexOf('\n', start - 1) + 1;
+            end = start;
+        }
+
+        const selectedText = textarea.value.slice(start, end);
+        const lines = selectedText ? selectedText.split('\n') : [''];
+        const insertedText = lines
+            .map((line, index) => `${ordered ? `${index + 1}.` : prefix}${ordered ? ' ' : ''}${line}`)
+            .join('\n');
+
+        textarea.setRangeText(insertedText, start, end, 'end');
+        textarea.focus();
     };
 
     return (
@@ -303,7 +351,15 @@ export default function AdminAnnouncements({
                                                     <td className="px-4 py-4">
                                                         <input type="checkbox" checked={selectedRows.includes(announcement.id)} onChange={() => handleSelectRow(announcement.id)} className="rounded border-slate-300 cursor-pointer" />
                                                     </td>
-                                                    <td className="px-4 py-4 font-bold text-slate-900 line-clamp-1">{announcement.title}</td>
+                                                    <td className="px-4 py-4">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedAnnouncement(announcement)}
+                                                            className="line-clamp-1 text-left font-bold text-slate-900 transition-colors hover:text-ctu-lightblue focus:outline-none focus-visible:ring-2 focus-visible:ring-ctu-lightblue rounded"
+                                                        >
+                                                            {announcement.title}
+                                                        </button>
+                                                    </td>
                                                     <td className="px-4 py-4">
                                                         <span className="border border-slate-200 bg-slate-50 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">{announcement.category}</span>
                                                     </td>
@@ -329,6 +385,17 @@ export default function AdminAnnouncements({
                         </div>
                     </main>
                 </div>
+
+                {selectedAnnouncement && (
+                    <AnnouncementPage
+                        announcement={selectedAnnouncement}
+                        discussions={discussions.filter((discussion) => discussion.announcement_id === selectedAnnouncement.id)}
+                        announcementComments={announcementComments
+                            .filter((comment) => comment.announcement_id === selectedAnnouncement.id)
+                            .flatMap((comment) => comment.messages)}
+                        onClose={() => setSelectedAnnouncement(null)}
+                    />
+                )}
 
                 {/* REDESIGNED ANNOUNCEMENT EDITOR MODAL */}
                 {isEditorOpen && (
@@ -384,17 +451,21 @@ export default function AdminAnnouncements({
                                                     Details <span className="text-rose-500">*</span>
                                                 </label>
                                                 <div className="border border-slate-300 rounded-lg overflow-hidden flex flex-col focus-within:border-ctu-lightblue focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-                                                    <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 border-b border-slate-200 text-slate-500">
-                                                        <button type="button" className="font-bold hover:text-slate-800">B</button>
-                                                        <button type="button" className="italic hover:text-slate-800">I</button>
+                                                    <div className="flex flex-wrap items-center gap-3 px-3 py-2 bg-slate-50 border-b border-slate-200 text-slate-500">
+                                                        <button type="button" aria-label="Bold" title="Bold" onClick={() => insertMarkdown('**', '**')} className="font-bold hover:text-slate-800">B</button>
+                                                        <button type="button" aria-label="Italic" title="Italic" onClick={() => insertMarkdown('*', '*')} className="italic hover:text-slate-800">I</button>
+                                                        <button type="button" aria-label="Heading" title="Heading" onClick={() => prefixMarkdownLines('## ')} className="font-bold hover:text-slate-800">H</button>
                                                         <div className="w-px h-4 bg-slate-300"></div>
-                                                        <button type="button" className="flex items-center gap-1 text-sm hover:text-slate-800"><i className="fa-solid fa-list-ul"></i> 1. List</button>
+                                                        <button type="button" aria-label="Bulleted list" title="Bulleted list" onClick={() => prefixMarkdownLines('- ')} className="flex items-center gap-1 text-sm hover:text-slate-800"><i className="fa-solid fa-list-ul"></i></button>
+                                                        <button type="button" aria-label="Numbered list" title="Numbered list" onClick={() => prefixMarkdownLines('', true)} className="flex items-center gap-1 text-sm hover:text-slate-800"><i className="fa-solid fa-list-ol"></i></button>
+                                                        <button type="button" aria-label="Blockquote" title="Blockquote" onClick={() => prefixMarkdownLines('> ')} className="flex items-center text-sm hover:text-slate-800"><i className="fa-solid fa-quote-left"></i></button>
                                                         <div className="w-px h-4 bg-slate-300"></div>
-                                                        <button type="button" className="flex items-center gap-1 text-sm hover:text-slate-800"><i className="fa-solid fa-link"></i> Link</button>
+                                                        <button type="button" aria-label="Link" title="Link" onClick={() => insertMarkdown('[', '](https://example.com)', 'link text')} className="flex items-center gap-1 text-sm hover:text-slate-800"><i className="fa-solid fa-link"></i></button>
                                                     </div>
                                                     <textarea 
                                                         id="body" 
                                                         name="body" 
+                                                        ref={bodyTextareaRef}
                                                         defaultValue={editingAnnouncement?.body ?? ''} 
                                                         required 
                                                         rows={8} 
@@ -407,8 +478,10 @@ export default function AdminAnnouncements({
 
                                             <div>
                                                 <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Cover image</label>
-                                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer relative overflow-hidden group">
-                                                    {editingAnnouncement?.image_url ? (
+                                                <label className="flex flex-col items-center justify-center w-full min-h-32 border-2 border-dashed border-slate-300 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer relative overflow-hidden group">
+                                                    {selectedImageName ? (
+                                                        <p className="p-4 text-sm font-bold text-slate-700 text-center break-all">{selectedImageName}</p>
+                                                    ) : editingAnnouncement?.image_url ? (
                                                         <img src={editingAnnouncement.image_url} alt="Announcement cover" className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="text-center p-4">
@@ -416,9 +489,61 @@ export default function AdminAnnouncements({
                                                             <p className="text-[10px] text-slate-500">JPG, PNG, GIF or WebP · up to 5 MB</p>
                                                         </div>
                                                     )}
-                                                    <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp" className="absolute inset-0 opacity-0 cursor-pointer" />
+                                                    <input
+                                                        type="file"
+                                                        name="image"
+                                                        accept="image/jpeg,image/png,image/gif,image/webp"
+                                                        onChange={(event) => setSelectedImageName(event.currentTarget.files?.[0]?.name ?? '')}
+                                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                                    />
                                                 </label>
                                                 {errors.image && <p className="mt-1 text-xs font-bold text-red-600">{errors.image}</p>}
+                                            </div>
+
+                                            <div>
+                                                <label htmlFor="attachments" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
+                                                    Downloadable documents
+                                                </label>
+                                                <input
+                                                    id="attachments"
+                                                    type="file"
+                                                    name="attachments[]"
+                                                    multiple
+                                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.odt,.ods,.odp"
+                                                    onChange={(event) => setSelectedAttachmentNames(Array.from(event.currentTarget.files ?? [], (file) => file.name))}
+                                                    className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-xs file:font-bold file:text-blue-700 hover:file:bg-blue-100"
+                                                />
+                                                <p className="mt-1 text-[10px] text-slate-500">PDF, Office, OpenDocument, TXT or CSV · up to 10 MB each</p>
+                                                {selectedAttachmentNames.length > 0 && (
+                                                    <ul className="mt-2 space-y-1">
+                                                        {selectedAttachmentNames.map((name, index) => (
+                                                            <li key={`${name}-${index}`} className="break-all text-xs font-medium text-slate-700">{name}</li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+                                                {editingAnnouncement?.attachments?.filter(({ path }) => !removedAttachmentPaths.includes(path)).map((attachment) => (
+                                                    <div key={attachment.path} className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
+                                                        <a href={attachment.url} target="_blank" rel="noreferrer" className="min-w-0 break-all text-xs font-semibold text-blue-700 hover:underline">
+                                                            {attachment.name}
+                                                        </a>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setRemovedAttachmentPaths((paths) => [...paths, attachment.path])}
+                                                            className="shrink-0 text-xs font-bold text-rose-600 hover:text-rose-800"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                {removedAttachmentPaths.map((path) => (
+                                                    <input key={path} type="hidden" name="remove_attachments[]" value={path} />
+                                                ))}
+                                                {errors.attachments && <p className="mt-1 text-xs font-bold text-red-600">{errors.attachments}</p>}
+                                                {Object.entries(errors)
+                                                    .filter(([key]) => key.startsWith('attachments.'))
+                                                    .map(([key, error]) => (
+                                                        <p key={key} className="mt-1 text-xs font-bold text-red-600">{error}</p>
+                                                    ))}
                                             </div>
                                         </div>
 

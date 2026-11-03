@@ -10,6 +10,7 @@ interface Announcement {
     posted_by: string;
     date: string;
     content: string;
+    content_html: string;
     image: string | null;
     event_date: string | null;
     start_time: string | null;
@@ -341,9 +342,10 @@ export default function ClientAnnouncements({
                                             {announcement.title}
                                         </h3>
                                         
-                                        <p className="line-clamp-3 text-base leading-relaxed text-slate-600 flex-1">
-                                            {announcement.content}
-                                        </p>
+                                        <div
+                                            dangerouslySetInnerHTML={{ __html: announcement.content_html }}
+                                            className="line-clamp-3 flex-1 text-base leading-relaxed text-slate-900 [&_a]:text-blue-700 [&_a]:underline [&_a]:[text-shadow:0_0_8px_rgb(59_130_246_/_50%)] [&_p]:mb-0"
+                                        />
                                         
                                         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
                                             <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-500">
