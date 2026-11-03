@@ -40,8 +40,10 @@ export default function AdminAnnouncements({
     
     // Editor State
     const [selectedCategory, setSelectedCategory] = useState('Academic');
+    
     // Table State
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isLogoutHovered, setIsLogoutHovered] = useState(false);
     const [activeTab, setActiveTab] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
@@ -83,15 +85,45 @@ export default function AdminAnnouncements({
                 @keyframes scaleIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
                 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
                 
+                @keyframes move-around-1 { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(-15vw, 10vh) rotate(15deg); } 50% { transform: translate(-5vw, 25vh) rotate(-10deg); } 75% { transform: translate(10vw, 15vh) rotate(5deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
+                @keyframes move-around-2 { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(10vw, -15vh) rotate(-20deg); } 50% { transform: translate(-20vw, -10vh) rotate(10deg); } 75% { transform: translate(-10vw, 15vh) rotate(-5deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
+                @keyframes move-around-3 { 0% { transform: translate(0, 0) rotate(0deg) scale(1); } 33% { transform: translate(15vw, -20vh) rotate(45deg) scale(1.2); } 66% { transform: translate(-15vw, 10vh) rotate(90deg) scale(0.8); } 100% { transform: translate(0, 0) rotate(0deg) scale(1); } }
+
                 .animate-fade-up { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
                 .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; opacity: 0; }
                 .animate-scale-in { animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+                
+                .shape-move-1 { animation: move-around-1 25s ease-in-out infinite; }
+                .shape-move-2 { animation: move-around-2 30s ease-in-out infinite; }
+                .shape-move-3 { animation: move-around-3 35s ease-in-out infinite; }
+
+                .clip-hexagon { clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
+                .clip-octagon { clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); }
             `}</style>
 
             <div className="font-sans text-slate-800 bg-slate-50 antialiased h-screen flex overflow-hidden relative">
                 
-                {/* SIDEBAR (Simplified for brevity, assuming same as before) */}
-                <aside className={`bg-ctu-dark flex flex-col justify-between shrink-0 absolute md:relative z-40 h-full transition-transform duration-300 shadow-2xl w-64 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+                {/* MOVING SHAPES BACKGROUND */}
+                <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                    <div className="absolute top-[10%] left-[10%] w-[30rem] h-[30rem] bg-blue-500/5 rounded-full blur-3xl shape-move-1"></div>
+                    <div className="absolute bottom-[10%] right-[10%] w-[35rem] h-[35rem] bg-indigo-500/5 rounded-full blur-3xl shape-move-2"></div>
+                    <div className="absolute top-[15%] right-[15%] w-[25rem] h-[25rem] border-[2px] border-blue-500/10 rounded-full shape-move-1"></div>
+                    <div className="absolute bottom-[20%] left-[10%] w-32 h-32 border-[3px] border-indigo-500/10 rounded-full shape-move-2"></div>
+                    <div className="absolute top-[60%] right-[30%] w-20 h-20 border-[2px] border-blue-500/15 rounded-full shape-move-3"></div>
+                    <div className="absolute top-[20%] left-[30%] w-40 h-40 bg-blue-500/5 clip-hexagon shape-move-2"></div>
+                    <div className="absolute bottom-[15%] right-[20%] w-56 h-56 border-[3px] border-indigo-500/10 clip-hexagon shape-move-1 bg-transparent">
+                        <div className="w-full h-full bg-blue-500/5 clip-hexagon scale-[0.95]"></div>
+                    </div>
+                    <div className="absolute top-[45%] left-[15%] w-32 h-32 bg-indigo-500/5 clip-octagon shape-move-3"></div>
+                    <div className="absolute top-[70%] right-[10%] w-28 h-28 border-[2px] border-blue-500/10 rotate-45 shape-move-2"></div>
+                    <div className="absolute bottom-[10%] left-[40%] w-16 h-16 bg-indigo-500/5 rotate-12 shape-move-3"></div>
+                </div>
+
+                {/* FULL SIDEBAR (Matching admin.tsx) */}
+                <aside 
+                    className={`bg-ctu-dark flex flex-col justify-between shrink-0 absolute md:relative z-40 h-full transition-transform duration-300 shadow-2xl w-64 
+                    ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+                >
                     <div className="flex-1 overflow-y-auto no-scrollbar w-64">
                         <div className="p-6 flex items-center">
                             <img src="/images/3rdLogo.png" alt="Cotify Logo" className="w-16 h-16 object-contain -ml-2 -mr-4" />
@@ -99,6 +131,7 @@ export default function AdminAnnouncements({
                                 <h1 className="font-extrabold text-xl leading-tight tracking-tight">Cotify</h1>
                             </div>
                         </div>
+
                         <nav className="mt-2 space-y-6 px-3">
                             <div>
                                 <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Main</p>
@@ -112,7 +145,52 @@ export default function AdminAnnouncements({
                                     <i className="fa-regular fa-calendar w-5 text-center group-hover:scale-110 transition-transform"></i> Events
                                 </Link>
                             </div>
+
+                            <div>
+                                <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">People</p>
+                                <Link href="/admin/users" prefetch="mount" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                    <i className="fa-solid fa-users w-5 text-center group-hover:scale-110 transition-transform"></i> Students
+                                </Link>
+                                <Link href="/admin/admins" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                    <i className="fa-solid fa-user-shield w-5 text-center group-hover:scale-110 transition-transform"></i> Staff & Admins
+                                </Link>
+                            </div>
+
+                            <div>
+                                <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">System</p>
+                                <Link href="/admin/settings" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                    <i className="fa-solid fa-gear w-5 text-center group-hover:rotate-90 transition-transform duration-300"></i> Settings
+                                </Link>
+                            </div>
                         </nav>
+                    </div>
+
+                    <div className="p-4 border-t border-slate-800/50 w-64">
+                        <div className="flex items-center gap-3 px-3 py-2 mb-2">
+                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 text-sm ring-2 ring-slate-700">
+                                <i className="fa-solid fa-user"></i>
+                            </div>
+                            <div>
+                                <p className="text-white text-sm font-bold">Niggas</p>
+                                <p className="text-slate-400 text-[11px] font-medium">Registrar's Office</p>
+                            </div>
+                        </div> 
+                        <Form method="post" action="/admin/logout">
+                            {({ processing }) => (
+                                <button 
+                                    type="submit" 
+                                    disabled={processing} 
+                                    onMouseEnter={() => setIsLogoutHovered(true)}
+                                    onMouseLeave={() => setIsLogoutHovered(false)}
+                                    className={`flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-bold rounded-xl transition-all disabled:opacity-60
+                                        ${isLogoutHovered ? 'bg-red-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
+                                    `}
+                                >
+                                    <i className={`fa-solid fa-arrow-right-from-bracket w-5 text-center transition-colors ${isLogoutHovered ? 'text-white' : 'text-slate-400'}`}></i> 
+                                    {processing ? 'Logging Out...' : 'Log Out'}
+                                </button>
+                            )}
+                        </Form>
                     </div>
                 </aside>
 
@@ -121,14 +199,30 @@ export default function AdminAnnouncements({
                 {/* MAIN CONTENT */}
                 <div className="flex-1 flex flex-col bg-transparent overflow-hidden relative w-full z-10">
                     
+                    {/* TOP BAR */}
                     <header className="h-20 bg-transparent border-b border-slate-200/50 flex items-center justify-between px-6 shrink-0 z-20">
                         <div className="flex items-center gap-4">
                             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} aria-label="Toggle sidebar" className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors md:hidden">
                                 <i className="fa-solid fa-bars"></i>
                             </button>
+                            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight hidden sm:block">Manage Announcements</h2>
                         </div>
                         
                         <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="relative w-64 hidden md:block group">
+                                <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm group-focus-within:text-ctu-lightblue transition-colors"></i>
+                                <input 
+                                    type="text" 
+                                    placeholder="Search..." 
+                                    className="w-full pl-11 pr-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl text-sm focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder-slate-400 font-medium shadow-sm" 
+                                />
+                            </div>
+
+                            <button aria-label="View notifications" className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-ctu-lightblue hover:bg-slate-50 transition-colors shadow-sm">
+                                <i className="fa-regular fa-bell text-lg"></i>
+                                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                            </button>
+
                             <button 
                                 type="button" 
                                 onClick={() => openEditor()} 
@@ -171,7 +265,7 @@ export default function AdminAnnouncements({
                                 </div>
                             </div>
 
-                            {/* SEARCH & FILTERS (Simplified for brevity) */}
+                            {/* SEARCH & FILTERS */}
                             <div className="flex flex-wrap items-center gap-3 mb-6">
                                 <div className="relative flex-1 min-w-[200px] max-w-xs">
                                     <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
@@ -236,9 +330,7 @@ export default function AdminAnnouncements({
                     </main>
                 </div>
 
-                {/* ======================================================== */}
-                {/* REDESIGNED ANNOUNCEMENT EDITOR MODAL                     */}
-                {/* ======================================================== */}
+                {/* REDESIGNED ANNOUNCEMENT EDITOR MODAL */}
                 {isEditorOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 sm:p-6 animate-fade-in" role="dialog" aria-modal="true">
                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-[1100px] h-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
@@ -253,7 +345,6 @@ export default function AdminAnnouncements({
                                     <>
                                     {editingAnnouncement && <input type="hidden" name="_method" value="put" />}
 
-                                    {/* EDITOR HEADER */}
                                     <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white shrink-0">
                                         <div className="flex items-center gap-4">
                                             <button type="button" onClick={() => setIsEditorOpen(false)} className="text-slate-400 hover:text-slate-700">
@@ -270,13 +361,8 @@ export default function AdminAnnouncements({
                                         </div>
                                     </div>
 
-                                    {/* EDITOR BODY (2 COLUMNS) */}
                                     <div className="flex-1 overflow-y-auto flex flex-col md:flex-row bg-white">
-                                        
-                                        {/* LEFT COLUMN (Main Content) */}
                                         <div className="flex-1 p-6 space-y-6 md:border-r border-slate-200">
-                                            
-                                            {/* Title */}
                                             <div>
                                                 <label htmlFor="title" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
                                                     Title <span className="text-rose-500">*</span>
@@ -293,13 +379,11 @@ export default function AdminAnnouncements({
                                                 {errors.title && <p className="mt-1 text-xs font-bold text-red-600">{errors.title}</p>}
                                             </div>
 
-                                            {/* Details (Rich Text) */}
                                             <div>
                                                 <label htmlFor="body" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
                                                     Details <span className="text-rose-500">*</span>
                                                 </label>
                                                 <div className="border border-slate-300 rounded-lg overflow-hidden flex flex-col focus-within:border-ctu-lightblue focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-                                                    {/* Toolbar Mockup */}
                                                     <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 border-b border-slate-200 text-slate-500">
                                                         <button type="button" className="font-bold hover:text-slate-800">B</button>
                                                         <button type="button" className="italic hover:text-slate-800">I</button>
@@ -321,29 +405,24 @@ export default function AdminAnnouncements({
                                                 {errors.body && <p className="mt-1 text-xs font-bold text-red-600">{errors.body}</p>}
                                             </div>
 
-                                                    {/* Cover image */}
-                                                    <div>
-                                                        <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Cover image</label>
-                                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer relative overflow-hidden group">
-                                                            {editingAnnouncement?.image_url ? (
-                                                                <img src={editingAnnouncement.image_url} alt="Announcement cover" className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <div className="text-center p-4">
-                                                                    <p className="text-sm font-bold text-slate-700 mb-1">Choose an image</p>
-                                                                    <p className="text-[10px] text-slate-500">JPG, PNG, GIF or WebP · up to 5 MB</p>
-                                                                </div>
-                                                            )}
-                                                            <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp" className="absolute inset-0 opacity-0 cursor-pointer" />
-                                                        </label>
-                                                        {errors.image && <p className="mt-1 text-xs font-bold text-red-600">{errors.image}</p>}
-                                                    </div>
-
+                                            <div>
+                                                <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Cover image</label>
+                                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer relative overflow-hidden group">
+                                                    {editingAnnouncement?.image_url ? (
+                                                        <img src={editingAnnouncement.image_url} alt="Announcement cover" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="text-center p-4">
+                                                            <p className="text-sm font-bold text-slate-700 mb-1">Choose an image</p>
+                                                            <p className="text-[10px] text-slate-500">JPG, PNG, GIF or WebP · up to 5 MB</p>
+                                                        </div>
+                                                    )}
+                                                    <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp" className="absolute inset-0 opacity-0 cursor-pointer" />
+                                                </label>
+                                                {errors.image && <p className="mt-1 text-xs font-bold text-red-600">{errors.image}</p>}
+                                            </div>
                                         </div>
 
-                                        {/* RIGHT COLUMN (Sidebar Settings) */}
                                         <div className="w-full md:w-[320px] bg-slate-50/50 p-6 space-y-6 shrink-0">
-                                            
-                                            {/* Database-backed announcement fields */}
                                             <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                                                 <label htmlFor="category" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
                                                     Category <span className="text-rose-500">*</span>
@@ -438,7 +517,6 @@ export default function AdminAnnouncements({
                                                     </div>
                                                 </div>
                                             )}
-
                                         </div>
                                     </div>
                                     </>
@@ -448,7 +526,7 @@ export default function AdminAnnouncements({
                     </div>
                 )}
 
-                {/* Delete Modal (Simplified) */}
+                {/* Delete Modal */}
                 {announcementToDelete && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
                         <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 animate-scale-in text-center">
@@ -472,7 +550,6 @@ export default function AdminAnnouncements({
                         </div>
                     </div>
                 )}
-
             </div>
         </>
     );

@@ -172,12 +172,6 @@ export default function admin({
 
                             <div>
                                 <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">System</p>
-                                <Link href="/admin/categories" prefetch="mount" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
-                                    <i className="fa-solid fa-tags w-5 text-center group-hover:scale-110 transition-transform"></i> Categories
-                                </Link>
-                                <Link href="/admin/logs" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
-                                    <i className="fa-solid fa-clock-rotate-left w-5 text-center group-hover:scale-110 transition-transform"></i> Activity Log
-                                </Link>
                                 <Link href="/admin/settings" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-gear w-5 text-center group-hover:rotate-90 transition-transform duration-300"></i> Settings
                                 </Link>
@@ -191,7 +185,7 @@ export default function admin({
                                 <i className="fa-solid fa-user"></i>
                             </div>
                             <div>
-                                <p className="text-white text-sm font-bold">M. Santos</p>
+                                <p className="text-white text-sm font-bold">Niggas</p>
                                 <p className="text-slate-400 text-[11px] font-medium">Registrar's Office</p>
                             </div>
                         </div> 
