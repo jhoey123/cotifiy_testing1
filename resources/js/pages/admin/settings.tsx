@@ -4,7 +4,7 @@ import { useState } from 'react';
 export default function Settings() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isLogoutHovered, setIsLogoutHovered] = useState(false);
-    const [activeTab, setActiveTab] = useState<'password' | 'categories' | 'offices' | 'school'>('password');
+    const [activeTab, setActiveTab] = useState<'password' | 'offices'>('password');
 
     return (
         <>
@@ -153,13 +153,11 @@ export default function Settings() {
                             <div className="flex items-center gap-6 border-b border-slate-200 mb-8 overflow-x-auto no-scrollbar">
                                 {[
                                     { id: 'password', label: 'Password' },
-                                    { id: 'categories', label: 'Categories' },
                                     { id: 'offices', label: 'Offices' },
-                                    { id: 'school', label: 'School & Semester' },
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
-                                        onClick={() => setActiveTab(tab.id as any)}
+                                        onClick={() => setActiveTab(tab.id === 'password' ? 'password' : 'offices')}
                                         className={`pb-3 text-sm font-bold whitespace-nowrap transition-colors relative flex items-center gap-1.5 ${
                                             activeTab === tab.id ? 'text-slate-900' : 'text-slate-500 hover:text-slate-700'
                                         }`}
@@ -222,39 +220,6 @@ export default function Settings() {
                                 </section>
                             )}
 
-                            {/* TAB CONTENT: CATEGORIES (Mockup for super admin) */}
-                            {activeTab === 'categories' && (
-                                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm animate-fade-in">
-                                    <div className="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-                                        <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
-                                            <i className="fa-solid fa-tags text-blue-600"></i> Manage Categories
-                                        </h3>
-                                        <button type="button" className="px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 transition-colors">
-                                            + New Category
-                                        </button>
-                                    </div>
-                                    <div className="p-6">
-                                        <div className="space-y-3">
-                                            {/* Mock list */}
-                                            {['Academic', 'Events', 'General', 'Service'].map((cat, i) => (
-                                                <div key={i} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-slate-50">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className={`w-3 h-3 rounded-full ${
-                                                            cat === 'Academic' ? 'bg-blue-500' : 
-                                                            cat === 'Events' ? 'bg-emerald-500' : 
-                                                            cat === 'Service' ? 'bg-purple-500' : 'bg-slate-500'
-                                                        }`}></span>
-                                                        <span className="font-bold text-slate-800">{cat}</span>
-                                                    </div>
-                                                    <button className="text-xs font-bold text-slate-500 hover:text-slate-900">Edit</button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <p className="mt-4 text-xs text-slate-500">Categories are stored in the database and colors apply globally.</p>
-                                    </div>
-                                </section>
-                            )}
-
                             {/* TAB CONTENT: OFFICES (Mockup for super admin) */}
                             {activeTab === 'offices' && (
                                 <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm animate-fade-in">
@@ -277,33 +242,6 @@ export default function Settings() {
                                             ))}
                                         </div>
                                         <p className="mt-4 text-xs text-slate-500">Offices link to admin accounts for accurate "Posted By" labels.</p>
-                                    </div>
-                                </section>
-                            )}
-
-                            {/* TAB CONTENT: SCHOOL & SEMESTER (Mockup for super admin) */}
-                            {activeTab === 'school' && (
-                                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm animate-fade-in">
-                                    <div className="border-b border-slate-200 px-6 py-4">
-                                        <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
-                                            <i className="fa-solid fa-school text-blue-600"></i> School & Semester
-                                        </h3>
-                                    </div>
-                                    <div className="p-6 space-y-4 max-w-lg">
-                                        <div>
-                                            <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wide mb-2">School Name</label>
-                                            <input type="text" defaultValue="College of Technology" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wide mb-2">Current Semester</label>
-                                            <select className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-                                                <option>1st Semester, AY 2023-2024</option>
-                                                <option>2nd Semester, AY 2023-2024</option>
-                                            </select>
-                                        </div>
-                                        <div className="pt-4 border-t border-slate-100 flex justify-end">
-                                            <button className="rounded-xl bg-ctu-dark px-6 py-2.5 text-sm font-bold text-white hover:bg-slate-800 transition-colors">Save Changes</button>
-                                        </div>
                                     </div>
                                 </section>
                             )}

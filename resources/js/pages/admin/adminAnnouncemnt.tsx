@@ -57,6 +57,7 @@ export default function AdminAnnouncements({
     const [isLogoutHovered, setIsLogoutHovered] = useState(false);
     const [activeTab, setActiveTab] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('All');
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
 
@@ -64,7 +65,8 @@ export default function AdminAnnouncements({
     const filteredAnnouncements = announcements.filter((ann) => {
         const matchesTab = activeTab === 'All' || ann.status === activeTab;
         const matchesSearch = ann.title.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesTab && matchesSearch;
+        const matchesCategory = categoryFilter === 'All' || ann.category === categoryFilter;
+        return matchesTab && matchesSearch && matchesCategory;
     });
 
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,15 +259,6 @@ export default function AdminAnnouncements({
                         </div>
                         
                         <div className="flex items-center gap-3 sm:gap-4">
-                            <div className="relative w-64 hidden md:block group">
-                                <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm group-focus-within:text-ctu-lightblue transition-colors"></i>
-                                <input 
-                                    type="text" 
-                                    placeholder="Search..." 
-                                    className="w-full pl-11 pr-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl text-sm focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder-slate-400 font-medium shadow-sm" 
-                                />
-                            </div>
-
                             <button aria-label="View notifications" className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-ctu-lightblue hover:bg-slate-50 transition-colors shadow-sm">
                                 <i className="fa-regular fa-bell text-lg"></i>
                                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
@@ -293,7 +286,6 @@ export default function AdminAnnouncements({
                                     {[
                                         { label: 'All', count: 24 },
                                         { label: 'Published', count: 18 },
-                                        { label: 'Scheduled', count: 1 },
                                         { label: 'Drafts', count: 2 },
                                         { label: 'Archived', count: 3 },
                                     ].map((tab) => (
@@ -326,6 +318,18 @@ export default function AdminAnnouncements({
                                         className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-lg text-sm focus:border-ctu-lightblue outline-none shadow-sm"
                                     />
                                 </div>
+                                <select
+                                    value={categoryFilter}
+                                    onChange={(e) => setCategoryFilter(e.target.value)}
+                                    aria-label="Filter announcements by category"
+                                    className="min-w-[160px] px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm focus:border-ctu-lightblue outline-none shadow-sm"
+                                >
+                                    <option value="All">All categories</option>
+                                    <option value="Academic">Academic</option>
+                                    <option value="General">General</option>
+                                    <option value="Event">Event</option>
+                                    <option value="Service">Service</option>
+                                </select>
                             </div>
 
                             {/* TABLE */}
@@ -562,7 +566,7 @@ export default function AdminAnnouncements({
                                                 >
                                                     <option value="Academic">Academic</option>
                                                     <option value="General">General</option>
-                                                    <option value="Event">Event</option>
+                                                    {editingAnnouncement?.category === 'Event' && <option value="Event">Event</option>}
                                                     <option value="Service">Service</option>
                                                 </select>
                                                 {errors.category && <p className="mb-3 text-xs font-bold text-red-600">{errors.category}</p>}
@@ -589,7 +593,7 @@ export default function AdminAnnouncements({
                                                     </h4>
                                                     <div>
                                                         <label htmlFor="event_date" className="block text-xs font-bold text-slate-700 mb-1">
-                                                            Event date <span className="text-rose-500">*</span>
+                                                            Start date <span className="text-rose-500">*</span>
                                                         </label>
                                                         <input
                                                             id="event_date"
@@ -600,6 +604,21 @@ export default function AdminAnnouncements({
                                                             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
                                                         />
                                                         {errors.event_date && <p className="mt-1 text-xs font-bold text-red-600">{errors.event_date}</p>}
+                                                    </div>
+                                                    <div>
+                                                        <label htmlFor="event_end_date" className="block text-xs font-bold text-slate-700 mb-1">
+                                                            End date <span className="text-rose-500">*</span>
+                                                        </label>
+                                                        <input
+                                                            id="event_end_date"
+                                                            type="date"
+                                                            name="event_end_date"
+                                                            min={editingAnnouncement?.event_date ?? undefined}
+                                                            defaultValue={editingAnnouncement?.event_end_date ?? editingAnnouncement?.event_date ?? ''}
+                                                            required
+                                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                                                        />
+                                                        {errors.event_end_date && <p className="mt-1 text-xs font-bold text-red-600">{errors.event_end_date}</p>}
                                                     </div>
                                                     <div className="grid grid-cols-2 gap-3">
                                                         <div>

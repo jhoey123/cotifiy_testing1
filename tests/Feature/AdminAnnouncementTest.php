@@ -340,3 +340,60 @@ test('an admin can publish an event announcement with a future schedule', functi
         ->and($event->end_time)->toStartWith('12:00')
         ->and($event->location)->toBe('Main courtyard');
 });
+
+test('an admin can publish a multi-day event with an inclusive end date', function () {
+    $admin = AdminUser::create([
+        'name' => 'Site Admin',
+        'email' => 'admin@example.com',
+        'password' => 'secret-password',
+    ]);
+    $startDate = now()->addDays(3)->toDateString();
+    $endDate = now()->addDays(5)->toDateString();
+
+    $this->actingAs($admin, 'admin')
+        ->post(route('admin.announcements.store'), [
+            'title' => 'Campus festival',
+            'category' => 'Event',
+            'posted_by' => 'Student Affairs',
+            'body' => 'A three-day campus festival.',
+            'event_date' => $startDate,
+            'event_end_date' => $endDate,
+            'start_time' => '09:00',
+            'end_time' => '17:00',
+            'location' => 'Main courtyard',
+        ])
+        ->assertRedirect();
+
+    $event = Announcement::query()->firstOrFail();
+    expect($event->event_date->toDateString())->toBe($startDate)
+        ->and($event->event_end_date->toDateString())->toBe($endDate);
+
+    $this->get(route('admin.events'))
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/adminEvent')
+            ->where('events.0.date', $startDate)
+            ->where('events.0.end_date', $endDate));
+});
+
+test('an event end date cannot be earlier than its start date', function () {
+    $admin = AdminUser::create([
+        'name' => 'Site Admin',
+        'email' => 'admin@example.com',
+        'password' => 'secret-password',
+    ]);
+
+    $this->actingAs($admin, 'admin')
+        ->from(route('admin.events'))
+        ->post(route('admin.announcements.store'), [
+            'title' => 'Invalid event range',
+            'category' => 'Event',
+            'posted_by' => 'Student Affairs',
+            'body' => 'This date range is invalid.',
+            'event_date' => now()->addDays(5)->toDateString(),
+            'event_end_date' => now()->addDays(3)->toDateString(),
+            'location' => 'Main courtyard',
+        ])
+        ->assertSessionHasErrors('event_end_date');
+
+    expect(Announcement::query()->count())->toBe(0);
+});

@@ -71,6 +71,9 @@ Route::post('/admin/discussions/{conversation}/messages', [AdminAnnouncementDisc
 Route::get('/admin/users', [UserController::class, 'index'])
     ->middleware(['auth:admin', 'private-cache'])
     ->name('admin.users');
+Route::get('/admin/staff', [UserController::class, 'staff'])
+    ->middleware(['auth:admin', 'private-cache'])
+    ->name('admin.staff');
 Route::get('/admin/settings', [SettingsController::class, 'index'])
     ->middleware(['auth:admin', 'private-cache'])
     ->name('admin.settings');

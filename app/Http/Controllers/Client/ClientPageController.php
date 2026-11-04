@@ -26,6 +26,7 @@ class ClientPageController extends Controller
                 'body',
                 'image',
                 'event_date',
+                'event_end_date',
                 'start_time',
                 'end_time',
                 'location',
@@ -46,12 +47,19 @@ class ClientPageController extends Controller
                 'body',
                 'image',
                 'event_date',
+                'event_end_date',
                 'start_time',
                 'end_time',
                 'location',
             ])
             ->where('category', 'Event')
-            ->whereDate('event_date', '>=', now()->toDateString())
+            ->where(function ($query) {
+                $query->whereDate('event_end_date', '>=', now()->toDateString())
+                    ->orWhere(function ($query) {
+                        $query->whereNull('event_end_date')
+                            ->whereDate('event_date', '>=', now()->toDateString());
+                    });
+            })
             ->orderBy('event_date')
             ->orderBy('id')
             ->limit(2)
@@ -196,6 +204,7 @@ class ClientPageController extends Controller
                 ];
             }, $announcement->attachments ?? []),
             'event_date' => $announcement->event_date?->toDateString(),
+            'event_end_date' => $announcement->event_end_date?->toDateString(),
             'start_time' => $announcement->start_time,
             'end_time' => $announcement->end_time,
             'location' => $announcement->location,
@@ -219,6 +228,7 @@ class ClientPageController extends Controller
                 ? Storage::disk('public')->url($announcement->image)
                 : null,
             'event_date' => $announcement->event_date?->toDateString(),
+            'event_end_date' => $announcement->event_end_date?->toDateString(),
             'start_time' => $announcement->start_time,
             'end_time' => $announcement->end_time,
             'location' => $announcement->location,

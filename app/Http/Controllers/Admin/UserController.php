@@ -20,7 +20,16 @@ class UserController extends Controller
         return Inertia::render('admin/users', [
             'users' => User::query()
                 ->orderBy('name')
-                ->get(['id', 'name', 'email', 'studentId', 'created_at']),
+                ->get(['id', 'name', 'email', 'studentId', 'course', 'year_level', 'created_at']),
+            'adminUsers' => AdminUser::query()
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'created_at']),
+        ]);
+    }
+
+    public function staff(): Response
+    {
+        return Inertia::render('admin/adminstaff', [
             'adminUsers' => AdminUser::query()
                 ->orderBy('name')
                 ->get(['id', 'name', 'email', 'created_at']),
@@ -64,6 +73,8 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'studentId' => ['nullable', 'string', 'max:255'],
+            'course' => ['nullable', 'string', 'max:255'],
+            'year_level' => ['nullable', 'string', 'max:255'],
             'email' => [
                 'required',
                 'string',
@@ -72,10 +83,14 @@ class UserController extends Controller
                 Rule::unique(User::class)->ignore($user),
                 Rule::unique(AdminUser::class),
             ],
+            'password' => ['nullable', 'string', Password::default(), 'confirmed'],
         ]);
 
         $emailChanged = $user->email !== $validated['email'];
-        $user->fill($validated);
+        $user->fill(collect($validated)->except(['password'])->all());
+        if (! empty($validated['password'])) {
+            $user->password = $validated['password'];
+        }
         if ($emailChanged) {
             $user->email_verified_at = null;
         }

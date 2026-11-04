@@ -12,6 +12,7 @@ export type Announcement = {
     image_url: string | null;
     attachments: { path: string; name: string; url: string; size: string }[];
     event_date: string | null;
+    event_end_date?: string | null;
     start_time: string | null;
     end_time: string | null;
     location: string | null;

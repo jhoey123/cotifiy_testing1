@@ -44,6 +44,24 @@ test('the users page requires admin authentication', function () {
         ->assertRedirect(route('login'));
 });
 
+test('an admin can view staff accounts from the staff page', function () {
+    $admin = AdminUser::create([
+        'name' => 'Site Admin',
+        'email' => 'admin@example.com',
+        'password' => 'secret-password',
+    ]);
+
+    $this->actingAs($admin, 'admin')
+        ->get(route('admin.staff'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/adminstaff')
+            ->has('adminUsers', 1)
+            ->where('adminUsers.0.id', $admin->id)
+            ->where('adminUsers.0.name', 'Site Admin')
+            ->missing('adminUsers.0.password'));
+});
+
 test('an admin can create another admin account', function () {
     $admin = AdminUser::create([
         'name' => 'Site Admin',
@@ -111,6 +129,10 @@ test('an admin can edit and delete a regular user', function () {
             'name' => 'Avery Updated',
             'email' => 'avery-updated@example.com',
             'studentId' => 'STU-456',
+            'course' => 'BSCS',
+            'year_level' => '3rd Year',
+            'password' => 'a-strong-updated-password',
+            'password_confirmation' => 'a-strong-updated-password',
         ])
         ->assertRedirect();
 
@@ -119,8 +141,11 @@ test('an admin can edit and delete a regular user', function () {
         'name' => 'Avery Updated',
         'email' => 'avery-updated@example.com',
         'studentId' => 'STU-456',
+        'course' => 'BSCS',
+        'year_level' => '3rd Year',
         'email_verified_at' => null,
     ]);
+    expect(Hash::check('a-strong-updated-password', $user->fresh()->password))->toBeTrue();
 
     $this->delete(route('admin.users.destroy', $user))
         ->assertRedirect();

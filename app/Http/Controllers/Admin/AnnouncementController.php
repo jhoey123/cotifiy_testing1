@@ -32,7 +32,13 @@ class AnnouncementController extends Controller
             'recentAnnouncements' => $announcements->take(5)->map(fn (Announcement $announcement) => $this->announcementData($announcement)),
             'upcomingEvents' => Announcement::query()
                 ->where('category', 'Event')
-                ->whereDate('event_date', '>=', now()->toDateString())
+                ->where(function ($query) {
+                    $query->whereDate('event_end_date', '>=', now()->toDateString())
+                        ->orWhere(function ($query) {
+                            $query->whereNull('event_end_date')
+                                ->whereDate('event_date', '>=', now()->toDateString());
+                        });
+                })
                 ->orderBy('event_date')
                 ->orderBy('start_time')
                 ->orderBy('id')
@@ -42,6 +48,7 @@ class AnnouncementController extends Controller
                     'id' => $announcement->id,
                     'title' => $announcement->title,
                     'event_date' => $announcement->event_date->toDateString(),
+                    'event_end_date' => $announcement->event_end_date?->toDateString() ?? $announcement->event_date->toDateString(),
                     'start_time' => $announcement->start_time,
                     'end_time' => $announcement->end_time,
                     'location' => $announcement->location,
@@ -78,13 +85,20 @@ class AnnouncementController extends Controller
             ->map(fn (Announcement $announcement) => [
                 'id' => $announcement->id,
                 'title' => $announcement->title,
+                'body' => $announcement->body,
+                'posted_by' => $announcement->posted_by,
+                'image_url' => $announcement->image
+                    ? Storage::disk('public')->url($announcement->image)
+                    : null,
+                'attachments' => $this->attachmentData($announcement),
                 'date' => $announcement->event_date?->toDateString() ?? $announcement->date->toDateString(),
+                'end_date' => $announcement->event_end_date?->toDateString() ?? $announcement->event_date?->toDateString() ?? $announcement->date->toDateString(),
                 'time' => $announcement->start_time ?? '',
                 'venue' => $announcement->location ?? '',
                 'rsvp_count' => 0,
                 'capacity' => null,
                 'audience' => 'All',
-                'status' => ($announcement->event_date?->toDateString() ?? $announcement->date->toDateString()) >= now()->toDateString()
+                'status' => ($announcement->event_end_date?->toDateString() ?? $announcement->event_date?->toDateString() ?? $announcement->date->toDateString()) >= now()->toDateString()
                     ? 'Upcoming'
                     : 'Past',
                 'start_time' => $announcement->start_time ?? '',
@@ -176,6 +190,7 @@ class AnnouncementController extends Controller
             'attachments' => ['sometimes', 'array', 'max:10'],
             'attachments.*' => ['file', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,odt,ods,odp', 'max:10240'],
             'event_date' => ['nullable', 'required_if:category,Event', 'date'],
+            'event_end_date' => ['nullable', 'date', 'after_or_equal:event_date'],
             'start_time' => ['nullable', 'required_with:end_time', 'date_format:H:i'],
             'end_time' => ['nullable', 'required_with:start_time', 'date_format:H:i', 'after:start_time'],
             'location' => ['nullable', 'required_if:category,Event', 'string', 'max:255'],
@@ -220,6 +235,7 @@ class AnnouncementController extends Controller
             'remove_attachments' => ['sometimes', 'array'],
             'remove_attachments.*' => ['string', Rule::in(array_column($announcement->attachments ?? [], 'path'))],
             'event_date' => ['nullable', 'required_if:category,Event', 'date'],
+            'event_end_date' => ['nullable', 'date', 'after_or_equal:event_date'],
             'start_time' => ['nullable', 'required_with:end_time', 'date_format:H:i'],
             'end_time' => ['nullable', 'required_with:start_time', 'date_format:H:i', 'after:start_time'],
             'location' => ['nullable', 'required_if:category,Event', 'string', 'max:255'],
@@ -300,6 +316,7 @@ class AnnouncementController extends Controller
                 : null,
             'attachments' => $this->attachmentData($announcement),
             'event_date' => $announcement->event_date?->toDateString(),
+            'event_end_date' => $announcement->event_end_date?->toDateString(),
             'start_time' => $announcement->start_time,
             'end_time' => $announcement->end_time,
             'location' => $announcement->location,
@@ -343,6 +360,7 @@ class AnnouncementController extends Controller
         if ($validated['category'] === 'Event') {
             return [
                 'event_date' => $validated['event_date'],
+                'event_end_date' => $validated['event_end_date'] ?? $validated['event_date'],
                 'start_time' => $validated['start_time'] ?? null,
                 'end_time' => $validated['end_time'] ?? null,
                 'location' => $validated['location'],
@@ -351,6 +369,7 @@ class AnnouncementController extends Controller
 
         return [
             'event_date' => null,
+            'event_end_date' => null,
             'start_time' => null,
             'end_time' => null,
             'location' => null,

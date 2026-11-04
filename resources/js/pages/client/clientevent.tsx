@@ -10,6 +10,7 @@ interface EventAnnouncement {
     content: string;
     image: string | null;
     event_date: string;
+    event_end_date?: string | null;
     start_time: string | null;
     end_time: string | null;
     location: string | null;
@@ -64,7 +65,9 @@ export default function ClientEvents({
         setSelectedDate(today.toISOString().split('T')[0]);
     };
 
-    const getEventsForDate = (dateStr: string) => filteredEvents.filter(e => e.event_date === dateStr);
+    const getEventsForDate = (dateStr: string) => filteredEvents.filter(e =>
+        e.event_date <= dateStr && (e.event_end_date || e.event_date) >= dateStr
+    );
 
     const activeDateStr = selectedDate || (
         new Date().getMonth() === currentMonth && new Date().getFullYear() === currentYear

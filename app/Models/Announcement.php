@@ -9,8 +9,9 @@ use Spatie\LaravelMarkdown\MarkdownRenderer;
 /**
  * @property \Illuminate\Support\Carbon $date
  * @property \Illuminate\Support\Carbon|null $event_date
+ * @property \Illuminate\Support\Carbon|null $event_end_date
  */
-#[Fillable(['image', 'title', 'category', 'posted_by', 'date', 'body', 'event_date', 'start_time', 'end_time', 'location', 'attachments'])]
+#[Fillable(['image', 'title', 'category', 'posted_by', 'date', 'body', 'event_date', 'event_end_date', 'start_time', 'end_time', 'location', 'attachments'])]
 class Announcement extends Model
 {
     protected $table = 'announcement';
@@ -31,6 +32,7 @@ class Announcement extends Model
         return [
             'date' => 'date',
             'event_date' => 'date',
+            'event_end_date' => 'date',
             'attachments' => 'array',
         ];
     }

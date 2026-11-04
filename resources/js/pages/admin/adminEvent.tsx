@@ -1,10 +1,11 @@
 import { Head, Link, router, useForm, Form } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 type AdminEvent = {
     id: number;
     title: string;
     date: string;
+    end_date: string;
     time: string;
     venue: string;
     rsvp_count: number;
@@ -13,7 +14,127 @@ type AdminEvent = {
     status: 'Upcoming' | 'Past';
     start_time: string;
     end_time: string;
+    body: string;
+    posted_by: string;
+    image_url: string | null;
+    attachments: EventAttachment[];
 };
+
+type EventAttachment = {
+    path: string;
+    name: string;
+    url: string;
+    size: string;
+};
+
+type EventFormData = {
+    title: string;
+    category: 'Event';
+    posted_by: string;
+    body: string;
+    event_date: string;
+    event_end_date: string;
+    start_time: string;
+    end_time: string;
+    location: string;
+    image: File | null;
+    attachments: File[];
+    remove_attachments: string[];
+    _method?: 'put';
+};
+
+type TimeParts = {
+    hour: string;
+    minute: string;
+    period: string;
+};
+
+const toDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const getTimeParts = (time: string): TimeParts => {
+    if (!time) {
+        return { hour: '', minute: '', period: '' };
+    }
+
+    const [hour24, minute] = time.split(':');
+    const hour = Number(hour24);
+    return {
+        hour: String(hour % 12 || 12).padStart(2, '0'),
+        minute: minute ?? '00',
+        period: hour >= 12 ? 'PM' : 'AM',
+    };
+};
+
+const formatTime = (time: string) => {
+    if (!time) return '';
+    const [hour, minute] = time.split(':').map(Number);
+    return new Date(2000, 0, 1, hour, minute).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    });
+};
+
+function EventTimePicker({
+    id,
+    label,
+    parts,
+    error,
+    onChange,
+}: {
+    id: string;
+    label: string;
+    parts: TimeParts;
+    error?: string;
+    onChange: (part: 'hour' | 'minute' | 'period', value: string) => void;
+}) {
+    return (
+        <div>
+            <label htmlFor={`${id}-hour`} className="mb-1 block text-xs font-bold text-slate-700">{label}</label>
+            <div className="grid grid-cols-[1fr_1fr_1.2fr] gap-2">
+                <select
+                    id={`${id}-hour`}
+                    aria-label={`${label} hour`}
+                    value={parts.hour}
+                    onChange={(e) => onChange('hour', e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm focus:border-ctu-lightblue focus:outline-none"
+                >
+                    <option value="">Hour</option>
+                    {Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, '0')).map((hour) => (
+                        <option key={hour} value={hour}>{Number(hour)}</option>
+                    ))}
+                </select>
+                <select
+                    aria-label={`${label} minute`}
+                    value={parts.minute}
+                    onChange={(e) => onChange('minute', e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm focus:border-ctu-lightblue focus:outline-none"
+                >
+                    <option value="">Min</option>
+                    {Array.from({ length: 60 }, (_, minute) => String(minute).padStart(2, '0')).map((minute) => (
+                        <option key={minute} value={minute}>{minute}</option>
+                    ))}
+                </select>
+                <select
+                    aria-label={`${label} AM or PM`}
+                    value={parts.period}
+                    onChange={(e) => onChange('period', e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm focus:border-ctu-lightblue focus:outline-none"
+                >
+                    <option value="">AM/PM</option>
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                </select>
+            </div>
+            {error && <p className="mt-1 text-xs font-semibold text-rose-600">{error}</p>}
+        </div>
+    );
+}
 
 export default function AdminEvents({
     events = [],
@@ -22,65 +143,119 @@ export default function AdminEvents({
 }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isLogoutHovered, setIsLogoutHovered] = useState(false);
-    const [activeTab, setActiveTab] = useState<'Upcoming' | 'Past'>('Upcoming');
-    const [eventToDelete, setEventToDelete] = useState<AdminEvent | null>(null);
+    const [visibleMonth, setVisibleMonth] = useState(() => {
+        const today = new Date();
+        return new Date(today.getFullYear(), today.getMonth(), 1);
+    });
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const [editingEvent, setEditingEvent] = useState<AdminEvent | null>(null);
-
-    // Initialize form
-    const form = useForm({
+    const [isEventEditorOpen, setIsEventEditorOpen] = useState(false);
+    const [eventToDelete, setEventToDelete] = useState<AdminEvent | null>(null);
+    const [selectedImageName, setSelectedImageName] = useState('');
+    const [selectedAttachmentNames, setSelectedAttachmentNames] = useState<string[]>([]);
+    const [startTimeParts, setStartTimeParts] = useState<TimeParts>(() => getTimeParts(''));
+    const [endTimeParts, setEndTimeParts] = useState<TimeParts>(() => getTimeParts(''));
+    const eventForm = useForm<EventFormData>({
         title: '',
-        venue: '',
+        category: 'Event',
+        posted_by: "Registrar's Office",
+        body: '',
+        event_date: '',
+        event_end_date: '',
         start_time: '',
         end_time: '',
-        capacity: '',
-        audience: 'All',
-        create_announcement: false,
+        location: '',
+        image: null,
+        attachments: [],
+        remove_attachments: [],
     });
 
-    // Update form when editing event changes - FIXED INFINITE LOOP
-    useEffect(() => {
-        if (editingEvent) {
-            form.setData({
-                title: editingEvent.title,
-                venue: editingEvent.venue,
-                start_time: editingEvent.start_time,
-                end_time: editingEvent.end_time,
-                capacity: editingEvent.capacity || '',
-                audience: editingEvent.audience,
-                create_announcement: false,
-            });
-            // Scroll to form
-            document.getElementById('event-form')?.scrollIntoView({ behavior: 'smooth' });
-        } else {
-            form.reset();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [editingEvent]);
-
-    // Filter events by tab
-    const filteredEvents = events.filter((e) => e.status === activeTab);
-
-    // Form submission handler
-    const handleSaveEvent = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (editingEvent) {
-            form.put(`/admin/events/${editingEvent.id}`, {
-                preserveScroll: true,
-                onSuccess: () => setEditingEvent(null),
-            });
-        } else {
-            form.post('/admin/events', {
-                preserveScroll: true,
-                onSuccess: () => {
-                    form.reset();
-                },
-            });
-        }
+    const openEventEditor = (event: AdminEvent | null = null) => {
+        setEditingEvent(event);
+        setStartTimeParts(getTimeParts(event?.start_time?.slice(0, 5) ?? ''));
+        setEndTimeParts(getTimeParts(event?.end_time?.slice(0, 5) ?? ''));
+        eventForm.setData({
+            title: event?.title ?? '',
+            category: 'Event',
+            posted_by: event?.posted_by ?? "Registrar's Office",
+            body: event?.body ?? '',
+            event_date: event?.date ?? selectedDate ?? '',
+            event_end_date: event?.end_date ?? event?.date ?? selectedDate ?? '',
+            start_time: event?.start_time?.slice(0, 5) ?? '',
+            end_time: event?.end_time?.slice(0, 5) ?? '',
+            location: event?.venue ?? '',
+            image: null,
+            attachments: [],
+            remove_attachments: [],
+        });
+        setSelectedImageName('');
+        setSelectedAttachmentNames([]);
+        eventForm.clearErrors();
+        setIsEventEditorOpen(true);
     };
+
+    const closeEventEditor = () => {
+        setIsEventEditorOpen(false);
+        setEditingEvent(null);
+        eventForm.reset();
+        setSelectedImageName('');
+        setSelectedAttachmentNames([]);
+        setStartTimeParts(getTimeParts(''));
+        setEndTimeParts(getTimeParts(''));
+        eventForm.clearErrors();
+    };
+
+    const saveEvent = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const options = {
+            preserveScroll: true,
+            onSuccess: closeEventEditor,
+        };
+
+        eventForm.transform((data) => editingEvent ? { ...data, _method: 'put' } : data);
+        eventForm.post(editingEvent ? `/admin/announcements/${editingEvent.id}` : '/admin/announcements', {
+            ...options,
+            forceFormData: true,
+        });
+    };
+
+    const updateEventTime = (field: 'start_time' | 'end_time', part: 'hour' | 'minute' | 'period', value: string) => {
+        const currentParts = field === 'start_time' ? startTimeParts : endTimeParts;
+        const parts = { ...currentParts, [part]: value };
+        (field === 'start_time' ? setStartTimeParts : setEndTimeParts)(parts);
+        if (!parts.hour || !parts.minute || !parts.period) {
+            eventForm.setData(field, '');
+            return;
+        }
+
+        const hour24 = (Number(parts.hour) % 12) + (parts.period === 'PM' ? 12 : 0);
+        eventForm.setData(field, `${String(hour24).padStart(2, '0')}:${parts.minute}`);
+    };
+
+    const monthStart = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1);
+    const calendarStart = new Date(monthStart);
+    calendarStart.setDate(monthStart.getDate() - monthStart.getDay());
+    const calendarDays = Array.from({ length: 42 }, (_, index) => {
+        const date = new Date(calendarStart);
+        date.setDate(calendarStart.getDate() + index);
+        return date;
+    });
+    const eventsByDate = events.reduce<Record<string, AdminEvent[]>>((groupedEvents, event) => {
+        const eventEndDate = event.end_date || event.date;
+        for (const date of calendarDays) {
+            const dateKey = toDateKey(date);
+            if (event.date <= dateKey && eventEndDate >= dateKey) {
+                groupedEvents[dateKey] = [...(groupedEvents[dateKey] ?? []), event];
+            }
+        }
+
+        return groupedEvents;
+    }, {});
+    const monthLabel = visibleMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
     const confirmDelete = () => {
         if (!eventToDelete) return;
-        router.delete(`/admin/events/${eventToDelete.id}`, {
+        router.delete(`/admin/announcements/${eventToDelete.id}`, {
             preserveScroll: true,
             onSuccess: () => setEventToDelete(null),
         });
@@ -229,242 +404,396 @@ export default function AdminEvents({
                                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
                             </button>
 
-                            <button 
-                                onClick={() => { setEditingEvent(null); form.reset(); document.getElementById('event-form')?.scrollIntoView({ behavior: 'smooth' }); }}
-                                className="bg-ctu-dark hover:bg-slate-800 text-white text-sm font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 shrink-0"
-                            >
-                                <i className="fa-solid fa-plus"></i> <span className="hidden sm:inline">New event</span>
-                            </button>
                         </div>
                     </header>
 
                     <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
                         <div className="max-w-[1000px] mx-auto space-y-8 animate-fade-up">
                             
-                            {/* EVENTS LIST CARD */}
+                            {/* EVENTS CALENDAR */}
                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                                 
                                 {/* Card Header */}
                                 <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
-                                    <h3 className="text-lg font-extrabold text-slate-900">Events</h3>
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex bg-slate-100 p-1 rounded-lg">
-                                            <button 
-                                                onClick={() => setActiveTab('Upcoming')}
-                                                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'Upcoming' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                            >
-                                                Upcoming
-                                            </button>
-                                            <button 
-                                                onClick={() => setActiveTab('Past')}
-                                                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${activeTab === 'Past' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                            >
-                                                Past
-                                            </button>
-                                        </div>
+                                    <div>
+                                        <h3 className="text-lg font-extrabold text-slate-900">Events calendar</h3>
+                                        <p className="text-xs font-medium text-slate-500 mt-1">{events.length} events</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))}
+                                            aria-label="Previous month"
+                                            className="w-9 h-9 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                                        >
+                                            <i className="fa-solid fa-chevron-left"></i>
+                                        </button>
+                                        <h4 className="min-w-36 text-center text-sm font-extrabold text-slate-800">{monthLabel}</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))}
+                                            aria-label="Next month"
+                                            className="w-9 h-9 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                                        >
+                                            <i className="fa-solid fa-chevron-right"></i>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const today = new Date();
+                                                setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+                                            }}
+                                            className="ml-1 px-3 h-9 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                                        >
+                                            Today
+                                        </button>
                                     </div>
                                 </div>
 
-                                {/* Table */}
+                                {/* Calendar */}
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse min-w-[700px]">
-                                        <thead>
-                                            <tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-500 font-extrabold bg-slate-50">
-                                                <th className="px-6 py-3 w-24">Date</th>
-                                                <th className="px-4 py-3">Event</th>
-                                                <th className="px-4 py-3">Venue</th>
-                                                <th className="px-4 py-3 w-48">RSVPs</th>
-                                                <th className="px-6 py-3 text-right">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {filteredEvents.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={5} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
-                                                        No {activeTab.toLowerCase()} events found.
-                                                    </td>
-                                                </tr>
-                                            ) : filteredEvents.map((event) => {
-                                                const isFull = event.capacity !== null && event.rsvp_count >= event.capacity;
-                                                const percentage = event.capacity ? Math.min((event.rsvp_count / event.capacity) * 100, 100) : 0;
-                                                
+                                    <div className="min-w-[700px]">
+                                        <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
+                                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                                                <div key={day} className="px-3 py-3 text-center text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                                                    {day}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="grid grid-cols-7">
+                                            {calendarDays.map((date) => {
+                                                const dateKey = toDateKey(date);
+                                                const dayEvents = eventsByDate[dateKey] ?? [];
+                                                const isCurrentMonth = date.getMonth() === visibleMonth.getMonth();
+                                                const isToday = dateKey === toDateKey(new Date());
+
                                                 return (
-                                                    <tr key={event.id} className="text-sm text-slate-700 hover:bg-slate-50/50 transition-colors group">
-                                                        <td className="px-6 py-4">
-                                                            <div className="text-xs font-extrabold text-slate-900 uppercase">
-                                                                {new Date(event.date).toLocaleDateString(undefined, { month: 'short' })}
-                                                            </div>
-                                                            <div className="text-lg font-black leading-none mt-0.5">
-                                                                {new Date(event.date).getDate()}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-4">
-                                                            <p className="font-bold text-slate-900 leading-tight">{event.title}</p>
-                                                        </td>
-                                                        <td className="px-4 py-4 text-xs font-semibold text-slate-600">
-                                                            {event.venue}
-                                                        </td>
-                                                        <td className="px-4 py-4">
-                                                            <div className="flex flex-col gap-1.5">
-                                                                <div className="flex items-center justify-between text-xs font-bold text-slate-600">
-                                                                    <span>{event.capacity ? `${event.rsvp_count}/${event.capacity}` : `No limit · ${event.rsvp_count}`}</span>
-                                                                </div>
-                                                                {event.capacity && (
-                                                                    <div className="w-full bg-slate-100 rounded-full h-1.5">
-                                                                        <div 
-                                                                            className={`h-1.5 rounded-full ${isFull ? 'bg-rose-500' : 'bg-slate-800'}`} 
-                                                                            style={{ width: `${percentage}%` }}
-                                                                        ></div>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4 text-right">
-                                                            <div className="flex items-center justify-end gap-2">
-                                                                <button 
-                                                                    onClick={() => setEditingEvent(event)}
-                                                                    className="px-3 py-1.5 border border-slate-300 rounded text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
-                                                                >
-                                                                    Edit
-                                                                </button>
-                                                                <button 
-                                                                    onClick={() => setEventToDelete(event)}
-                                                                    className="px-3 py-1.5 border border-slate-300 rounded text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
-                                                                >
-                                                                    Delete
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedDate(dateKey);
+                                                            setIsEventEditorOpen(false);
+                                                            setEditingEvent(null);
+                                                        }}
+                                                        aria-label={`${date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}, ${dayEvents.length} events`}
+                                                        key={dateKey}
+                                                        className={`min-h-36 border-b border-r border-slate-100 p-2 text-left transition-colors hover:bg-blue-50/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ctu-lightblue ${isCurrentMonth ? 'bg-white' : 'bg-slate-50/70'}`}
+                                                    >
+                                                        <span className={`mb-2 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                                                            isToday ? 'bg-ctu-dark text-white' : isCurrentMonth ? 'text-slate-700' : 'text-slate-400'
+                                                        }`}>
+                                                            {date.getDate()}
+                                                        </span>
+                                                        <span className="block space-y-1.5">
+                                                            {dayEvents.slice(0, 2).map((event) => (
+                                                                <span key={event.id} className="block rounded-md border border-blue-100 bg-blue-50 p-1.5">
+                                                                    <span className="block truncate text-[11px] font-bold text-blue-900" title={event.title}>{event.title}</span>
+                                                                    <span className="block truncate text-[10px] font-medium text-blue-700">
+                                                                        {[formatTime(event.time), event.venue].filter(Boolean).join(' · ')}
+                                                                    </span>
+                                                                </span>
+                                                            ))}
+                                                            {dayEvents.length > 2 && (
+                                                                <span className="block text-[10px] font-bold text-slate-500">More</span>
+                                                            )}
+                                                            {dayEvents.length === 0 && (
+                                                                <span className="block pt-1 text-[10px] font-semibold text-slate-400">+ Add event</span>
+                                                            )}
+                                                        </span>
+                                                    </button>
                                                 );
                                             })}
-                                        </tbody>
-                                    </table>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-
-                            {/* EVENT FORM CARD */}
-                            <div id="event-form" className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                                <div className="px-6 py-4 border-b border-slate-200">
-                                    <h3 className="text-base font-extrabold text-slate-900">
-                                        {editingEvent ? 'Edit event' : 'Event form'}
-                                    </h3>
-                                </div>
-                                <form onSubmit={handleSaveEvent} className="p-6 space-y-5">
-                                    
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                        <div>
-                                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Title</label>
-                                            <input 
-                                                type="text" 
-                                                value={form.data.title}
-                                                onChange={e => form.setData('title', e.target.value)}
-                                                placeholder="IT Week Hackathon" 
-                                                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium focus:border-ctu-lightblue focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" 
-                                            />
-                                            {form.errors.title && <p className="mt-1 text-xs text-red-500">{form.errors.title}</p>}
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Venue</label>
-                                            <input 
-                                                type="text" 
-                                                value={form.data.venue}
-                                                onChange={e => form.setData('venue', e.target.value)}
-                                                placeholder="Computer Lab 2" 
-                                                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium focus:border-ctu-lightblue focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" 
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                        <div>
-                                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Starts</label>
-                                            <input 
-                                                type="text" 
-                                                value={form.data.start_time}
-                                                onChange={e => form.setData('start_time', e.target.value)}
-                                                placeholder="Nov 7 · 8:00 AM" 
-                                                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium focus:border-ctu-lightblue focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" 
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Ends</label>
-                                            <input 
-                                                type="text" 
-                                                value={form.data.end_time}
-                                                onChange={e => form.setData('end_time', e.target.value)}
-                                                placeholder="Nov 7 · 5:00 PM" 
-                                                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium focus:border-ctu-lightblue focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" 
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                        <div>
-                                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Capacity</label>
-                                            <input 
-                                                type="number" 
-                                                value={form.data.capacity}
-                                                onChange={e => form.setData('capacity', e.target.value)}
-                                                placeholder="40" 
-                                                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium focus:border-ctu-lightblue focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" 
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Audience</label>
-                                            <select 
-                                                value={form.data.audience}
-                                                onChange={e => form.setData('audience', e.target.value)}
-                                                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium focus:border-ctu-lightblue focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none cursor-pointer"
-                                            >
-                                                <option value="All">All Students</option>
-                                                <option value="BSIT, BSCS">BSIT, BSCS</option>
-                                                <option value="BSIT">BSIT Only</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-2 flex items-center justify-between">
-                                        <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={form.data.create_announcement}
-                                                onChange={e => form.setData('create_announcement', e.target.checked)}
-                                                className="rounded border-slate-300 text-ctu-lightblue focus:ring-ctu-lightblue" 
-                                            /> 
-                                            Also post as an announcement
-                                        </label>
-
-                                        <div className="flex gap-3">
-                                            {editingEvent && (
-                                                <button type="button" onClick={() => setEditingEvent(null)} className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
-                                                    Cancel Edit
-                                                </button>
-                                            )}
-                                            <button type="submit" disabled={form.processing} className="px-6 py-2 bg-ctu-dark hover:bg-slate-800 text-white rounded-lg text-sm font-bold transition-colors disabled:opacity-50">
-                                                {editingEvent ? 'Save Changes' : 'Create Event'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
                             </div>
 
                         </div>
                     </main>
                 </div>
 
+                {selectedDate && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+                        <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white shadow-2xl animate-scale-in">
+                            <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+                                <div>
+                                    <h3 className="text-lg font-extrabold text-slate-900">
+                                        {isEventEditorOpen
+                                            ? editingEvent ? 'Edit event' : 'Add event'
+                                            : new Date(`${selectedDate}T00:00:00`).toLocaleDateString(undefined, {
+                                                weekday: 'long',
+                                                month: 'long',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                            })}
+                                    </h3>
+                                    {!isEventEditorOpen && (
+                                        <p className="mt-1 text-xs font-medium text-slate-500">
+                                            {(eventsByDate[selectedDate] ?? []).length} events
+                                        </p>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        closeEventEditor();
+                                        setSelectedDate(null);
+                                    }}
+                                    aria-label="Close"
+                                    className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                                >
+                                    <i className="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+
+                            {isEventEditorOpen ? (
+                                <form onSubmit={saveEvent} className="space-y-4 p-6">
+                                    <div>
+                                        <label htmlFor="calendar-event-title" className="mb-1 block text-xs font-bold text-slate-700">Title</label>
+                                        <input
+                                            id="calendar-event-title"
+                                            type="text"
+                                            required
+                                            maxLength={255}
+                                            value={eventForm.data.title}
+                                            onChange={(e) => eventForm.setData('title', e.target.value)}
+                                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-ctu-lightblue focus:outline-none"
+                                        />
+                                        {eventForm.errors.title && <p className="mt-1 text-xs font-semibold text-rose-600">{eventForm.errors.title}</p>}
+                                    </div>
+                                    <div>
+                                        <label htmlFor="calendar-event-body" className="mb-1 block text-xs font-bold text-slate-700">Description</label>
+                                        <textarea
+                                            id="calendar-event-body"
+                                            required
+                                            rows={4}
+                                            value={eventForm.data.body}
+                                            onChange={(e) => eventForm.setData('body', e.target.value)}
+                                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-ctu-lightblue focus:outline-none"
+                                        />
+                                        {eventForm.errors.body && <p className="mt-1 text-xs font-semibold text-rose-600">{eventForm.errors.body}</p>}
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div>
+                                            <label htmlFor="calendar-event-date" className="mb-1 block text-xs font-bold text-slate-700">Start date</label>
+                                            <input
+                                                id="calendar-event-date"
+                                                type="date"
+                                                required
+                                                value={eventForm.data.event_date}
+                                                onChange={(e) => {
+                                                    const eventDate = e.target.value;
+                                                    eventForm.setData((data) => ({
+                                                        ...data,
+                                                        event_date: eventDate,
+                                                        event_end_date: data.event_end_date < eventDate ? eventDate : data.event_end_date,
+                                                    }));
+                                                }}
+                                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-ctu-lightblue focus:outline-none"
+                                            />
+                                            {eventForm.errors.event_date && <p className="mt-1 text-xs font-semibold text-rose-600">{eventForm.errors.event_date}</p>}
+                                        </div>
+                                        <div>
+                                            <label htmlFor="calendar-event-end-date" className="mb-1 block text-xs font-bold text-slate-700">End date</label>
+                                            <input
+                                                id="calendar-event-end-date"
+                                                type="date"
+                                                required
+                                                min={eventForm.data.event_date}
+                                                value={eventForm.data.event_end_date}
+                                                onChange={(e) => eventForm.setData('event_end_date', e.target.value)}
+                                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-ctu-lightblue focus:outline-none"
+                                            />
+                                            {eventForm.errors.event_end_date && <p className="mt-1 text-xs font-semibold text-rose-600">{eventForm.errors.event_end_date}</p>}
+                                        </div>
+                                        <div>
+                                            <label htmlFor="calendar-event-location" className="mb-1 block text-xs font-bold text-slate-700">Location</label>
+                                            <input
+                                                id="calendar-event-location"
+                                                type="text"
+                                                required
+                                                maxLength={255}
+                                                value={eventForm.data.location}
+                                                onChange={(e) => eventForm.setData('location', e.target.value)}
+                                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-ctu-lightblue focus:outline-none"
+                                            />
+                                            {eventForm.errors.location && <p className="mt-1 text-xs font-semibold text-rose-600">{eventForm.errors.location}</p>}
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <EventTimePicker
+                                            id="calendar-event-start"
+                                            label="Start time"
+                                            parts={startTimeParts}
+                                            error={eventForm.errors.start_time}
+                                            onChange={(part, value) => updateEventTime('start_time', part, value)}
+                                        />
+                                        <EventTimePicker
+                                            id="calendar-event-end"
+                                            label="End time"
+                                            parts={endTimeParts}
+                                            error={eventForm.errors.end_time}
+                                            onChange={(part, value) => updateEventTime('end_time', part, value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="calendar-event-poster" className="mb-1 block text-xs font-bold text-slate-700">Posted by</label>
+                                        <input
+                                            id="calendar-event-poster"
+                                            type="text"
+                                            required
+                                            maxLength={255}
+                                            value={eventForm.data.posted_by}
+                                            onChange={(e) => eventForm.setData('posted_by', e.target.value)}
+                                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-ctu-lightblue focus:outline-none"
+                                        />
+                                        {eventForm.errors.posted_by && <p className="mt-1 text-xs font-semibold text-rose-600">{eventForm.errors.posted_by}</p>}
+                                    </div>
+                                    <div>
+                                        <label htmlFor="calendar-event-image" className="mb-1 block text-xs font-bold text-slate-700">Cover image</label>
+                                        {editingEvent?.image_url && !eventForm.data.image && (
+                                            <img
+                                                src={editingEvent.image_url}
+                                                alt="Current event cover"
+                                                className="mb-2 max-h-48 w-full rounded-lg border border-slate-200 object-cover"
+                                            />
+                                        )}
+                                        <input
+                                            id="calendar-event-image"
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/gif,image/webp"
+                                            onChange={(e) => {
+                                                const image = e.target.files?.[0] ?? null;
+                                                eventForm.setData('image', image);
+                                                setSelectedImageName(image?.name ?? '');
+                                            }}
+                                            className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-xs file:font-bold file:text-blue-700"
+                                        />
+                                        {selectedImageName && <p className="mt-1 text-xs text-slate-500">{selectedImageName}</p>}
+                                        <p className="mt-1 text-[11px] text-slate-500">JPG, PNG, GIF or WebP · up to 5 MB</p>
+                                        {eventForm.errors.image && <p className="mt-1 text-xs font-semibold text-rose-600">{eventForm.errors.image}</p>}
+                                    </div>
+                                    <div>
+                                        <label htmlFor="calendar-event-attachments" className="mb-1 block text-xs font-bold text-slate-700">Downloadable documents</label>
+                                        {editingEvent?.attachments
+                                            .filter((attachment) => !eventForm.data.remove_attachments.includes(attachment.path))
+                                            .map((attachment) => (
+                                                <div key={attachment.path} className="mb-2 flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
+                                                    <a
+                                                        href={attachment.url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="min-w-0 truncate text-xs font-semibold text-blue-700 hover:underline"
+                                                    >
+                                                        {attachment.name}
+                                                    </a>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => eventForm.setData('remove_attachments', [
+                                                            ...eventForm.data.remove_attachments,
+                                                            attachment.path,
+                                                        ])}
+                                                        className="shrink-0 text-xs font-bold text-rose-600 hover:text-rose-800"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        <input
+                                            id="calendar-event-attachments"
+                                            type="file"
+                                            multiple
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.odt,.ods,.odp"
+                                            onChange={(e) => {
+                                                const files = Array.from(e.target.files ?? []);
+                                                eventForm.setData('attachments', files);
+                                                setSelectedAttachmentNames(files.map((file) => file.name));
+                                            }}
+                                            className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-xs file:font-bold file:text-blue-700"
+                                        />
+                                        {selectedAttachmentNames.length > 0 && (
+                                            <p className="mt-1 text-xs text-slate-500">{selectedAttachmentNames.join(', ')}</p>
+                                        )}
+                                        <p className="mt-1 text-[11px] text-slate-500">Up to 10 files, 10 MB each. Documents only.</p>
+                                        {eventForm.errors.attachments && <p className="mt-1 text-xs font-semibold text-rose-600">{eventForm.errors.attachments}</p>}
+                                        {Object.entries(eventForm.errors)
+                                            .filter(([key]) => key.startsWith('attachments.'))
+                                            .map(([key, error]) => (
+                                                <p key={key} className="mt-1 text-xs font-semibold text-rose-600">{error}</p>
+                                            ))}
+                                    </div>
+                                    <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+                                        <button
+                                            type="button"
+                                            onClick={closeEventEditor}
+                                            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={eventForm.processing}
+                                            className="rounded-lg bg-ctu-dark px-5 py-2 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-60"
+                                        >
+                                            {eventForm.processing ? 'Saving...' : editingEvent ? 'Save changes' : 'Create event'}
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <div className="space-y-3 p-6">
+                                    {(eventsByDate[selectedDate] ?? []).length === 0 ? (
+                                        <p className="rounded-lg bg-slate-50 p-4 text-sm font-medium text-slate-500">
+                                            No events on this day yet.
+                                        </p>
+                                    ) : (eventsByDate[selectedDate] ?? []).map((event) => (
+                                        <div key={event.id} className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 p-4">
+                                            <div className="min-w-0">
+                                                <p className="truncate text-sm font-bold text-slate-900">{event.title}</p>
+                                                <p className="mt-1 truncate text-xs font-medium text-slate-500">
+                                                    {[formatTime(event.time), event.venue].filter(Boolean).join(' · ')}
+                                                </p>
+                                            </div>
+                                            <div className="flex shrink-0 gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openEventEditor(event)}
+                                                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEventToDelete(event)}
+                                                    className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => openEventEditor()}
+                                        className="w-full rounded-lg bg-ctu-dark px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-800"
+                                    >
+                                        <i className="fa-solid fa-plus mr-2"></i>Add event on this day
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* DELETE CONFIRMATION MODAL */}
                 {eventToDelete && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
                         <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-scale-in">
                             
-                            <h3 className="text-xl font-extrabold text-slate-900 mb-2">Delete this announcement?</h3>
+                            <h3 className="text-xl font-extrabold text-slate-900 mb-2">Delete this event?</h3>
                             <p className="text-sm font-medium text-slate-600 mb-2 leading-relaxed">
                                 <strong className="text-slate-900">"{eventToDelete.title}"</strong> will be removed for all students. This can't be undone.
                             </p>
-                            <p className="text-xs font-medium text-slate-400 mb-8 flex items-center gap-1.5">
-                                <i className="fa-solid fa-circle-info"></i> Tip: Archive hides it but keeps the record.
-                            </p>
+                            <p className="text-xs font-medium text-slate-400 mb-8">This action cannot be undone.</p>
                             
                             <div className="flex items-center justify-end gap-3">
                                 <button 
@@ -472,12 +801,6 @@ export default function AdminEvents({
                                     className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
                                 >
                                     Cancel
-                                </button>
-                                <button 
-                                    onClick={() => setEventToDelete(null)} 
-                                    className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                                >
-                                    Archive instead
                                 </button>
                                 <button 
                                     onClick={confirmDelete}

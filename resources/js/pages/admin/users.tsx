@@ -6,6 +6,8 @@ type RegisteredUser = {
     name: string;
     email: string;
     studentId: string | null;
+    course: string | null;
+    year_level: string | null;
     created_at: string | null;
 };
 
@@ -191,12 +193,14 @@ export default function AdminStudents({ users = [] }: { users: RegisteredUser[] 
                                 </div>
                                 
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
+                                    <table className="w-full min-w-[980px] text-left border-collapse">
                                         <thead>
                                             <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-extrabold">
                                                 <th className="px-6 py-5">Name</th>
                                                 <th className="px-6 py-5">Email</th>
                                                 <th className="px-6 py-5">Student ID</th>
+                                                <th className="px-6 py-5">Course</th>
+                                                <th className="px-6 py-5">Year Level</th>
                                                 <th className="px-6 py-5">Joined</th>
                                                 <th className="px-6 py-5 text-right">Actions</th>
                                             </tr>
@@ -204,7 +208,7 @@ export default function AdminStudents({ users = [] }: { users: RegisteredUser[] 
                                         <tbody className="divide-y divide-slate-100">
                                             {filteredUsers.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={5} className="px-6 py-16 text-center text-sm font-medium text-slate-500">
+                                                    <td colSpan={7} className="px-6 py-16 text-center text-sm font-medium text-slate-500">
                                                         No students found.
                                                     </td>
                                                 </tr>
@@ -222,13 +226,15 @@ export default function AdminStudents({ users = [] }: { users: RegisteredUser[] 
                                                     </td>
                                                     <td className="px-6 py-4 font-medium text-slate-600">{account.email}</td>
                                                     <td className="px-6 py-4 font-medium text-slate-500">{account.studentId || '—'}</td>
+                                                    <td className="px-6 py-4 font-medium text-slate-500">{account.course || '—'}</td>
+                                                    <td className="px-6 py-4 font-medium text-slate-500">{account.year_level || '—'}</td>
                                                     <td className="px-6 py-4 font-medium text-slate-500">{formatDate(account.created_at)}</td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button type="button" onClick={() => setEditingUser(account)} className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-all shadow-sm" title="Edit">
+                                                        <div className="flex justify-end gap-2">
+                                                            <button type="button" onClick={() => setEditingUser(account)} aria-label={`Edit ${account.name}`} className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-all shadow-sm" title="Edit">
                                                                 <i className="fa-solid fa-pen text-xs"></i>
                                                             </button>
-                                                            <button type="button" onClick={() => setDeletingUser(account)} className="w-9 h-9 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white flex items-center justify-center transition-all shadow-sm" title="Delete">
+                                                            <button type="button" onClick={() => setDeletingUser(account)} aria-label={`Delete ${account.name}`} className="w-9 h-9 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white flex items-center justify-center transition-all shadow-sm" title="Delete">
                                                                 <i className="fa-solid fa-trash text-xs"></i>
                                                             </button>
                                                         </div>
@@ -273,6 +279,74 @@ export default function AdminStudents({ users = [] }: { users: RegisteredUser[] 
                                         <label htmlFor="editUserStudentId" className="mb-2 block text-xs font-extrabold text-slate-700 uppercase tracking-wide">Student ID</label>
                                         <input id="editUserStudentId" name="studentId" defaultValue={editingUser.studentId ?? ''} maxLength={255} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
                                         {errors.studentId && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.studentId}</p>}
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                                        <div>
+                                            <label htmlFor="editUserCourse" className="mb-2 block text-xs font-extrabold text-slate-700 uppercase tracking-wide">Course</label>
+                                            <select id="editUserCourse" name="course" defaultValue={editingUser.course ?? ''} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                                                <option value="">Select course</option>
+                                                {editingUser.course && !['BEEd', 'BTLEd', 'BSEd', 'DipPE', 'BSIE', 'BSME', 'BSCE', 'BSEE', 'BSCpE', 'BSIT', 'BSMx', 'BIT', 'BSHM', 'BSTM', 'BSBA'].includes(editingUser.course) && (
+                                                    <option value={editingUser.course}>{editingUser.course}</option>
+                                                )}
+                                                <optgroup label="College of Education">
+                                                    <option value="BEEd">Bachelor of Elementary Education (BEEd)</option>
+                                                    <option value="BTLEd">Bachelor of Technology and Livelihood Education (BTLEd)</option>
+                                                    <option value="BSEd">Bachelor of Secondary Education (BSEd)</option>
+                                                    <option value="DipPE">Diploma in Professional Education</option>
+                                                </optgroup>
+                                                <optgroup label="College of Engineering">
+                                                    <option value="BSIE">BS Industrial Engineering (BSIE)</option>
+                                                    <option value="BSME">BS Mechanical Engineering (BSME)</option>
+                                                    <option value="BSCE">BS Civil Engineering (BSCE)</option>
+                                                    <option value="BSEE">BS Electrical Engineering (BSEE)</option>
+                                                    <option value="BSCpE">BS Computer Engineering (BSCpE)</option>
+                                                </optgroup>
+                                                <optgroup label="College of Technology">
+                                                    <option value="BSIT">BS Information Technology (BSIT)</option>
+                                                    <option value="BSMx">BS Mechatronics (BSMx)</option>
+                                                    <option value="BIT">BIT Computer</option>
+                                                    <option value="BIT">BIT Drafting</option>
+                                                    <option value="BIT">BIT Electrical</option>
+                                                    <option value="BIT">BIT Electronics</option>
+                                                </optgroup>
+                                                <optgroup label="College of Management and Entrepreneurship">
+                                                    <option value="BSHM">BS Hospitality Management (BSHM)</option>
+                                                    <option value="BSTM">BS Tourism Management (BSTM)</option>
+                                                    <option value="BSBA">BS Business Administration (BSBA)</option>
+                                                </optgroup>
+                                            </select>
+                                            {errors.course && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.course}</p>}
+                                        </div>
+                                        <div>
+                                            <label htmlFor="editUserYearLevel" className="mb-2 block text-xs font-extrabold text-slate-700 uppercase tracking-wide">Year Level</label>
+                                            <select id="editUserYearLevel" name="year_level" defaultValue={editingUser.year_level ?? ''} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                                                <option value="">Select year level</option>
+                                                {editingUser.year_level && !['1st Year', '2nd Year', '3rd Year', '4th Year'].includes(editingUser.year_level) && (
+                                                    <option value={editingUser.year_level}>{editingUser.year_level}</option>
+                                                )}
+                                                <option value="1st Year">1st Year</option>
+                                                <option value="2nd Year">2nd Year</option>
+                                                <option value="3rd Year">3rd Year</option>
+                                                <option value="4th Year">4th Year</option>
+                                            </select>
+                                            {errors.year_level && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.year_level}</p>}
+                                        </div>
+                                    </div>
+                                    <div className="border-t border-slate-100 pt-5">
+                                        <p className="mb-4 text-xs font-extrabold uppercase tracking-wide text-slate-700">Change password</p>
+                                        <p className="mb-3 text-xs font-medium text-slate-500">Leave both fields blank to keep the current password.</p>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label htmlFor="editUserPassword" className="mb-2 block text-xs font-extrabold text-slate-700 uppercase tracking-wide">New Password</label>
+                                                <input id="editUserPassword" name="password" type="password" autoComplete="new-password" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                                                {errors.password && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.password}</p>}
+                                            </div>
+                                            <div>
+                                                <label htmlFor="editUserPasswordConfirmation" className="mb-2 block text-xs font-extrabold text-slate-700 uppercase tracking-wide">Confirm New Password</label>
+                                                <input id="editUserPasswordConfirmation" name="password_confirmation" type="password" autoComplete="new-password" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                                                {errors.password_confirmation && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.password_confirmation}</p>}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="flex gap-4 pt-4 border-t border-slate-100">
                                         <button type="button" onClick={() => setEditingUser(null)} className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">Cancel</button>
