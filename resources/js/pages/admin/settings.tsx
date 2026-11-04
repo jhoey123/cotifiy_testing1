@@ -1,14 +1,15 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 
-export default function Settings() {
+export default function Settings({ staffMode = false, staffName = '' }: { staffMode?: boolean; staffName?: string }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isLogoutHovered, setIsLogoutHovered] = useState(false);
     const [activeTab, setActiveTab] = useState<'password' | 'offices'>('password');
+    const panelBase = staffMode ? '/staff' : '/admin';
 
     return (
         <>
-            <Head title="Settings | Cotify Admin" />
+            <Head title={`Settings | Cotify ${staffMode ? 'Staff' : 'Admin'}`} />
             
             <style>{`
                 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -55,24 +56,25 @@ export default function Settings() {
                             <img src="/images/3rdLogo.png" alt="Cotify Logo" className="w-16 h-16 object-contain -ml-2 -mr-4" />
                             <div className="text-white">
                                 <h1 className="font-extrabold text-xl leading-tight tracking-tight">Cotify</h1>
+                                {staffMode && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Staff Portal</p>}
                             </div>
                         </div>
 
                         <nav className="mt-2 space-y-6 px-3">
                             <div>
                                 <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Main</p>
-                                <Link href="/admin" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                <Link href={panelBase} className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-house w-5 text-center group-hover:scale-110 transition-transform"></i> Dashboard
                                 </Link>
-                                <Link href="/admin/announcements" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                <Link href={`${panelBase}/announcements`} className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-bullhorn w-5 text-center group-hover:scale-110 transition-transform"></i> Announcements
                                 </Link>
-                                <Link href="/admin/events" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                <Link href={`${panelBase}/events`} className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-regular fa-calendar w-5 text-center group-hover:scale-110 transition-transform"></i> Events
                                 </Link>
                             </div>
 
-                            <div>
+                            {!staffMode && <div>
                                 <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">People</p>
                                 <Link href="/admin/users" prefetch="mount" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-users w-5 text-center group-hover:scale-110 transition-transform"></i> Students
@@ -80,11 +82,11 @@ export default function Settings() {
                                 <Link href="/admin/staff" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-user-shield w-5 text-center group-hover:scale-110 transition-transform"></i> Staff & Admins
                                 </Link>
-                            </div>
+                            </div>}
 
                             <div>
                                 <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">System</p>
-                                <Link href="/admin/settings" className="mt-1 flex items-center gap-3 px-3 py-2.5 bg-ctu-lightblue text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-900/30">
+                                <Link href={`${panelBase}/settings`} className="mt-1 flex items-center gap-3 px-3 py-2.5 bg-ctu-lightblue text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-900/30">
                                     <i className="fa-solid fa-gear w-5 text-center"></i> Settings
                                 </Link>
                             </div>
@@ -97,11 +99,11 @@ export default function Settings() {
                                 <i className="fa-solid fa-user"></i>
                             </div>
                             <div>
-                                <p className="text-white text-sm font-bold">Niggas</p>
+                                <p className="text-white text-sm font-bold">{staffMode ? staffName : 'Admin'}</p>
                                 <p className="text-slate-400 text-[11px] font-medium">Registrar's Office</p>
                             </div>
                         </div> 
-                        <Form method="post" action="/admin/logout">
+                        <Form method="post" action={`${panelBase}/logout`}>
                             {({ processing }) => (
                                 <button 
                                     type="submit" 
@@ -153,7 +155,7 @@ export default function Settings() {
                             <div className="flex items-center gap-6 border-b border-slate-200 mb-8 overflow-x-auto no-scrollbar">
                                 {[
                                     { id: 'password', label: 'Password' },
-                                    { id: 'offices', label: 'Offices' },
+                                    ...(!staffMode ? [{ id: 'offices' as const, label: 'Offices' }] : []),
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
@@ -177,7 +179,7 @@ export default function Settings() {
                                             <i className="fa-solid fa-lock text-blue-600"></i> Change Password
                                         </h3>
                                     </div>
-                                    <Form method="put" action="/admin/settings/password" resetOnSuccess className="space-y-5 p-6 sm:p-8">
+                                    <Form method="put" action={`${panelBase}/settings/password`} resetOnSuccess className="space-y-5 p-6 sm:p-8">
                                         {({ errors, processing }) => (
                                             <>
                                                 <div>
@@ -221,7 +223,7 @@ export default function Settings() {
                             )}
 
                             {/* TAB CONTENT: OFFICES (Mockup for super admin) */}
-                            {activeTab === 'offices' && (
+                            {!staffMode && activeTab === 'offices' && (
                                 <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm animate-fade-in">
                                     <div className="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
                                         <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">

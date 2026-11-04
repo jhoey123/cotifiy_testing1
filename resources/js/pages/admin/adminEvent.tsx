@@ -138,8 +138,12 @@ function EventTimePicker({
 
 export default function AdminEvents({
     events = [],
+    staffMode = false,
+    staffName = '',
 }: {
     events: AdminEvent[];
+    staffMode?: boolean;
+    staffName?: string;
 }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isLogoutHovered, setIsLogoutHovered] = useState(false);
@@ -151,6 +155,7 @@ export default function AdminEvents({
     const [editingEvent, setEditingEvent] = useState<AdminEvent | null>(null);
     const [isEventEditorOpen, setIsEventEditorOpen] = useState(false);
     const [eventToDelete, setEventToDelete] = useState<AdminEvent | null>(null);
+    const panelBase = staffMode ? '/staff' : '/admin';
     const [selectedImageName, setSelectedImageName] = useState('');
     const [selectedAttachmentNames, setSelectedAttachmentNames] = useState<string[]>([]);
     const [startTimeParts, setStartTimeParts] = useState<TimeParts>(() => getTimeParts(''));
@@ -213,7 +218,7 @@ export default function AdminEvents({
         };
 
         eventForm.transform((data) => editingEvent ? { ...data, _method: 'put' } : data);
-        eventForm.post(editingEvent ? `/admin/announcements/${editingEvent.id}` : '/admin/announcements', {
+        eventForm.post(editingEvent ? `${panelBase}/announcements/${editingEvent.id}` : `${panelBase}/announcements`, {
             ...options,
             forceFormData: true,
         });
@@ -255,7 +260,7 @@ export default function AdminEvents({
 
     const confirmDelete = () => {
         if (!eventToDelete) return;
-        router.delete(`/admin/announcements/${eventToDelete.id}`, {
+        router.delete(`${panelBase}/announcements/${eventToDelete.id}`, {
             preserveScroll: true,
             onSuccess: () => setEventToDelete(null),
         });
@@ -263,7 +268,7 @@ export default function AdminEvents({
 
     return (
         <>
-            <Head title="Manage Events | Cotify Admin" />
+            <Head title={`Manage Events | Cotify ${staffMode ? 'Staff' : 'Admin'}`} />
             
             <style>{`
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -314,36 +319,37 @@ export default function AdminEvents({
                             <img src="/images/3rdLogo.png" alt="Cotify Logo" className="w-16 h-16 object-contain -ml-2 -mr-4" />
                             <div className="text-white">
                                 <h1 className="font-extrabold text-xl leading-tight tracking-tight">Cotify</h1>
+                                {staffMode && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Staff Portal</p>}
                             </div>
                         </div>
 
                         <nav className="mt-2 space-y-6 px-3">
                             <div>
                                 <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Main</p>
-                                <Link href="/admin" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                <Link href={panelBase} className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-house w-5 text-center group-hover:scale-110 transition-transform"></i> Dashboard
                                 </Link>
-                                <Link href="/admin/announcements" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                <Link href={`${panelBase}/announcements`} className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-bullhorn w-5 text-center group-hover:scale-110 transition-transform"></i> Announcements
                                 </Link>
-                                <Link href="/admin/events" className="mt-1 flex items-center gap-3 px-3 py-2.5 bg-ctu-lightblue text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-900/30">
+                                <Link href={`${panelBase}/events`} className="mt-1 flex items-center gap-3 px-3 py-2.5 bg-ctu-lightblue text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-900/30">
                                     <i className="fa-regular fa-calendar w-5 text-center"></i> Events
                                 </Link>
                             </div>
 
-                            <div>
+                            {!staffMode && <div>
                                 <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">People</p>
                                 <Link href="/admin/users" prefetch="mount" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-users w-5 text-center group-hover:scale-110 transition-transform"></i> Students
                                 </Link>
-                                <Link href="/admin/admins" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                <Link href="/admin/staff" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-user-shield w-5 text-center group-hover:scale-110 transition-transform"></i> Staff & Admins
                                 </Link>
-                            </div>
+                            </div>}
 
                             <div>
                                 <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">System</p>
-                                <Link href="/admin/settings" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                <Link href={`${panelBase}/settings`} prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-gear w-5 text-center group-hover:rotate-90 transition-transform duration-300"></i> Settings
                                 </Link>
                             </div>
@@ -356,11 +362,11 @@ export default function AdminEvents({
                                 <i className="fa-solid fa-user"></i>
                             </div>
                             <div>
-                                <p className="text-white text-sm font-bold">Niggas</p>
+                                <p className="text-white text-sm font-bold">{staffMode ? staffName : 'Admin'}</p>
                                 <p className="text-slate-400 text-[11px] font-medium">Registrar's Office</p>
                             </div>
                         </div> 
-                        <Form method="post" action="/admin/logout">
+                        <Form method="post" action={`${panelBase}/logout`}>
                             {({ processing }) => (
                                 <button 
                                     type="submit" 

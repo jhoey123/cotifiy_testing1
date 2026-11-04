@@ -120,7 +120,7 @@ class ClientPageController extends Controller
             ->where('client_id', $request->user()->id)
             ->with([
                 'messages' => fn ($query) => $query
-                    ->with(['sender', 'adminSender'])
+                    ->with(['sender', 'adminSender', 'staffSender'])
                     ->orderBy('created_at')
                     ->orderBy('id'),
             ])
@@ -131,7 +131,7 @@ class ClientPageController extends Controller
             ->whereNull('client_id')
             ->with([
                 'messages' => fn ($query) => $query
-                    ->with(['sender', 'adminSender'])
+                    ->with(['sender', 'adminSender', 'staffSender'])
                     ->orderBy('created_at')
                     ->orderBy('id'),
             ])
@@ -140,10 +140,14 @@ class ClientPageController extends Controller
             ->map(fn (Message $message) => [
                 'id' => $message->id,
                 'parent_message_id' => $message->parent_message_id,
-                'author' => $message->sender_admin_id === null
-                    ? $message->sender->name
-                    : $message->adminSender->name,
-                'role' => $message->sender_admin_id === null ? 'Client' : 'Admin',
+                'author' => $message->sender_staff_id !== null
+                    ? $message->staffSender->name
+                    : ($message->sender_admin_id !== null
+                        ? $message->adminSender->name
+                        : $message->sender->name),
+                'role' => $message->sender_staff_id !== null
+                    ? 'Staff'
+                    : ($message->sender_admin_id === null ? 'Client' : 'Admin'),
                 'content' => $message->content,
                 'sent_at' => $message->created_at?->toIso8601String(),
                 'is_mine' => $message->sender_id === $request->user()->id,
@@ -154,10 +158,14 @@ class ClientPageController extends Controller
             ->map(fn (Message $message) => [
                 'id' => $message->id,
                 'parent_message_id' => $message->parent_message_id,
-                'author' => $message->sender_admin_id === null
-                    ? $message->sender->name
-                    : $message->adminSender->name,
-                'role' => $message->sender_admin_id === null ? 'Client' : 'Admin',
+                'author' => $message->sender_staff_id !== null
+                    ? $message->staffSender->name
+                    : ($message->sender_admin_id !== null
+                        ? $message->adminSender->name
+                        : $message->sender->name),
+                'role' => $message->sender_staff_id !== null
+                    ? 'Staff'
+                    : ($message->sender_admin_id === null ? 'Client' : 'Admin'),
                 'content' => $message->content,
                 'sent_at' => $message->created_at?->toIso8601String(),
                 'is_mine' => $message->sender_id === $request->user()->id,

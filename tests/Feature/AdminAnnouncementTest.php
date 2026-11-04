@@ -2,6 +2,8 @@
 
 use App\Models\AdminUser;
 use App\Models\Announcement;
+use App\Models\Conversation;
+use App\Models\StaffUser;
 use App\Models\User;
 use App\Notifications\AnnouncementPublished;
 use Illuminate\Http\UploadedFile;
@@ -72,6 +74,112 @@ test('an admin can publish an announcement', function () {
             ->where('announcements.0.title', 'Campus closure')
             ->where('announcements.0.image_url', '/storage/'.$announcement->image)
             ->where('announcements.0.date', now()->toDateString()));
+});
+
+test('staff can manage announcements and events through the staff panel', function () {
+    Notification::fake();
+    $staff = StaffUser::create([
+        'name' => 'Campus Staff',
+        'email' => 'staff@example.com',
+        'password' => 'secret-password',
+    ]);
+
+    $this->actingAs($staff, 'staff')
+        ->post(route('staff.announcements.store'), [
+            'title' => 'Staff announcement',
+            'category' => 'General',
+            'posted_by' => 'Student Services',
+            'body' => 'Staff created this announcement.',
+        ])
+        ->assertRedirect();
+
+    $announcement = Announcement::query()->where('title', 'Staff announcement')->firstOrFail();
+
+    $this->put(route('staff.announcements.update', $announcement), [
+        'title' => 'Updated staff announcement',
+        'category' => 'General',
+        'posted_by' => 'Student Services',
+        'body' => 'Staff updated this announcement.',
+    ])->assertRedirect();
+
+    $eventResponse = $this->post(route('staff.announcements.store'), [
+        'title' => 'Staff event',
+        'category' => 'Event',
+        'posted_by' => 'Student Services',
+        'body' => 'Staff created this event.',
+        'event_date' => now()->addDays(3)->toDateString(),
+        'event_end_date' => now()->addDays(4)->toDateString(),
+        'start_time' => '09:00',
+        'end_time' => '10:00',
+        'location' => 'Main Hall',
+    ]);
+    $eventResponse->assertRedirect();
+
+    $event = Announcement::query()->where('title', 'Staff event')->firstOrFail();
+
+    $this->get(route('staff.announcements.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/adminAnnouncemnt')
+            ->where('staffMode', true)
+            ->where('staffName', 'Campus Staff')
+            ->where('announcements.0.title', 'Staff event'));
+
+    $this->get(route('staff.events'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/adminEvent')
+            ->where('staffMode', true)
+            ->where('staffName', 'Campus Staff')
+            ->where('events.0.title', 'Staff event'));
+
+    $this->delete(route('staff.announcements.destroy', $announcement))
+        ->assertRedirect();
+
+    $this->assertDatabaseMissing('announcement', ['id' => $announcement->id]);
+    $this->assertDatabaseHas('announcement', ['id' => $event->id, 'category' => 'Event']);
+});
+
+test('staff can reply to announcement discussions using the staff identity', function () {
+    $client = User::factory()->create();
+    $staff = StaffUser::create([
+        'name' => 'Campus Staff',
+        'email' => 'staff@example.com',
+        'password' => 'secret-password',
+    ]);
+    $announcement = Announcement::create([
+        'title' => 'Discussion announcement',
+        'category' => 'General',
+        'posted_by' => 'Student Services',
+        'date' => now()->toDateString(),
+        'body' => 'Discuss this update.',
+    ]);
+    $conversation = Conversation::create([
+        'type' => 'announcement',
+        'name' => $announcement->title,
+        'announcement_id' => $announcement->id,
+        'client_id' => null,
+    ]);
+
+    $this->actingAs($staff, 'staff')
+        ->post(route('staff.announcements.comments.store', $announcement), [
+            'content' => 'Staff reply',
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('messages', [
+        'conversation_id' => $conversation->id,
+        'sender_staff_id' => $staff->id,
+        'sender_admin_id' => null,
+        'content' => 'Staff reply',
+    ]);
+
+    $this->actingAs($client, 'web')
+        ->get(route('client.announcements.show', $announcement))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('messages.0.author', 'Campus Staff')
+            ->where('messages.0.role', 'Staff'));
 });
 
 test('admins can upload downloadable documents and manage them when editing announcements', function () {

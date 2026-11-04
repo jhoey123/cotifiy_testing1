@@ -56,6 +56,36 @@ Route::post('/client/announcements/{announcement}/messages', [AnnouncementDiscus
 Route::get('/admin', [AnnouncementController::class, 'index'])
     ->middleware(['auth:admin', 'private-cache'])
     ->name('admin');
+Route::get('/staff', [AnnouncementController::class, 'staffDashboard'])
+    ->middleware(['auth:staff', 'private-cache'])
+    ->name('staff');
+Route::get('/staff/announcements', [AnnouncementController::class, 'staffAnnouncements'])
+    ->middleware(['auth:staff', 'private-cache'])
+    ->name('staff.announcements.index');
+Route::get('/staff/events', [AnnouncementController::class, 'staffEvents'])
+    ->middleware(['auth:staff', 'private-cache'])
+    ->name('staff.events');
+Route::post('/staff/announcements/{announcement}/comments', [AdminAnnouncementDiscussionController::class, 'storeStaffAnnouncementComment'])
+    ->middleware(['auth:staff', 'private-cache', 'throttle:20,1'])
+    ->name('staff.announcements.comments.store');
+Route::post('/staff/discussions/{conversation}/messages', [AdminAnnouncementDiscussionController::class, 'storeStaffMessage'])
+    ->middleware(['auth:staff', 'private-cache', 'throttle:20,1'])
+    ->name('staff.discussions.messages.store');
+Route::post('/staff/announcements', [AnnouncementController::class, 'store'])
+    ->middleware(['auth:staff', 'private-cache'])
+    ->name('staff.announcements.store');
+Route::put('/staff/announcements/{announcement}', [AnnouncementController::class, 'update'])
+    ->middleware(['auth:staff', 'private-cache'])
+    ->name('staff.announcements.update');
+Route::delete('/staff/announcements/{announcement}', [AnnouncementController::class, 'destroy'])
+    ->middleware(['auth:staff', 'private-cache'])
+    ->name('staff.announcements.destroy');
+Route::get('/staff/settings', [SettingsController::class, 'staffIndex'])
+    ->middleware(['auth:staff', 'private-cache'])
+    ->name('staff.settings');
+Route::put('/staff/settings/password', [SettingsController::class, 'updateStaffPassword'])
+    ->middleware(['auth:staff', 'private-cache'])
+    ->name('staff.settings.password');
 Route::get('/admin/announcements', [AnnouncementController::class, 'announcements'])
     ->middleware(['auth:admin', 'private-cache'])
     ->name('admin.announcements.index');
@@ -83,6 +113,9 @@ Route::put('/admin/settings/password', [SettingsController::class, 'updatePasswo
 Route::post('/admin/users/admins', [UserController::class, 'storeAdmin'])
     ->middleware(['auth:admin', 'private-cache'])
     ->name('admin.users.admins.store');
+Route::post('/admin/users/staff', [UserController::class, 'storeStaff'])
+    ->middleware(['auth:admin', 'private-cache'])
+    ->name('admin.users.staff.store');
 Route::put('/admin/users/{user}', [UserController::class, 'update'])
     ->middleware(['auth:admin', 'private-cache'])
     ->name('admin.users.update');
@@ -101,6 +134,9 @@ Route::delete('/admin/announcements/{announcement}', [AnnouncementController::cl
 Route::post('/admin/logout', [LoginController::class, 'destroy'])
     ->middleware(['auth:admin', 'private-cache'])
     ->name('admin.logout');
+Route::post('/staff/logout', [LoginController::class, 'destroy'])
+    ->middleware(['auth:staff', 'private-cache'])
+    ->name('staff.logout');
 Route::post('/logout', [LoginController::class, 'destroy'])
     ->middleware(['auth:web', 'private-cache'])
     ->name('logout');

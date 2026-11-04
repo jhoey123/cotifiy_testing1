@@ -22,6 +22,7 @@ type AnnouncementPageProps = {
     announcement?: Announcement;
     discussions?: Discussion[];
     announcementComments?: DiscussionMessage[];
+    staffMode?: boolean;
     onClose?: () => void;
 };
 
@@ -29,7 +30,7 @@ type DiscussionMessage = {
     id: number;
     parent_message_id: number | null;
     author: string;
-    role: 'Client' | 'Admin';
+    role: 'Client' | 'Admin' | 'Staff';
     content: string;
     sent_at: string | null;
 };
@@ -71,8 +72,10 @@ export default function AnnouncementPage({
     announcement,
     discussions = [],
     announcementComments = [],
+    staffMode = false,
     onClose,
 }: AnnouncementPageProps) {
+    const panelBase = staffMode ? '/staff' : '/admin';
     const isModal = Boolean(onClose);
     const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'announcement' | 'comments'>(
@@ -408,6 +411,7 @@ export default function AnnouncementPage({
                                             announcementId={announcement.id}
                                             message={message}
                                             messages={announcementComments}
+                                            panelBase={panelBase}
                                         />
                                     ))}
                             </div>
@@ -431,13 +435,14 @@ export default function AnnouncementPage({
                                     <DiscussionThread
                                         key={discussion.id}
                                         discussion={discussion}
+                                        panelBase={panelBase}
                                     />
                                 ))}
                             </div>
                         )}
 
                         <div className="border-t border-slate-100 bg-slate-50 p-4 sm:p-6">
-                            <AnnouncementCommentForm announcementId={announcement.id} />
+                            <AnnouncementCommentForm announcementId={announcement.id} panelBase={panelBase} />
                         </div>
                     </section>
                 )}
@@ -446,7 +451,7 @@ export default function AnnouncementPage({
     );
 }
 
-function DiscussionThread({ discussion }: { discussion: Discussion }) {
+function DiscussionThread({ discussion, panelBase }: { discussion: Discussion; panelBase: string }) {
     const rootMessages = discussion.messages.filter(
         (message) => message.parent_message_id === null,
     );
@@ -467,12 +472,13 @@ function DiscussionThread({ discussion }: { discussion: Discussion }) {
                         <AdminMessageThread
                             discussion={discussion}
                             message={message}
+                            panelBase={panelBase}
                         />
                     </div>
                 ))}
             </div>
             <div className="border-t border-slate-100 bg-slate-50 p-4">
-                <DiscussionReplyForm discussionId={discussion.id} />
+                <DiscussionReplyForm discussionId={discussion.id} panelBase={panelBase} />
             </div>
         </article>
     );
@@ -481,9 +487,11 @@ function DiscussionThread({ discussion }: { discussion: Discussion }) {
 function AdminMessageThread({
     discussion,
     message,
+    panelBase,
 }: {
     discussion: Discussion;
     message: DiscussionMessage;
+    panelBase: string;
 }) {
     const [isReplyOpen, setIsReplyOpen] = useState(false);
     const replies = discussion.messages.filter(
@@ -505,6 +513,7 @@ function AdminMessageThread({
                     <DiscussionReplyForm
                         discussionId={discussion.id}
                         comment={message}
+                        panelBase={panelBase}
                     />
                 )}
                 {replies.map((reply) => (
@@ -512,6 +521,7 @@ function AdminMessageThread({
                         key={reply.id}
                         discussion={discussion}
                         message={reply}
+                        panelBase={panelBase}
                     />
                 ))}
             </div>
@@ -523,14 +533,14 @@ function MessageBubble({ message }: { message: DiscussionMessage }) {
     return (
         <div
             className={`rounded-xl px-4 py-3 ${
-                message.role === 'Admin'
+                message.role !== 'Client'
                     ? 'bg-blue-50 text-blue-900'
                     : 'bg-slate-100 text-slate-800'
             }`}
         >
             <p className="mb-1 text-[11px] font-bold tracking-wide uppercase opacity-75">
-                {message.role === 'Admin'
-                    ? 'Admin'
+                {message.role !== 'Client'
+                    ? message.role
                     : `${message.author} · Student comment`}
             </p>
             <p className="text-sm break-words whitespace-pre-wrap">
@@ -551,9 +561,11 @@ function MessageBubble({ message }: { message: DiscussionMessage }) {
 function DiscussionReplyForm({
     discussionId,
     comment,
+    panelBase,
 }: {
     discussionId: number;
     comment?: DiscussionMessage;
+    panelBase: string;
 }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         content: '',
@@ -566,7 +578,7 @@ function DiscussionReplyForm({
             return;
         }
 
-        post(`/admin/discussions/${discussionId}/messages`, {
+        post(`${panelBase}/discussions/${discussionId}/messages`, {
             preserveScroll: true,
             onSuccess: () => reset(),
         });
@@ -613,10 +625,11 @@ function DiscussionReplyForm({
     );
 }
 
-function AnnouncementCommentForm({ announcementId }: { announcementId: number }) {
+function AnnouncementCommentForm({ announcementId, panelBase }: { announcementId: number; panelBase: string }) {
     return (
         <AnnouncementCommentFormFields
             announcementId={announcementId}
+            panelBase={panelBase}
             label="Post a comment for all clients"
         />
     );
@@ -626,10 +639,12 @@ function AnnouncementMessageThread({
     announcementId,
     message,
     messages,
+    panelBase,
 }: {
     announcementId: number;
     message: DiscussionMessage;
     messages: DiscussionMessage[];
+    panelBase: string;
 }) {
     const [isReplyOpen, setIsReplyOpen] = useState(false);
     const replies = messages.filter(
@@ -651,6 +666,7 @@ function AnnouncementMessageThread({
                     <AnnouncementCommentFormFields
                         announcementId={announcementId}
                         parentMessageId={message.id}
+                        panelBase={panelBase}
                         label={`Reply to ${message.author}`}
                     />
                 )}
@@ -662,6 +678,7 @@ function AnnouncementMessageThread({
                                 announcementId={announcementId}
                                 message={reply}
                                 messages={messages}
+                                panelBase={panelBase}
                             />
                         ))}
                     </div>
@@ -674,10 +691,12 @@ function AnnouncementMessageThread({
 function AnnouncementCommentFormFields({
     announcementId,
     parentMessageId,
+    panelBase,
     label,
 }: {
     announcementId: number;
     parentMessageId?: number;
+    panelBase: string;
     label: string;
 }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -692,7 +711,7 @@ function AnnouncementCommentFormFields({
             return;
         }
 
-        post(`/admin/announcements/${announcementId}/comments`, {
+        post(`${panelBase}/announcements/${announcementId}/comments`, {
             preserveScroll: true,
             onSuccess: () => reset(),
         });

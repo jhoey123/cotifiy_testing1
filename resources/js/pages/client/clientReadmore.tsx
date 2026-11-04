@@ -28,7 +28,7 @@ interface DiscussionMessage {
     id: number;
     parent_message_id: number | null;
     author: string;
-    role: 'Client' | 'Admin';
+    role: 'Client' | 'Admin' | 'Staff';
     content: string;
     sent_at: string | null;
     is_mine: boolean;
@@ -625,7 +625,7 @@ export default function ClientReadMore({
                                                     <article
                                                     id={`comment-${message.id}`}
                                                     className={`scroll-mt-24 rounded-xl border p-5 ${
-                                                        message.role === 'Admin'
+                                                        message.role !== 'Client'
                                                             ? 'border-blue-200 bg-blue-50/50'
                                                             : 'border-slate-200 bg-white'
                                                     }`}
@@ -635,12 +635,12 @@ export default function ClientReadMore({
                                                             {message.author}
                                                         </span>
                                                         <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
-                                                                message.role === 'Admin'
+                                                                message.role !== 'Client'
                                                                     ? 'bg-blue-100 text-blue-700'
                                                                     : 'bg-slate-100 text-slate-600'
                                                             }`}
                                                         >
-                                                            {message.role === 'Admin' ? announcement.posted_by : 'Student'}
+                                                            {message.role === 'Admin' ? announcement.posted_by : message.role}
                                                         </span>
                                                         {message.is_announcement_wide && (
                                                             <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-700">

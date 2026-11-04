@@ -32,11 +32,13 @@ export default function StaffDashboard({
     upcomingEvents = [],
     announcementCount = 0,
     eventCount = 0,
+    userName = 'Staff User',
 }: {
     recentAnnouncements: Announcement[];
     upcomingEvents: UpcomingEvent[];
     announcementCount: number;
     eventCount: number;
+    userName?: string;
 }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isLogoutHovered, setIsLogoutHovered] = useState(false);
@@ -129,7 +131,7 @@ export default function StaffDashboard({
                                 <i className="fa-solid fa-user"></i>
                             </div>
                             <div>
-                                <p className="text-white text-sm font-bold">J. Cruz</p>
+                                <p className="text-white text-sm font-bold">{userName}</p>
                                 <p className="text-slate-400 text-[11px] font-medium">Registrar's Office</p>
                             </div>
                         </div> 

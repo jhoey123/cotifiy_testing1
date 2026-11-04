@@ -12,9 +12,11 @@ const formatDate = (date: string | null) => date
     ? new Date(date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
     : '—';
 
-export default function AdminStaff({ adminUsers = [] }: { adminUsers: User[] }) {
+export default function AdminStaff({ adminUsers = [], staffUsers = [] }: { adminUsers: User[]; staffUsers: User[] }) {
     const [adminSearch, setAdminSearch] = useState('');
+    const [staffSearch, setStaffSearch] = useState('');
     const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
+    const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
     
     // State for sidebar toggle and hover
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -23,6 +25,10 @@ export default function AdminStaff({ adminUsers = [] }: { adminUsers: User[] }) 
     const normalizedAdminSearch = adminSearch.trim().toLowerCase();
     const filteredAdminUsers = adminUsers.filter((admin) =>
         [admin.name, admin.email].some((value) => value.toLowerCase().includes(normalizedAdminSearch)),
+    );
+    const normalizedStaffSearch = staffSearch.trim().toLowerCase();
+    const filteredStaffUsers = staffUsers.filter((staff) =>
+        [staff.name, staff.email].some((value) => value.toLowerCase().includes(normalizedStaffSearch)),
     );
 
     return (
@@ -228,6 +234,58 @@ export default function AdminStaff({ adminUsers = [] }: { adminUsers: User[] }) 
                                     </table>
                                 </div>
                             </section>
+
+                            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:flex-1">
+                                        <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
+                                            <i className="fa-solid fa-user-tie text-blue-600"></i> Staff Users <span className="text-sm font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">({filteredStaffUsers.length}{normalizedStaffSearch ? ` of ${staffUsers.length}` : ''})</span>
+                                        </h3>
+                                        <label className="relative block sm:w-64">
+                                            <span className="sr-only">Search staff users</span>
+                                            <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i>
+                                            <input type="search" value={staffSearch} onChange={(event) => setStaffSearch(event.target.value)} placeholder="Search staff..." className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-4 text-sm font-medium outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                                        </label>
+                                    </div>
+                                    <button type="button" onClick={() => setIsAddStaffOpen(true)} className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-ctu-dark px-4 py-2 text-sm font-bold text-white transition-all shadow-md hover:bg-slate-800 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
+                                        <i className="fa-solid fa-plus"></i> Add Staff
+                                    </button>
+                                </div>
+
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-extrabold">
+                                                <th className="px-6 py-5">Name</th>
+                                                <th className="px-6 py-5">Email</th>
+                                                <th className="px-6 py-5">Joined</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {filteredStaffUsers.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={3} className="px-6 py-16 text-center text-sm font-medium text-slate-500">
+                                                        No staff users found.
+                                                    </td>
+                                                </tr>
+                                            ) : filteredStaffUsers.map((account) => (
+                                                <tr key={account.id} className="text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                                                                {account.name.charAt(0)}
+                                                            </div>
+                                                            <p className="font-bold text-slate-900">{account.name}</p>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 font-medium text-slate-600">{account.email}</td>
+                                                    <td className="px-6 py-4 font-medium text-slate-500">{formatDate(account.created_at)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
                         </div>
                     </main>
                 </div>
@@ -271,6 +329,51 @@ export default function AdminStaff({ adminUsers = [] }: { adminUsers: User[] }) 
                                     <div className="flex gap-4 pt-4 border-t border-slate-100">
                                         <button type="button" onClick={() => setIsAddAdminOpen(false)} className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">Cancel</button>
                                         <button type="submit" disabled={processing} className="flex-1 rounded-xl bg-purple-600 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/30 hover:bg-purple-700 disabled:opacity-60 transition-all">{processing ? 'Creating...' : 'Create Admin'}</button>
+                                    </div>
+                                </>
+                            )}
+                        </Form>
+                    </div>
+                </div>
+            )}
+
+            {isAddStaffOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in" role="dialog" aria-modal="true" aria-labelledby="addStaffTitle">
+                    <div className="max-h-[95vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-8 shadow-2xl animate-scale-in">
+                        <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
+                            <h3 id="addStaffTitle" className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                                <i className="fa-solid fa-user-tie text-blue-600"></i> Add Staff User
+                            </h3>
+                            <button type="button" onClick={() => setIsAddStaffOpen(false)} aria-label="Close form" className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors">
+                                <i className="fa-solid fa-times"></i>
+                            </button>
+                        </div>
+                        <Form method="post" action="/admin/users/staff" onSuccess={() => setIsAddStaffOpen(false)} className="space-y-5">
+                            {({ errors, processing }) => (
+                                <>
+                                    <div>
+                                        <label htmlFor="staffName" className="mb-2 block text-xs font-extrabold text-slate-700 uppercase tracking-wide">Name</label>
+                                        <input id="staffName" name="name" required maxLength={255} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                                        {errors.name && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.name}</p>}
+                                    </div>
+                                    <div>
+                                        <label htmlFor="staffEmail" className="mb-2 block text-xs font-extrabold text-slate-700 uppercase tracking-wide">Email</label>
+                                        <input id="staffEmail" name="email" type="email" required maxLength={255} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                                        {errors.email && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.email}</p>}
+                                    </div>
+                                    <div>
+                                        <label htmlFor="staffPassword" className="mb-2 block text-xs font-extrabold text-slate-700 uppercase tracking-wide">Password</label>
+                                        <input id="staffPassword" name="password" type="password" required autoComplete="new-password" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                                        {errors.password && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.password}</p>}
+                                    </div>
+                                    <div>
+                                        <label htmlFor="staffPasswordConfirmation" className="mb-2 block text-xs font-extrabold text-slate-700 uppercase tracking-wide">Confirm Password</label>
+                                        <input id="staffPasswordConfirmation" name="password_confirmation" type="password" required autoComplete="new-password" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10" />
+                                        {errors.password_confirmation && <p className="mt-1.5 text-xs font-bold text-red-600">{errors.password_confirmation}</p>}
+                                    </div>
+                                    <div className="flex gap-4 pt-4 border-t border-slate-100">
+                                        <button type="button" onClick={() => setIsAddStaffOpen(false)} className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">Cancel</button>
+                                        <button type="submit" disabled={processing} className="flex-1 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700 disabled:opacity-60 transition-all">{processing ? 'Adding...' : 'Add Staff'}</button>
                                     </div>
                                 </>
                             )}

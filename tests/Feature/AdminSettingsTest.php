@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\AdminUser;
+use App\Models\StaffUser;
 use Illuminate\Support\Facades\Hash;
 
 test('an admin can view the settings page', function () {
@@ -78,4 +79,28 @@ test('an admin can log out and lose access to admin pages', function () {
 
     $this->get(route('admin'))
         ->assertRedirect(route('login'));
+});
+
+test('staff can view the shared settings page and change their password', function () {
+    $staff = StaffUser::create([
+        'name' => 'Campus Staff',
+        'email' => 'staff@example.com',
+        'password' => 'old-password',
+    ]);
+
+    $this->actingAs($staff, 'staff')
+        ->get(route('staff.settings'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/settings')
+            ->where('staffMode', true)
+            ->where('staffName', 'Campus Staff'));
+
+    $this->put(route('staff.settings.password'), [
+        'current_password' => 'old-password',
+        'password' => 'new-strong-password',
+        'password_confirmation' => 'new-strong-password',
+    ])->assertRedirect();
+
+    expect(Hash::check('new-strong-password', $staff->fresh()->password))->toBeTrue();
 });

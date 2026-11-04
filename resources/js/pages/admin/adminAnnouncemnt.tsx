@@ -6,7 +6,7 @@ type DiscussionMessage = {
     id: number;
     parent_message_id: number | null;
     author: string;
-    role: 'Client' | 'Admin';
+    role: 'Client' | 'Admin' | 'Staff';
     content: string;
     sent_at: string | null;
 };
@@ -34,10 +34,14 @@ export default function AdminAnnouncements({
     announcements = [],
     discussions = [],
     announcementComments = [],
+    staffMode = false,
+    staffName = '',
 }: {
     announcements: Announcement[];
     discussions: Discussion[];
     announcementComments: AnnouncementComment[];
+    staffMode?: boolean;
+    staffName?: string;
 }) {
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
@@ -60,6 +64,7 @@ export default function AdminAnnouncements({
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+    const panelBase = staffMode ? '/staff' : '/admin';
 
     // Filtering Logic
     const filteredAnnouncements = announcements.filter((ann) => {
@@ -128,7 +133,7 @@ export default function AdminAnnouncements({
 
     return (
         <>
-            <Head title="Announcements | Cotify Admin" />
+            <Head title={`Announcements | Cotify ${staffMode ? 'Staff' : 'Admin'}`} />
             
             <style>{`
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -179,36 +184,37 @@ export default function AdminAnnouncements({
                             <img src="/images/3rdLogo.png" alt="Cotify Logo" className="w-16 h-16 object-contain -ml-2 -mr-4" />
                             <div className="text-white">
                                 <h1 className="font-extrabold text-xl leading-tight tracking-tight">Cotify</h1>
+                                {staffMode && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Staff Portal</p>}
                             </div>
                         </div>
 
                         <nav className="mt-2 space-y-6 px-3">
                             <div>
                                 <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Main</p>
-                                <Link href="/admin" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                <Link href={panelBase} className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-house w-5 text-center group-hover:scale-110 transition-transform"></i> Dashboard
                                 </Link>
-                                <Link href="/admin/announcements" className="mt-1 flex items-center gap-3 px-3 py-2.5 bg-ctu-lightblue text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-900/30">
+                                <Link href={`${panelBase}/announcements`} className="mt-1 flex items-center gap-3 px-3 py-2.5 bg-ctu-lightblue text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-900/30">
                                     <i className="fa-solid fa-bullhorn w-5 text-center"></i> Announcements
                                 </Link>
-                                <Link href="/admin/events" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                <Link href={`${panelBase}/events`} className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-regular fa-calendar w-5 text-center group-hover:scale-110 transition-transform"></i> Events
                                 </Link>
                             </div>
 
-                            <div>
+                            {!staffMode && <div>
                                 <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">People</p>
                                 <Link href="/admin/users" prefetch="mount" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-users w-5 text-center group-hover:scale-110 transition-transform"></i> Students
                                 </Link>
-                                <Link href="/admin/admins" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                <Link href="/admin/staff" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-user-shield w-5 text-center group-hover:scale-110 transition-transform"></i> Staff & Admins
                                 </Link>
-                            </div>
+                            </div>}
 
                             <div>
                                 <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">System</p>
-                                <Link href="/admin/settings" prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
+                                <Link href={`${panelBase}/settings`} prefetch="mount" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
                                     <i className="fa-solid fa-gear w-5 text-center group-hover:rotate-90 transition-transform duration-300"></i> Settings
                                 </Link>
                             </div>
@@ -221,11 +227,11 @@ export default function AdminAnnouncements({
                                 <i className="fa-solid fa-user"></i>
                             </div>
                             <div>
-                                <p className="text-white text-sm font-bold">Niggas</p>
+                                <p className="text-white text-sm font-bold">{staffMode ? staffName : 'Admin'}</p>
                                 <p className="text-slate-400 text-[11px] font-medium">Registrar's Office</p>
                             </div>
                         </div> 
-                        <Form method="post" action="/admin/logout">
+                        <Form method="post" action={`${panelBase}/logout`}>
                             {({ processing }) => (
                                 <button 
                                     type="submit" 
@@ -397,6 +403,7 @@ export default function AdminAnnouncements({
                         announcementComments={announcementComments
                             .filter((comment) => comment.announcement_id === selectedAnnouncement.id)
                             .flatMap((comment) => comment.messages)}
+                        staffMode={staffMode}
                         onClose={() => setSelectedAnnouncement(null)}
                     />
                 )}
@@ -408,7 +415,7 @@ export default function AdminAnnouncements({
                             
                             <Form 
                                 method="post" 
-                                action={editingAnnouncement ? `/admin/announcements/${editingAnnouncement.id}` : '/admin/announcements'} 
+                                action={editingAnnouncement ? `${panelBase}/announcements/${editingAnnouncement.id}` : `${panelBase}/announcements`}
                                 onSuccess={() => setIsEditorOpen(false)} 
                                 className="flex flex-col h-full"
                             >
@@ -683,7 +690,7 @@ export default function AdminAnnouncements({
                                 <button onClick={() => setAnnouncementToDelete(null)} className="flex-1 border border-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50">Cancel</button>
                                 <button onClick={() => {
                                     setIsDeletingAnnouncement(true);
-                                    router.post(`/admin/announcements/${announcementToDelete.id}`, { _method: 'delete' }, {
+                                    router.post(`${panelBase}/announcements/${announcementToDelete.id}`, { _method: 'delete' }, {
                                         onSuccess: () => setAnnouncementToDelete(null),
                                         onFinish: () => setIsDeletingAnnouncement(false),
                                     });

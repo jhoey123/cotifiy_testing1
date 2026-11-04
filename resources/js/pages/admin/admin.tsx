@@ -17,7 +17,7 @@ type DiscussionMessage = {
     id: number;
     parent_message_id: number | null;
     author: string;
-    role: 'Client' | 'Admin';
+    role: 'Client' | 'Admin' | 'Staff';
     content: string;
     sent_at: string | null;
 };

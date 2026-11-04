@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminUser;
+use App\Models\StaffUser;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,6 +34,9 @@ class UserController extends Controller
             'adminUsers' => AdminUser::query()
                 ->orderBy('name')
                 ->get(['id', 'name', 'email', 'created_at']),
+            'staffUsers' => StaffUser::query()
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'created_at']),
         ]);
     }
 
@@ -51,11 +55,41 @@ class UserController extends Controller
                 'max:255',
                 Rule::unique(User::class),
                 Rule::unique(AdminUser::class),
+                Rule::unique(StaffUser::class),
             ],
             'password' => ['required', 'string', Password::default(), 'confirmed'],
         ]);
 
         AdminUser::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+        ]);
+
+        return back();
+    }
+
+    public function storeStaff(Request $request): RedirectResponse
+    {
+        $request->merge([
+            'email' => Str::lower((string) $request->input('email')),
+        ]);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique(User::class),
+                Rule::unique(AdminUser::class),
+                Rule::unique(StaffUser::class),
+            ],
+            'password' => ['required', 'string', Password::default(), 'confirmed'],
+        ]);
+
+        StaffUser::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $validated['password'],
@@ -82,6 +116,7 @@ class UserController extends Controller
                 'max:255',
                 Rule::unique(User::class)->ignore($user),
                 Rule::unique(AdminUser::class),
+                Rule::unique(StaffUser::class),
             ],
             'password' => ['nullable', 'string', Password::default(), 'confirmed'],
         ]);

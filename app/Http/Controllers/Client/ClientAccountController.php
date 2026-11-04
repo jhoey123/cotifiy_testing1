@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\AdminUser;
 use App\Models\Message;
+use App\Models\StaffUser;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,6 +55,7 @@ class ClientAccountController extends Controller
                 'max:255',
                 Rule::unique(User::class)->ignore($user),
                 Rule::unique(AdminUser::class),
+                Rule::unique(StaffUser::class),
             ],
             'student_id' => ['nullable', 'string', 'max:255'],
             'course' => ['required', 'string', Rule::in(['BSIT', 'BSCS', 'BSIS', 'ACT'])],

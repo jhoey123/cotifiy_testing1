@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminUser;
+use App\Models\StaffUser;
 use App\Models\User;
 use App\Notifications\VerifyPendingRegistration;
 use Illuminate\Http\RedirectResponse;
@@ -36,7 +38,7 @@ class RegistrationController extends Controller
             'studentId' => ['required', 'string', 'max:255'],
             'course' => ['required', 'string', Rule::in(self::COURSES)],
             'year_level' => ['required', 'string', Rule::in(self::YEAR_LEVELS)],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class), Rule::unique(AdminUser::class), Rule::unique(StaffUser::class)],
             'password' => ['required', 'string', Password::default(), 'confirmed'],
         ]);
 
@@ -78,7 +80,7 @@ class RegistrationController extends Controller
             'studentId' => ['required', 'string', 'max:255'],
             'course' => ['required', 'string', Rule::in(self::COURSES)],
             'year_level' => ['required', 'string', Rule::in(self::YEAR_LEVELS)],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class), Rule::unique(AdminUser::class), Rule::unique(StaffUser::class)],
             'password' => ['required', 'string'],
         ])->validate();
 
@@ -107,7 +109,7 @@ class RegistrationController extends Controller
             'studentId' => ['required', 'string', 'max:255'],
             'course' => ['required', 'string', Rule::in(self::COURSES)],
             'year_level' => ['required', 'string', Rule::in(self::YEAR_LEVELS)],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class), Rule::unique(AdminUser::class), Rule::unique(StaffUser::class)],
             'password' => ['required', 'string'],
         ])->validate();
 

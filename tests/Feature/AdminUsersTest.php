@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\AdminUser;
+use App\Models\StaffUser;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -50,6 +51,11 @@ test('an admin can view staff accounts from the staff page', function () {
         'email' => 'admin@example.com',
         'password' => 'secret-password',
     ]);
+    $staff = StaffUser::create([
+        'name' => 'Campus Staff',
+        'email' => 'staff@example.com',
+        'password' => 'secret-password',
+    ]);
 
     $this->actingAs($admin, 'admin')
         ->get(route('admin.staff'))
@@ -59,7 +65,68 @@ test('an admin can view staff accounts from the staff page', function () {
             ->has('adminUsers', 1)
             ->where('adminUsers.0.id', $admin->id)
             ->where('adminUsers.0.name', 'Site Admin')
-            ->missing('adminUsers.0.password'));
+            ->missing('adminUsers.0.password')
+            ->has('staffUsers', 1)
+            ->where('staffUsers.0.id', $staff->id)
+            ->where('staffUsers.0.name', 'Campus Staff')
+            ->where('staffUsers.0.email', 'staff@example.com')
+            ->missing('staffUsers.0.password'));
+});
+
+test('an admin can add a staff user with a password without granting admin or student access', function () {
+    $admin = AdminUser::create([
+        'name' => 'Site Admin',
+        'email' => 'admin@example.com',
+        'password' => 'secret-password',
+    ]);
+
+    $this->actingAs($admin, 'admin')
+        ->post(route('admin.users.staff.store'), [
+            'name' => 'New Staff',
+            'email' => 'NEW-STAFF@example.com',
+            'password' => 'a-strong-password',
+            'password_confirmation' => 'a-strong-password',
+        ])
+        ->assertRedirect();
+
+    $staff = StaffUser::query()->where('email', 'new-staff@example.com')->firstOrFail();
+    expect($staff->name)->toBe('New Staff')
+        ->and(Hash::check('a-strong-password', $staff->password))->toBeTrue()
+        ->and(AdminUser::query()->count())->toBe(1)
+        ->and(User::query()->count())->toBe(0);
+});
+
+test('staff users cannot reuse student or admin email addresses', function () {
+    $admin = AdminUser::create([
+        'name' => 'Site Admin',
+        'email' => 'admin@example.com',
+        'password' => 'secret-password',
+    ]);
+    User::create([
+        'name' => 'Avery Student',
+        'email' => 'avery@example.com',
+        'studentId' => 'STU-123',
+        'password' => 'secret-password',
+    ]);
+
+    $this->actingAs($admin, 'admin')
+        ->from(route('admin.staff'))
+        ->post(route('admin.users.staff.store'), [
+            'name' => 'Duplicate Admin Email',
+            'email' => 'admin@example.com',
+        ])
+        ->assertRedirect(route('admin.staff'))
+        ->assertSessionHasErrors('email');
+
+    $this->from(route('admin.staff'))
+        ->post(route('admin.users.staff.store'), [
+            'name' => 'Duplicate Student Email',
+            'email' => 'avery@example.com',
+        ])
+        ->assertRedirect(route('admin.staff'))
+        ->assertSessionHasErrors('email');
+
+    expect(StaffUser::query()->count())->toBe(0);
 });
 
 test('an admin can create another admin account', function () {

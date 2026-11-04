@@ -14,8 +14,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read Collection<int, Message> $replies
  * @property-read User|null $sender
  * @property-read AdminUser|null $adminSender
+ * @property-read StaffUser|null $staffSender
  */
-#[Fillable(['conversation_id', 'parent_message_id', 'sender_id', 'sender_admin_id', 'content'])]
+#[Fillable(['conversation_id', 'parent_message_id', 'sender_id', 'sender_admin_id', 'sender_staff_id', 'content'])]
 class Message extends Model
 {
     /** @return BelongsTo<Conversation, $this> */
@@ -46,5 +47,11 @@ class Message extends Model
     public function adminSender(): BelongsTo
     {
         return $this->belongsTo(AdminUser::class, 'sender_admin_id');
+    }
+
+    /** @return BelongsTo<StaffUser, $this> */
+    public function staffSender(): BelongsTo
+    {
+        return $this->belongsTo(StaffUser::class, 'sender_staff_id');
     }
 }

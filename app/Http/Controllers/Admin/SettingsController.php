@@ -17,6 +17,14 @@ class SettingsController extends Controller
         return Inertia::render('admin/settings');
     }
 
+    public function staffIndex(Request $request): Response
+    {
+        return Inertia::render('admin/settings', [
+            'staffMode' => true,
+            'staffName' => $request->user('staff')->name,
+        ]);
+    }
+
     public function updatePassword(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -27,6 +35,22 @@ class SettingsController extends Controller
         ]);
 
         $request->user('admin')->forceFill([
+            'password' => Hash::make($validated['password']),
+        ])->save();
+
+        return back();
+    }
+
+    public function updateStaffPassword(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'string', 'current_password:staff'],
+            'password' => ['required', 'string', Password::default(), 'confirmed'],
+        ], [
+            'current_password.current_password' => __('The provided password does not match your current password.'),
+        ]);
+
+        $request->user('staff')->forceFill([
             'password' => Hash::make($validated['password']),
         ])->save();
 

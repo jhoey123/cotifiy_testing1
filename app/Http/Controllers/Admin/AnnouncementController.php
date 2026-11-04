@@ -61,6 +61,96 @@ class AnnouncementController extends Controller
         ]);
     }
 
+    public function staffDashboard(Request $request): Response
+    {
+        $announcements = Announcement::query()
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->get();
+
+        return Inertia::render('staff/staff', [
+            'recentAnnouncements' => $announcements->take(5)->map(fn (Announcement $announcement) => $this->announcementData($announcement)),
+            'upcomingEvents' => Announcement::query()
+                ->where('category', 'Event')
+                ->where(function ($query) {
+                    $query->whereDate('event_end_date', '>=', now()->toDateString())
+                        ->orWhere(function ($query) {
+                            $query->whereNull('event_end_date')
+                                ->whereDate('event_date', '>=', now()->toDateString());
+                        });
+                })
+                ->orderBy('event_date')
+                ->orderBy('start_time')
+                ->orderBy('id')
+                ->limit(5)
+                ->get()
+                ->map(fn (Announcement $announcement) => [
+                    'id' => $announcement->id,
+                    'title' => $announcement->title,
+                    'event_date' => $announcement->event_date?->toDateString() ?? $announcement->date->toDateString(),
+                    'start_time' => $announcement->start_time,
+                    'end_time' => $announcement->end_time,
+                    'location' => $announcement->location,
+                ]),
+            'announcementCount' => $announcements->count(),
+            'eventCount' => Announcement::query()->where('category', 'Event')->count(),
+            'userName' => $request->user('staff')->name,
+        ]);
+    }
+
+    public function staffAnnouncements(Request $request): Response
+    {
+        $announcements = Announcement::query()
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->get();
+
+        return Inertia::render('admin/adminAnnouncemnt', [
+            'announcements' => $announcements->map(fn (Announcement $announcement) => $this->announcementData($announcement)),
+            'discussions' => $this->discussionData(),
+            'announcementComments' => $this->announcementCommentData(),
+            'staffMode' => true,
+            'staffName' => $request->user('staff')->name,
+        ]);
+    }
+
+    public function staffEvents(Request $request): Response
+    {
+        $events = Announcement::query()
+            ->where('category', 'Event')
+            ->orderByDesc('event_date')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (Announcement $announcement) => [
+                'id' => $announcement->id,
+                'title' => $announcement->title,
+                'body' => $announcement->body,
+                'posted_by' => $announcement->posted_by,
+                'image_url' => $announcement->image
+                    ? Storage::disk('public')->url($announcement->image)
+                    : null,
+                'attachments' => $this->attachmentData($announcement),
+                'date' => $announcement->event_date?->toDateString() ?? $announcement->date->toDateString(),
+                'end_date' => $announcement->event_end_date?->toDateString() ?? $announcement->event_date?->toDateString() ?? $announcement->date->toDateString(),
+                'time' => $announcement->start_time ?? '',
+                'venue' => $announcement->location ?? '',
+                'rsvp_count' => 0,
+                'capacity' => null,
+                'audience' => 'All',
+                'status' => ($announcement->event_end_date?->toDateString() ?? $announcement->event_date?->toDateString() ?? $announcement->date->toDateString()) >= now()->toDateString()
+                    ? 'Upcoming'
+                    : 'Past',
+                'start_time' => $announcement->start_time ?? '',
+                'end_time' => $announcement->end_time ?? '',
+            ]);
+
+        return Inertia::render('admin/adminEvent', [
+            'events' => $events,
+            'staffMode' => true,
+            'staffName' => $request->user('staff')->name,
+        ]);
+    }
+
     public function announcements(): Response
     {
         $announcements = Announcement::query()
@@ -119,7 +209,7 @@ class AnnouncementController extends Controller
                 'announcement:id,title',
                 'client:id,name',
                 'messages' => fn ($query) => $query
-                    ->with(['sender', 'adminSender'])
+                    ->with(['sender', 'adminSender', 'staffSender'])
                     ->orderBy('created_at')
                     ->orderBy('id'),
             ])
@@ -136,10 +226,14 @@ class AnnouncementController extends Controller
                     ->map(fn (Message $message) => [
                         'id' => $message->id,
                         'parent_message_id' => $message->parent_message_id,
-                        'author' => $message->sender_admin_id === null
-                            ? $message->sender->name
-                            : $message->adminSender->name,
-                        'role' => $message->sender_admin_id === null ? 'Client' : 'Admin',
+                        'author' => $message->sender_staff_id !== null
+                            ? $message->staffSender->name
+                            : ($message->sender_admin_id !== null
+                                ? $message->adminSender->name
+                                : $message->sender->name),
+                        'role' => $message->sender_staff_id !== null
+                            ? 'Staff'
+                            : ($message->sender_admin_id === null ? 'Client' : 'Admin'),
                         'content' => $message->content,
                         'sent_at' => $message->created_at?->toIso8601String(),
                     ])
@@ -155,7 +249,7 @@ class AnnouncementController extends Controller
             ->whereNull('client_id')
             ->with([
                 'messages' => fn ($query) => $query
-                    ->with(['sender', 'adminSender'])
+                    ->with(['sender', 'adminSender', 'staffSender'])
                     ->orderBy('created_at')
                     ->orderBy('id'),
             ])
@@ -167,10 +261,14 @@ class AnnouncementController extends Controller
                     ->map(fn (Message $message) => [
                         'id' => $message->id,
                         'parent_message_id' => $message->parent_message_id,
-                        'author' => $message->sender_admin_id === null
-                            ? $message->sender->name
-                            : $message->adminSender->name,
-                        'role' => $message->sender_admin_id === null ? 'Client' : 'Admin',
+                        'author' => $message->sender_staff_id !== null
+                            ? $message->staffSender->name
+                            : ($message->sender_admin_id !== null
+                                ? $message->adminSender->name
+                                : $message->sender->name),
+                        'role' => $message->sender_staff_id !== null
+                            ? 'Staff'
+                            : ($message->sender_admin_id === null ? 'Client' : 'Admin'),
                         'content' => $message->content,
                         'sent_at' => $message->created_at?->toIso8601String(),
                     ])

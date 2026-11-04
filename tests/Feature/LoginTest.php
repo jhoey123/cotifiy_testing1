@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\AdminUser;
+use App\Models\StaffUser;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -35,6 +36,28 @@ test('a regular user is redirected to the client page after login', function () 
         ])->assertRedirect(route('client.clientpage'));
 
     $this->get(route('admin'))->assertRedirect(route('login'));
+});
+
+test('a staff user is redirected to the staff dashboard after login', function () {
+    $staff = StaffUser::create([
+        'name' => 'Campus Staff',
+        'email' => 'staff@example.com',
+        'password' => 'secret-password',
+    ]);
+
+    $this->post('/auth/login', [
+        'email' => $staff->email,
+        'password' => 'secret-password',
+    ])->assertRedirect(route('staff'));
+
+    $this->get(route('staff'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('staff/staff')
+            ->where('userName', 'Campus Staff'));
+
+    $this->get(route('admin'))->assertRedirect(route('login'));
+    $this->get(route('admin.users'))->assertRedirect(route('login'));
 });
 
 test('successful client logins do not count toward the failed login limit', function () {
@@ -92,6 +115,21 @@ test('a regular user can log out from the client page', function () {
 
     $this->get(route('client.clientpage'))
         ->assertRedirect(route('login'));
+});
+
+test('a staff user can log out from the staff dashboard', function () {
+    $staff = StaffUser::create([
+        'name' => 'Campus Staff',
+        'email' => 'staff@example.com',
+        'password' => 'secret-password',
+    ]);
+
+    $this->actingAs($staff, 'staff')
+        ->post('/staff/logout')
+        ->assertRedirect(route('login'))
+        ->assertHeaderContains('Cache-Control', 'no-store');
+
+    $this->get(route('staff'))->assertRedirect(route('login'));
 });
 
 test('an admin can still log out from the admin page', function () {
