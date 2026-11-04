@@ -25,6 +25,8 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'studentId' => ['required', 'string', 'max:255'],
+            'course' => ['required', 'string', Rule::in(['BSIT', 'BSCS', 'BSIS', 'ACT'])],
+            'year_level' => ['required', 'string', Rule::in(['1st Year', '2nd Year', '3rd Year', '4th Year'])],
             'email' => [
                 'required',
                 'string',
@@ -38,6 +40,8 @@ class CreateNewUser implements CreatesNewUsers
         return User::create([
             'name' => $input['name'],
             'studentId' => $input['studentId'],
+            'course' => $input['course'],
+            'year_level' => $input['year_level'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
         ]);
