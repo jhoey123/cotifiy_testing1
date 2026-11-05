@@ -41,6 +41,29 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'unreadCount' => fn () => $request->user('web')?->unreadNotifications()->count() ?? 0,
+            'recentNotifications' => function () use ($request): array {
+                $user = $request->user('web');
+
+                if ($user === null) {
+                    return [];
+                }
+
+                return $user->notifications()
+                    ->latest()
+                    ->limit(5)
+                    ->get()
+                    ->map(fn ($notification) => [
+                        'id' => $notification->id,
+                        'title' => $notification->data['title'] ?? 'Notification',
+                        'message' => $notification->data['message'] ?? '',
+                        'office' => $notification->data['office'] ?? '',
+                        'is_read' => $notification->read_at !== null,
+                        'link' => $notification->data['link'] ?? route('client.notifications'),
+                        'created_at' => $notification->created_at?->toIso8601String(),
+                    ])
+                    ->all();
+            },
         ];
     }
 }

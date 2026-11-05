@@ -1,15 +1,15 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Notification {
-    id: number;
+    id: string;
     title: string;
     message: string;
     office: string;
     time_ago: string;
     is_read: boolean;
     link: string;
-    type: 'urgent' | 'academic' | 'general' | 'event';
+    type: 'urgent' | 'academic' | 'general' | 'event' | 'service';
     created_at: string; // ISO string for grouping
 }
 
@@ -31,6 +31,21 @@ export default function ClientNotifications({
     const [items, setItems] = useState<Notification[]>(notifications);
     const [currentUnread, setCurrentUnread] = useState(unreadCount);
 
+    useEffect(() => {
+        setItems(notifications);
+        setCurrentUnread(unreadCount);
+    }, [notifications, unreadCount]);
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                router.reload({ only: ['notifications', 'unreadCount'], showProgress: false });
+            }
+        }, 15_000);
+
+        return () => window.clearInterval(intervalId);
+    }, []);
+
     // Group by Today vs Earlier
     const todayDate = new Date().toDateString();
     const todayItems = items.filter(n => new Date(n.created_at).toDateString() === todayDate);
@@ -42,11 +57,16 @@ export default function ClientNotifications({
         router.post('/client/notifications/mark-all-read', {}, { preserveScroll: true, showProgress: false });
     };
 
-    const handleNotificationClick = (id: number, link: string, isRead: boolean) => {
+    const handleNotificationClick = (id: string, link: string, isRead: boolean) => {
         if (!isRead) {
             setItems(items.map(n => n.id === id ? { ...n, is_read: true } : n));
             setCurrentUnread(prev => Math.max(0, prev - 1));
-            router.post(`/client/notifications/${id}/read`, {}, { preserveScroll: true, showProgress: false });
+            router.post(`/client/notifications/${id}/read`, {}, {
+                preserveScroll: true,
+                showProgress: false,
+                onSuccess: () => router.visit(link),
+            });
+            return;
         }
         router.visit(link);
     };
@@ -199,7 +219,8 @@ export default function ClientNotifications({
                             </div>
 
                             <div className="flex items-center gap-3 sm:gap-4">
-                                <button 
+                                <Link
+                                    href="/client/notifications"
                                     aria-label={`View notifications. ${currentUnread} unread.`}
                                     className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-800"
                                 >
@@ -209,7 +230,7 @@ export default function ClientNotifications({
                                             {currentUnread}
                                         </span>
                                     )}
-                                </button>
+                                </Link>
 
                                 <Link
                                     href="/client/profile"

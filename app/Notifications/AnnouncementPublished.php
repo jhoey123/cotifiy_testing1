@@ -20,7 +20,21 @@ class AnnouncementPublished extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['database', 'mail'];
+    }
+
+    /**
+     * @return array{title: string, message: string, office: string, link: string, type: string}
+     */
+    public function toDatabase(object $notifiable): array
+    {
+        return [
+            'title' => $this->announcement->title,
+            'message' => 'A new '.$this->announcement->category.' announcement has been posted.',
+            'office' => $this->announcement->posted_by,
+            'link' => route('client.announcements.show', $this->announcement),
+            'type' => strtolower($this->announcement->category),
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

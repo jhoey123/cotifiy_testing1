@@ -1,5 +1,6 @@
-import { Head, Link, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
+import ClientNotificationDropdown from './ClientNotificationDropdown';
 
 type AnnouncementCategory = 'Academic' | 'Event' | 'General' | 'Service';
 
@@ -56,6 +57,16 @@ export default function ClientAnnouncements({
     const userName = auth?.user?.name ?? 'Student';
     const [activeCategory, setActiveCategory] = useState<(typeof categories)[number]>('All');
     const [search, setSearch] = useState('');
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                router.reload({ only: ['announcements', 'unreadCount'], showProgress: false });
+            }
+        }, 15_000);
+
+        return () => window.clearInterval(intervalId);
+    }, []);
 
     const filteredAnnouncements = useMemo(() => {
         const query = search.trim().toLowerCase();
@@ -211,17 +222,7 @@ export default function ClientAnnouncements({
                                 />
                             </div>
 
-                            <button 
-                                aria-label={`View notifications. ${unreadCount} unread.`}
-                                className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <i className="fa-regular fa-bell text-xl"></i>
-                                {unreadCount > 0 && (
-                                    <span className="border-ctu-dark absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 bg-red-500 text-[10px] font-bold text-white">
-                                        {unreadCount}
-                                    </span>
-                                )}
-                            </button>
+                            <ClientNotificationDropdown />
 
                             <Link
                                 href="/client/profile"

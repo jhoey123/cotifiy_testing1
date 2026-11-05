@@ -9,6 +9,7 @@ use App\Models\StaffUser;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -107,10 +108,47 @@ class ClientAccountController extends Controller
         ]);
     }
 
-    public function notifications(): Response
+    public function notifications(Request $request): Response
     {
+        /** @var User $user */
+        $user = $request->user();
+        $notifications = $user->notifications()
+            ->latest()
+            ->limit(50)
+            ->get()
+            ->map(fn (DatabaseNotification $notification) => [
+                'id' => $notification->id,
+                'title' => $notification->data['title'] ?? 'Notification',
+                'message' => $notification->data['message'] ?? '',
+                'office' => $notification->data['office'] ?? '',
+                'time_ago' => $notification->created_at?->diffForHumans() ?? '',
+                'is_read' => $notification->read_at !== null,
+                'link' => $notification->data['link'] ?? route('client.announcements.index'),
+                'type' => $notification->data['type'] ?? 'general',
+                'created_at' => $notification->created_at?->toIso8601String(),
+            ]);
+
         return Inertia::render('client/clientnotif', [
-            'notifications' => [],
+            'notifications' => $notifications,
+            'unreadCount' => $user->unreadNotifications()->count(),
         ]);
+    }
+
+    public function markNotificationRead(Request $request, string $notification): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $user->notifications()->whereKey($notification)->firstOrFail()->markAsRead();
+
+        return back();
+    }
+
+    public function markAllNotificationsRead(Request $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $user->unreadNotifications()->update(['read_at' => now()]);
+
+        return back();
     }
 }

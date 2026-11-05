@@ -47,6 +47,12 @@ Route::get('/client/settings', [ClientAccountController::class, 'settings'])
 Route::get('/client/notifications', [ClientAccountController::class, 'notifications'])
     ->middleware(['auth:web', 'private-cache'])
     ->name('client.notifications');
+Route::post('/client/notifications/{notification}/read', [ClientAccountController::class, 'markNotificationRead'])
+    ->middleware(['auth:web', 'private-cache'])
+    ->name('client.notifications.read');
+Route::post('/client/notifications/mark-all-read', [ClientAccountController::class, 'markAllNotificationsRead'])
+    ->middleware(['auth:web', 'private-cache'])
+    ->name('client.notifications.mark-all-read');
 Route::get('/client/announcements/{announcement}', [ClientPageController::class, 'show'])
     ->middleware(['auth:web', 'private-cache'])
     ->name('client.announcements.show');

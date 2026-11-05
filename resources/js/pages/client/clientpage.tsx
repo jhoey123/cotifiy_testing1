@@ -64,9 +64,8 @@ export default function ClientHome({
         const pollForAnnouncements = () => {
             if (document.visibilityState === 'visible') {
                 router.reload({
-                    only: ['announcements'],
-                    preserveState: true,
-                    preserveScroll: true,
+                    only: ['announcements', 'upcomingEvents', 'unreadCount'],
+                    showProgress: false,
                 });
             }
         };
@@ -361,11 +360,11 @@ export default function ClientHome({
                                                 )}
                                             </div>
                                             <Link
-                                                href="/client/announcements"
+                                                href="/client/notifications"
                                                 onClick={() => setNotificationsOpen(false)}
-                                                className="block border-t border-slate-100 px-4 py-3 text-center text-xs font-bold text-blue-600 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                                                className="block border-t border-slate-100 px-4 py-3 text-center text-xs font-bold text-ctu-lightblue hover:bg-slate-50"
                                             >
-                                                View all announcements
+                                                View notifications
                                             </Link>
                                         </div>
                                     )}

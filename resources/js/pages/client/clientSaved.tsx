@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import ClientNotificationDropdown from './ClientNotificationDropdown';
 
 interface SavedItem {
     id: number;
@@ -154,17 +155,7 @@ export default function ClientSaved({
                             </div>
 
                             <div className="flex items-center gap-3 sm:gap-4">
-                                <button 
-                                    aria-label={`View notifications. ${unreadCount} unread.`}
-                                    className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <i className="fa-regular fa-bell text-xl"></i>
-                                    {unreadCount > 0 && (
-                                        <span className="border-ctu-dark absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 bg-red-500 text-[10px] font-bold text-white">
-                                            {unreadCount}
-                                        </span>
-                                    )}
-                                </button>
+                                <ClientNotificationDropdown />
 
                                 <Link
                                     href="/client/profile"

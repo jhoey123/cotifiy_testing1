@@ -321,7 +321,8 @@ export default function ClientReadMore({
                                     />
                                 </div>
 
-                                <button 
+                                <Link
+                                    href="/client/notifications"
                                     aria-label={`View notifications. ${unreadCount} unread.`}
                                     className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
@@ -331,7 +332,7 @@ export default function ClientReadMore({
                                             {unreadCount}
                                         </span>
                                     )}
-                                </button>
+                                </Link>
 
                                 <div className="relative" ref={profileRef}>
                                     <button
