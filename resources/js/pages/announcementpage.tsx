@@ -3,6 +3,10 @@ import { useState } from 'react';
 
 export type Announcement = {
     id: number;
+    author_staff_id?: number | null;
+    author_admin_id?: number | null;
+    is_pinned?: boolean;
+    status?: string;
     title: string;
     category: string;
     posted_by: string;

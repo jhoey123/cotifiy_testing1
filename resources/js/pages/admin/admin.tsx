@@ -49,6 +49,7 @@ export default function admin({
     announcementCount,
     eventCount,
     userCount,
+    adminId,
 }: {
     recentAnnouncements: Announcement[];
     upcomingEvents: UpcomingEvent[];
@@ -57,10 +58,15 @@ export default function admin({
     announcementCount: number;
     eventCount: number;
     userCount: number;
+    adminId: number;
 }) {
     const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isLogoutHovered, setIsLogoutHovered] = useState(false);
+    const [announcementTab, setAnnouncementTab] = useState<'All' | 'My Posts'>('All');
+    const visibleAnnouncements = announcementTab === 'All'
+        ? recentAnnouncements
+        : recentAnnouncements.filter((announcement) => announcement.author_admin_id === adminId);
 
     // Polling for new discussions if needed
     useEffect(() => {
@@ -301,6 +307,25 @@ export default function admin({
                                         <h4 className="font-extrabold text-slate-900">Recent announcements</h4>
                                         <Link href="/admin/announcements" className="text-xs font-bold text-slate-500 hover:text-ctu-lightblue transition-colors">View all</Link>
                                     </div>
+                                    <div className="flex items-center gap-4 px-6 pt-3">
+                                        {([
+                                            { label: 'All', count: recentAnnouncements.length },
+                                            { label: 'My Posts', count: recentAnnouncements.filter((announcement) => announcement.author_admin_id === adminId).length },
+                                        ] as const).map((tab) => (
+                                            <button
+                                                key={tab.label}
+                                                type="button"
+                                                onClick={() => setAnnouncementTab(tab.label)}
+                                                className={`border-b-2 pb-2 text-xs font-bold transition-colors ${
+                                                    announcementTab === tab.label
+                                                        ? 'border-ctu-lightblue text-ctu-lightblue'
+                                                        : 'border-transparent text-slate-500 hover:text-slate-700'
+                                                }`}
+                                            >
+                                                {tab.label} <span className="ml-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px]">{tab.count}</span>
+                                            </button>
+                                        ))}
+                                    </div>
                                     
                                     <div className="flex-1">
                                         <table className="w-full text-left border-collapse">
@@ -312,7 +337,7 @@ export default function admin({
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
-                                                {recentAnnouncements.map((announcement) => (
+                                                {visibleAnnouncements.map((announcement) => (
                                                     <tr key={announcement.id} className="hover:bg-slate-50/50 transition-colors group">
                                                         <td className="px-6 py-3">
                                                             <div className="flex items-start gap-2">

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminUser;
 use App\Models\Announcement;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\StaffUser;
 use App\Models\User;
 use App\Notifications\AnnouncementPublished;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +22,7 @@ use RuntimeException;
 
 class AnnouncementController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $announcements = Announcement::query()
             ->orderByDesc('date')
@@ -56,6 +58,7 @@ class AnnouncementController extends Controller
             'announcementCount' => $announcements->count(),
             'eventCount' => Announcement::query()->where('category', 'Event')->count(),
             'userCount' => User::query()->count(),
+            'adminId' => $request->user('admin')->id,
             'discussions' => $this->discussionData(),
             'announcementComments' => $this->announcementCommentData(),
         ]);
@@ -111,6 +114,7 @@ class AnnouncementController extends Controller
             'announcementComments' => $this->announcementCommentData(),
             'staffMode' => true,
             'staffName' => $request->user('staff')->name,
+            'staffId' => $request->user('staff')->id,
         ]);
     }
 
@@ -151,7 +155,7 @@ class AnnouncementController extends Controller
         ]);
     }
 
-    public function announcements(): Response
+    public function announcements(Request $request): Response
     {
         $announcements = Announcement::query()
             ->orderByDesc('date')
@@ -162,6 +166,7 @@ class AnnouncementController extends Controller
             'announcements' => $announcements->map(fn (Announcement $announcement) => $this->announcementData($announcement)),
             'discussions' => $this->discussionData(),
             'announcementComments' => $this->announcementCommentData(),
+            'adminId' => $request->user('admin')->id,
         ]);
     }
 
@@ -310,6 +315,7 @@ class AnnouncementController extends Controller
             'date' => now()->toDateString(),
             'image' => $imagePath,
             'attachments' => $attachments,
+            ...$this->authorFields($request),
             ...$this->eventFields($validated),
         ]);
 
@@ -322,6 +328,8 @@ class AnnouncementController extends Controller
 
     public function update(Request $request, Announcement $announcement): RedirectResponse
     {
+        $this->ensureStaffOwnsAnnouncement($request, $announcement);
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', Rule::in(['General', 'Academic', 'Event', 'Service'])],
@@ -380,8 +388,10 @@ class AnnouncementController extends Controller
         return back();
     }
 
-    public function destroy(Announcement $announcement): RedirectResponse
+    public function destroy(Request $request, Announcement $announcement): RedirectResponse
     {
+        $this->ensureStaffOwnsAnnouncement($request, $announcement);
+
         $image = $announcement->image;
         $attachments = array_column($announcement->attachments ?? [], 'path');
         $announcement->delete();
@@ -403,6 +413,8 @@ class AnnouncementController extends Controller
     {
         return [
             'id' => $announcement->id,
+            'author_staff_id' => $announcement->author_staff_id,
+            'author_admin_id' => $announcement->author_admin_id,
             'title' => $announcement->title,
             'category' => $announcement->category,
             'posted_by' => $announcement->posted_by,
@@ -472,5 +484,33 @@ class AnnouncementController extends Controller
             'end_time' => null,
             'location' => null,
         ];
+    }
+
+    /**
+     * @return array{author_staff_id: int|null, author_admin_id: int|null}
+     */
+    private function authorFields(Request $request): array
+    {
+        $staff = $request->user('staff');
+        $admin = $request->user('admin');
+
+        if ($staff instanceof StaffUser) {
+            return ['author_staff_id' => $staff->id, 'author_admin_id' => null];
+        }
+
+        if ($admin instanceof AdminUser) {
+            return ['author_staff_id' => null, 'author_admin_id' => $admin->id];
+        }
+
+        abort(403);
+    }
+
+    private function ensureStaffOwnsAnnouncement(Request $request, Announcement $announcement): void
+    {
+        $staff = $request->user('staff');
+
+        if ($staff instanceof StaffUser && $announcement->author_staff_id !== $staff->id) {
+            abort(403);
+        }
     }
 }

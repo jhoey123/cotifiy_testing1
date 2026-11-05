@@ -47,6 +47,8 @@ test('an admin can publish an announcement', function () {
         ->assertRedirect();
 
     $announcement = Announcement::query()->firstOrFail();
+    expect($announcement->author_admin_id)->toBe($admin->id)
+        ->and($announcement->adminAuthor->is($admin))->toBeTrue();
 
     $this->assertDatabaseHas('announcement', [
         'title' => 'Campus closure',
@@ -76,6 +78,58 @@ test('an admin can publish an announcement', function () {
             ->where('announcements.0.date', now()->toDateString()));
 });
 
+test('admin announcement pages include all announcements and expose ownership for My Posts filtering', function () {
+    Notification::fake();
+    $admin = AdminUser::create([
+        'name' => 'Site Admin',
+        'email' => 'admin@example.com',
+        'password' => 'secret-password',
+    ]);
+    $otherAdmin = AdminUser::create([
+        'name' => 'Other Admin',
+        'email' => 'other-admin@example.com',
+        'password' => 'secret-password',
+    ]);
+
+    $this->actingAs($admin, 'admin')
+        ->post(route('admin.announcements.store'), [
+            'title' => 'My announcement',
+            'category' => 'General',
+            'posted_by' => 'Student Services',
+            'body' => 'Created by the signed-in admin.',
+        ])->assertRedirect();
+    $myAnnouncement = Announcement::query()->where('title', 'My announcement')->firstOrFail();
+
+    $this->actingAs($otherAdmin, 'admin')
+        ->post(route('admin.announcements.store'), [
+            'title' => 'Other admin announcement',
+            'category' => 'General',
+            'posted_by' => 'Registrar',
+            'body' => 'Created by another admin.',
+        ])->assertRedirect();
+    $otherAnnouncement = Announcement::query()->where('title', 'Other admin announcement')->firstOrFail();
+
+    $this->actingAs($admin, 'admin')
+        ->get(route('admin.announcements.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('adminId', $admin->id)
+            ->has('announcements', 2)
+            ->where('announcements.0.author_admin_id', $otherAdmin->id)
+            ->where('announcements.1.author_admin_id', $admin->id));
+
+    $this->get(route('admin'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('adminId', $admin->id)
+            ->has('recentAnnouncements', 2)
+            ->where('recentAnnouncements.0.author_admin_id', $otherAdmin->id)
+            ->where('recentAnnouncements.1.author_admin_id', $admin->id));
+
+    expect($myAnnouncement->adminAuthor->is($admin))->toBeTrue()
+        ->and($otherAnnouncement->adminAuthor->is($otherAdmin))->toBeTrue();
+});
+
 test('staff can manage announcements and events through the staff panel', function () {
     Notification::fake();
     $staff = StaffUser::create([
@@ -94,6 +148,8 @@ test('staff can manage announcements and events through the staff panel', functi
         ->assertRedirect();
 
     $announcement = Announcement::query()->where('title', 'Staff announcement')->firstOrFail();
+    expect($announcement->author_staff_id)->toBe($staff->id)
+        ->and($announcement->staffAuthor->is($staff))->toBeTrue();
 
     $this->put(route('staff.announcements.update', $announcement), [
         'title' => 'Updated staff announcement',
@@ -138,6 +194,93 @@ test('staff can manage announcements and events through the staff panel', functi
 
     $this->assertDatabaseMissing('announcement', ['id' => $announcement->id]);
     $this->assertDatabaseHas('announcement', ['id' => $event->id, 'category' => 'Event']);
+});
+
+test('staff announcement pages show all announcements and provide the signed-in author id for My Posts filtering', function () {
+    Notification::fake();
+    $staff = StaffUser::create([
+        'name' => 'Test One',
+        'email' => 'test1@example.com',
+        'password' => 'secret-password',
+    ]);
+    $otherStaff = StaffUser::create([
+        'name' => 'Test Two',
+        'email' => 'test2@example.com',
+        'password' => 'secret-password',
+    ]);
+
+    $this->actingAs($staff, 'staff')
+        ->post(route('staff.announcements.store'), [
+            'title' => 'My announcement',
+            'category' => 'General',
+            'posted_by' => 'Student Services',
+            'body' => 'Created by Test One.',
+        ])->assertRedirect();
+    $this->post(route('staff.announcements.store'), [
+        'title' => 'My event',
+        'category' => 'Event',
+        'posted_by' => 'Student Services',
+        'body' => 'Created by Test One.',
+        'event_date' => now()->addDays(3)->toDateString(),
+        'location' => 'Main Hall',
+    ])->assertRedirect();
+
+    $this->actingAs($otherStaff, 'staff')
+        ->post(route('staff.announcements.store'), [
+            'title' => 'Other staff event',
+            'category' => 'Event',
+            'posted_by' => 'Student Services',
+            'body' => 'Created by Test Two.',
+            'event_date' => now()->addDays(4)->toDateString(),
+            'location' => 'Auditorium',
+        ])->assertRedirect();
+
+    $otherEvent = Announcement::query()->where('title', 'Other staff event')->firstOrFail();
+
+    $this->actingAs($staff, 'staff')
+        ->get(route('staff.announcements.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('staffName', 'Test One')
+            ->where('staffId', $staff->id)
+            ->has('announcements', 3)
+            ->where('announcements.0.title', 'Other staff event')
+            ->where('announcements.0.author_staff_id', $otherStaff->id)
+            ->where('announcements.1.title', 'My event')
+            ->where('announcements.1.author_staff_id', $staff->id)
+            ->where('announcements.2.title', 'My announcement')
+            ->where('announcements.2.author_staff_id', $staff->id));
+
+    $this->get(route('staff'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('recentAnnouncements', 3)
+            ->where('recentAnnouncements.0.title', 'Other staff event')
+            ->where('announcementCount', 3)
+            ->where('eventCount', 2)
+            ->has('upcomingEvents', 2)
+            ->where('upcomingEvents.0.title', 'My event')
+            ->where('upcomingEvents.1.title', 'Other staff event'));
+
+    $this->get(route('staff.events'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('events', 2)
+            ->where('events.0.title', 'Other staff event')
+            ->where('events.1.title', 'My event'));
+
+    $this->put(route('staff.announcements.update', $otherEvent), [
+        'title' => 'Changed by Test One',
+        'category' => 'Event',
+        'posted_by' => 'Student Services',
+        'body' => 'Attempted unauthorized update.',
+        'event_date' => now()->addDays(4)->toDateString(),
+        'location' => 'Auditorium',
+    ])->assertForbidden();
+
+    $this->delete(route('staff.announcements.destroy', $otherEvent))
+        ->assertForbidden();
+    $this->assertDatabaseHas('announcement', ['id' => $otherEvent->id]);
 });
 
 test('staff can reply to announcement discussions using the staff identity', function () {

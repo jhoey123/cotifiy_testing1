@@ -36,12 +36,16 @@ export default function AdminAnnouncements({
     announcementComments = [],
     staffMode = false,
     staffName = '',
+    staffId,
+    adminId,
 }: {
     announcements: Announcement[];
     discussions: Discussion[];
     announcementComments: AnnouncementComment[];
     staffMode?: boolean;
     staffName?: string;
+    staffId?: number;
+    adminId?: number;
 }) {
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
@@ -59,16 +63,33 @@ export default function AdminAnnouncements({
     // Table State
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isLogoutHovered, setIsLogoutHovered] = useState(false);
-    const [activeTab, setActiveTab] = useState('All');
+    const [activeTab, setActiveTab] = useState('My Posts');
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
     const panelBase = staffMode ? '/staff' : '/admin';
+    const tabs = [
+        ...(staffMode ? [{
+            label: 'My Posts',
+            count: announcements.filter((announcement) => announcement.author_staff_id === staffId).length,
+        }] : []),
+        ...(!staffMode ? [{
+            label: 'My Posts',
+            count: announcements.filter((announcement) => announcement.author_admin_id === adminId).length,
+        }] : []),
+        { label: 'All', count: announcements.length },
+        { label: 'Drafts', count: 2 },
+        { label: 'Archived', count: 3 },
+    ];
 
     // Filtering Logic
     const filteredAnnouncements = announcements.filter((ann) => {
-        const matchesTab = activeTab === 'All' || ann.status === activeTab;
+        const matchesTab = activeTab === 'My Posts'
+            ? staffMode
+                ? ann.author_staff_id === staffId
+                : ann.author_admin_id === adminId
+            : activeTab === 'All' || ann.status === activeTab;
         const matchesSearch = ann.title.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = categoryFilter === 'All' || ann.category === categoryFilter;
         return matchesTab && matchesSearch && matchesCategory;
@@ -289,12 +310,7 @@ export default function AdminAnnouncements({
                                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-6">Announcements</h1>
                                 
                                 <div className="flex items-center gap-6 border-b border-slate-200 overflow-x-auto no-scrollbar">
-                                    {[
-                                        { label: 'All', count: 24 },
-                                        { label: 'Published', count: 18 },
-                                        { label: 'Drafts', count: 2 },
-                                        { label: 'Archived', count: 3 },
-                                    ].map((tab) => (
+                                    {tabs.map((tab) => (
                                         <button
                                             key={tab.label}
                                             onClick={() => setActiveTab(tab.label)}
@@ -352,7 +368,7 @@ export default function AdminAnnouncements({
                                                 <th className="px-4 py-3">Audience</th>
                                                 <th className="px-4 py-3">Status</th>
                                                 <th className="px-4 py-3">Date</th>
-                                                <th className="px-4 py-3 text-right">Actions</th>
+                                                {!staffMode && <th className="px-4 py-3 text-right">Actions</th>}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
@@ -380,12 +396,14 @@ export default function AdminAnnouncements({
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-4 text-xs">{formatDate(announcement.date)}</td>
-                                                    <td className="px-4 py-4 text-right">
-                                                        <div className="flex justify-end gap-2">
-                                                            <button onClick={() => openEditor(announcement)} className="px-3 py-1.5 border border-slate-300 rounded text-xs font-bold hover:bg-slate-50">Edit</button>
-                                                            <button onClick={() => setAnnouncementToDelete(announcement)} className="w-8 h-8 flex items-center justify-center rounded border border-slate-300 hover:bg-rose-50 text-rose-600"><i className="fa-solid fa-trash"></i></button>
-                                                        </div>
-                                                    </td>
+                                                    {!staffMode && (
+                                                        <td className="px-4 py-4 text-right">
+                                                            <div className="flex justify-end gap-2">
+                                                                <button onClick={() => openEditor(announcement)} className="px-3 py-1.5 border border-slate-300 rounded text-xs font-bold hover:bg-slate-50">Edit</button>
+                                                                <button onClick={() => setAnnouncementToDelete(announcement)} className="w-8 h-8 flex items-center justify-center rounded border border-slate-300 hover:bg-rose-50 text-rose-600"><i className="fa-solid fa-trash"></i></button>
+                                                            </div>
+                                                        </td>
+                                                    )}
                                                 </tr>
                                             ))}
                                         </tbody>
