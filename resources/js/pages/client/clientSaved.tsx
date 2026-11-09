@@ -1,6 +1,6 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import ClientNotificationDropdown from './ClientNotificationDropdown';
+import ClientNavbar from './ClientNavbar';
 
 interface SavedItem {
     id: number;
@@ -18,12 +18,7 @@ interface ClientSavedProps {
 
 export default function ClientSaved({
     savedItems = [],
-    unreadCount = 0,
-    user = { name: 'Juan' }
 }: ClientSavedProps) {
-    const { auth } = usePage<any>().props;
-    const userName = auth?.user?.name || user.name;
-    
     const [activeTab, setActiveTab] = useState<'All' | 'Events'>('All');
     const [items, setItems] = useState<SavedItem[]>(savedItems);
 
@@ -102,76 +97,7 @@ export default function ClientSaved({
                     <div className="absolute top-[20%] left-[40%] w-24 h-24 bg-indigo-600/15 clip-diamond shape-move-4"></div>
                 </div>
 
-                {/* DARK HEADER */}
-                <header className="bg-ctu-dark/95 relative z-50 border-b border-white/10 shadow-lg backdrop-blur-xl">
-                    <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-                        <div className="flex h-16 items-center justify-between gap-4 sm:h-20">
-                            <div className="flex items-center gap-8">
-                                <Link
-                                    href="/client"
-                                    className="group flex shrink-0 items-center rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <img
-                                        src="/images/3rdLogo.png"
-                                        alt="Cotify Logo"
-                                        className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8" 
-                                    />
-                                    <div className="hidden sm:block">
-                                        <span className="block text-xl leading-tight font-extrabold text-white">
-                                            Cotify
-                                        </span>
-                                        <span className="block text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-                                            College of Technology
-                                        </span>
-                                    </div>
-                                </Link>
-
-                                <nav className="hidden items-center gap-6 md:flex">
-                                    <Link
-                                        href="/client"
-                                        className="rounded-md px-1 text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        Home
-                                    </Link>
-                                    <Link
-                                        href="/client/announcements"
-                                        className="rounded-md px-1 text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        Announcements
-                                    </Link>
-                                    <Link
-                                        href="/client/events"
-                                        className="rounded-md px-1 text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        Events
-                                    </Link>
-                                    <Link
-                                        href="/client/saved"
-                                        className="border-ctu-lightblue rounded-t-md border-b-2 px-1 pb-1 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        Saved
-                                    </Link>
-                                </nav>
-                            </div>
-
-                            <div className="flex items-center gap-3 sm:gap-4">
-                                <ClientNotificationDropdown />
-
-                                <Link
-                                    href="/client/profile"
-                                    className="group flex cursor-pointer items-center gap-2 rounded-md border-l border-slate-700 pl-2 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:pl-4"
-                                >
-                                    <div className="bg-ctu-lightblue flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white ring-2 ring-transparent transition-all group-hover:ring-white/20">
-                                        {userName.charAt(0).toUpperCase()}
-                                    </div>
-                                    <span className="hidden text-sm font-semibold text-white lg:block">
-                                        {userName.split(' ')[0]} D.
-                                    </span>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </header>
+                <ClientNavbar activePage="saved" />
 
                 <main className="relative z-10 mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8 animate-slide-up">
                     

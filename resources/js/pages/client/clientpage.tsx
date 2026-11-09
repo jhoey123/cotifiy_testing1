@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import ClientNavbar from './ClientNavbar';
 
 interface Announcement {
     id: number;
@@ -44,21 +45,6 @@ export default function ClientHome({
         'all' | 'Academic' | 'Event' | 'General' | 'Service'
     >('all');
     const [searchTerm, setSearchTerm] = useState('');
-    const [notificationsOpen, setNotificationsOpen] = useState(false);
-    const [newAnnouncementCount, setNewAnnouncementCount] = useState(0);
-    const notificationsRef = useRef<HTMLDivElement>(null);
-    const knownAnnouncementIds = useRef(new Set(announcements.map(({ id }) => id)));
-
-    useEffect(() => {
-        const newAnnouncements = announcements.filter(
-            ({ id }) => !knownAnnouncementIds.current.has(id),
-        );
-
-        if (newAnnouncements.length > 0) {
-            newAnnouncements.forEach(({ id }) => knownAnnouncementIds.current.add(id));
-            setNewAnnouncementCount((count) => count + newAnnouncements.length);
-        }
-    }, [announcements]);
 
     useEffect(() => {
         const pollForAnnouncements = () => {
@@ -73,27 +59,6 @@ export default function ClientHome({
 
         return () => window.clearInterval(intervalId);
     }, []);
-
-    useEffect(() => {
-        if (!notificationsOpen) {
-            return;
-        }
-
-        const closeOnOutsideClick = (event: PointerEvent) => {
-            if (
-                event.target instanceof Node &&
-                !notificationsRef.current?.contains(event.target)
-            ) {
-                setNotificationsOpen(false);
-            }
-        };
-
-        document.addEventListener('pointerdown', closeOnOutsideClick);
-
-        return () => {
-            document.removeEventListener('pointerdown', closeOnOutsideClick);
-        };
-    }, [notificationsOpen]);
     
     const filteredAnnouncements = useMemo(() => {
         const query = searchTerm.trim().toLocaleLowerCase();
@@ -226,166 +191,15 @@ export default function ClientHome({
                     <div className="absolute top-[20%] left-[40%] w-24 h-24 bg-indigo-600/15 clip-diamond shape-move-4"></div>
                 </div>
 
-                <header className="bg-ctu-dark/95 relative z-50 border-b border-white/10 shadow-lg backdrop-blur-xl">
-                    <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-                        <div className="flex h-16 items-center justify-between gap-4 sm:h-20">
-                            <div className="flex items-center gap-8">
-                                <Link
-                                    href="/client"
-                                    className="flex shrink-0 items-center focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg p-1"
-                                    aria-label="Cotify Home"
-                                >
-                                   <img
-                                        src="/images/3rdLogo.png"
-                                        alt="Cotify Logo"
-                                           className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8" 
-                                    />
-                                    <div className="hidden sm:block">
-                                        <span className="text-xl font-extrabold text-white leading-tight block">
-                                            Cotify
-                                        </span>
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                                            College of Technology
-                                        </span>
-                                    </div>
-                                </Link>
-
-                                <nav className="hidden items-center gap-6 md:flex">
-                                    <Link
-                                        href="/client"
-                                        className="border-ctu-lightblue border-b-2 pb-1 text-sm font-bold text-white"
-                                    >
-                                        Home
-                                    </Link>
-                                    <Link
-                                        href="/client/announcements"
-                                        className="text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1"
-                                    >
-                                        Announcements
-                                    </Link>
-                                    <Link
-                                        href="/client/events"
-                                        className="text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1"
-                                    >
-                                        Events
-                                    </Link>
-                                    <Link
-                                        href="/client/saved"
-                                        className="text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1"
-                                    >
-                                        Saved
-                                    </Link>
-                                </nav>
-                            </div>
-
-                            <div className="flex items-center gap-3 sm:gap-4">
-                                <div className="relative hidden sm:block">
-                                    <i className="fa-solid fa-magnifying-glass absolute top-1/2 left-3 -translate-y-1/2 text-sm text-slate-400" aria-hidden="true"></i>
-                                    <input
-                                        type="text"
-                                        placeholder="Search announcements..."
-                                        value={searchTerm}
-                                        onChange={(e) =>
-                                            setSearchTerm(e.target.value)
-                                        }
-                                        className="focus:ring-ctu-lightblue w-64 rounded-lg border border-slate-700 bg-slate-800/50 py-2 pr-4 pl-9 text-sm text-white placeholder-slate-400 transition-all outline-none focus:ring-2"
-                                        aria-label="Search announcements"
-                                    />
-                                </div>
-
-                                <div ref={notificationsRef} className="relative">
-                                    <button
-                                        type="button"
-                                        className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        aria-label={`Notifications${newAnnouncementCount > 0 ? `, ${newAnnouncementCount} new announcements` : ''}`}
-                                        aria-expanded={notificationsOpen}
-                                        aria-controls="recent-announcements-menu"
-                                        onClick={() => {
-                                            const willOpen = !notificationsOpen;
-                                            setNotificationsOpen(willOpen);
-
-                                            if (willOpen) {
-                                                setNewAnnouncementCount(0);
-                                            }
-                                        }}
-                                    >
-                                        <i className="fa-regular fa-bell text-xl" aria-hidden="true"></i>
-                                        {newAnnouncementCount > 0 && (
-                                            <span
-                                                aria-live="polite"
-                                                className="border-ctu-dark absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 bg-red-500 px-1 text-[10px] font-bold text-white"
-                                            >
-                                                {newAnnouncementCount > 99 ? '99+' : newAnnouncementCount}
-                                            </span>
-                                        )}
-                                    </button>
-
-                                    {notificationsOpen && (
-                                        <div
-                                            id="recent-announcements-menu"
-                                            role="region"
-                                            aria-label="Recent announcements"
-                                            className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-xl"
-                                        >
-                                            <div className="border-b border-slate-100 px-4 py-3">
-                                                <h2 className="text-sm font-extrabold text-slate-900">
-                                                    Recent announcements
-                                                </h2>
-                                            </div>
-                                            <div className="max-h-96 overflow-y-auto">
-                                                {announcements.slice(0, 5).map((announcement) => (
-                                                    <Link
-                                                        key={announcement.id}
-                                                        href={`/client/announcements/${announcement.id}`}
-                                                        onClick={() => setNotificationsOpen(false)}
-                                                        className="block border-b border-slate-100 px-4 py-3 transition-colors last:border-b-0 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
-                                                    >
-                                                        <span className="flex items-center justify-between gap-3">
-                                                            <span className="truncate text-sm font-bold text-slate-800">
-                                                                {announcement.title}
-                                                            </span>
-                                                            <span className="shrink-0 text-[11px] font-medium text-slate-400">
-                                                                {formatDate(announcement.date)}
-                                                            </span>
-                                                        </span>
-                                                        <span className="mt-1 block text-xs text-slate-500">
-                                                            {announcement.category} · {announcement.posted_by_office}
-                                                        </span>
-                                                    </Link>
-                                                ))}
-                                                {announcements.length === 0 && (
-                                                    <p className="px-4 py-6 text-center text-sm text-slate-500">
-                                                        No announcements have been posted yet.
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <Link
-                                                href="/client/notifications"
-                                                onClick={() => setNotificationsOpen(false)}
-                                                className="block border-t border-slate-100 px-4 py-3 text-center text-xs font-bold text-ctu-lightblue hover:bg-slate-50"
-                                            >
-                                                View notifications
-                                            </Link>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <Link 
-                                    href="/client/profile"
-                                    className="group flex cursor-pointer items-center gap-2 border-l border-slate-700 pl-2 sm:pl-4 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-r-lg p-1"
-                                    aria-label="Profile settings"
-                                >
-                                    <div className="bg-ctu-lightblue flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white">
-                                        {userName.charAt(0).toUpperCase()}
-                                    </div>
-                                    <span className="hidden text-sm font-semibold text-white lg:block">
-                                        {userName.split(' ')[0]} D.
-                                    </span>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </header>
+                <ClientNavbar
+                    activePage="home"
+                    search={{
+                        value: searchTerm,
+                        onChange: setSearchTerm,
+                        placeholder: 'Search announcements...',
+                        label: 'Search announcements',
+                    }}
+                />
 
                 <main className="relative z-10 mx-auto w-full max-w-[1400px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
                     <div className="mb-8 animate-slide-up">

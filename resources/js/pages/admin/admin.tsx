@@ -9,7 +9,6 @@ type UpcomingEvent = {
     start_time: string | null;
     end_time: string | null;
     location: string | null;
-    rsvp_count?: number;
     capacity?: number;
 };
 
@@ -286,7 +285,6 @@ export default function admin({
                                     <p className="text-sm font-semibold text-slate-500 mb-1">Upcoming events</p>
                                     <div className="flex items-end justify-between">
                                         <h3 className="text-3xl font-extrabold text-slate-900">{eventCount}</h3>
-                                        <span className="text-xs font-semibold text-slate-500 mb-1">58 RSVPs</span>
                                     </div>
                                 </div>
                                 <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
@@ -389,7 +387,6 @@ export default function admin({
                                                 <div className="pt-1">
                                                     <p className="text-sm font-bold text-slate-900 mb-1 group-hover:text-ctu-lightblue transition-colors line-clamp-1">{event.title}</p>
                                                     <p className="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
-                                                        {event.rsvp_count || 0} / {event.capacity || 100} going
                                                     </p>
                                                 </div>
                                             </div>

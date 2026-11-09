@@ -1,5 +1,6 @@
-import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
+import ClientNavbar from './ClientNavbar';
 
 interface ClientProfileProps {
     user: {
@@ -115,43 +116,7 @@ export default function ClientProfile({ user }: ClientProfileProps) {
 
                 <div className="relative z-10 flex flex-col min-h-screen">
                     
-                    {/* HEADER */}
-                    <header className="fixed top-0 left-0 right-0 z-50 bg-ctu-dark/90 backdrop-blur-xl border-b border-white/10 shadow-lg">
-                        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
-                                <div className="flex items-center gap-8">
-                                    <Link href="/client" className="flex items-center shrink-0 group">
-                                        <img src="/images/3rdLogo.png" alt="Cotify"    className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8"  />
-                                       <div className="hidden sm:block">
-                                        <span className="block text-xl leading-tight font-extrabold text-white">
-                                            Cotify
-                                        </span>
-                                        <span className="block text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-                                            College of Technology
-                                        </span>
-                                    </div>
-                                    </Link>
-                                    <nav className="hidden md:flex items-center gap-6">
-                                        <Link href="/client" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Home</Link>
-                                        <Link href="/client/announcements" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Announcements</Link>
-                                        <Link href="/client/events" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Events</Link>
-                                        <Link href="/client/saved" className="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Saved</Link>
-                                    </nav>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <button className="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-800 text-slate-300 transition-colors">
-                                        <i className="fa-regular fa-bell text-xl"></i>
-                                    </button>
-                                    <Link href="/client/profile" className="flex items-center gap-2 pl-2 sm:pl-4 border-l border-slate-700 cursor-pointer">
-                                        <div className="w-8 h-8 rounded-full bg-ctu-lightblue text-white flex items-center justify-center font-bold text-sm ring-2 ring-white/20">
-                                            {user.name.charAt(0).toUpperCase()}
-                                        </div>
-                                        <span className="text-sm font-semibold text-white hidden lg:block">{user.name.split(' ')[0]} D.</span>
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                    </header>
+                    <ClientNavbar activePage="settings" fixed />
 
                     {/* MAIN CONTENT */}
                     <main className="flex-1 pt-24 sm:pt-32 pb-16 max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 w-full">

@@ -1,6 +1,6 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
-import ClientNotificationDropdown from './ClientNotificationDropdown';
+import ClientNavbar from './ClientNavbar';
 
 type AnnouncementCategory = 'Academic' | 'Event' | 'General' | 'Service';
 
@@ -53,8 +53,6 @@ export default function ClientAnnouncements({
     announcements = [],
     unreadCount = 0,
 }: ClientAnnouncementsProps) {
-    const { auth } = usePage<any>().props;
-    const userName = auth?.user?.name ?? 'Student';
     const [activeCategory, setActiveCategory] = useState<(typeof categories)[number]>('All');
     const [search, setSearch] = useState('');
 
@@ -155,89 +153,16 @@ export default function ClientAnnouncements({
                     <div className="absolute top-[20%] left-[40%] w-24 h-24 bg-indigo-600/15 clip-diamond shape-move-4"></div>
                 </div>
 
-                {/* DARK HEADER */}
-                <header className="bg-ctu-dark/95 relative z-50 border-b border-white/10 shadow-lg backdrop-blur-xl">
-                    <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-4 px-4 sm:h-20 sm:px-6 lg:px-8">
-                        <div className="flex items-center gap-8">
-                            <Link
-                                href="/client"
-                                className="group flex shrink-0 items-center rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <img
-                                    src="/images/3rdLogo.png"
-                                    alt="Cotify Logo"
-                                    className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8" 
-                                />
-                                <div className="hidden sm:block">
-                                    <span className="block text-xl leading-tight font-extrabold text-white">
-                                        Cotify
-                                    </span>
-                                    <span className="block text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-                                        College of Technology
-                                    </span>
-                                </div>
-                            </Link>
-                            <nav
-                                aria-label="Client navigation"
-                                className="hidden items-center gap-6 md:flex"
-                            >
-                                <Link
-                                    href="/client"
-                                    className="rounded-md px-1 text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    Home
-                                </Link>
-                                <Link
-                                    href="/client/announcements"
-                                    aria-current="page"
-                                    className="border-ctu-lightblue rounded-t-md border-b-2 px-1 py-1 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    Announcements
-                                </Link>
-                                <Link
-                                    href="/client/events"
-                                    className="rounded-md px-1 text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    Events
-                                </Link>
-                                <Link
-                                    href="/client/saved"
-                                    className="rounded-md px-1 text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    Saved
-                                </Link>
-                            </nav>
-                        </div>
-
-                        <div className="flex items-center gap-3 sm:gap-4">
-                            <div className="relative hidden sm:block">
-                                <i className="fa-solid fa-magnifying-glass absolute top-1/2 left-3 -translate-y-1/2 text-sm text-slate-400"></i>
-                                <input
-                                    type="search"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Search announcements..."
-                                    aria-label="Search announcements"
-                                    className="focus:ring-ctu-lightblue w-64 rounded-lg border border-slate-700 bg-slate-800/50 py-2 pr-4 pl-9 text-sm text-white placeholder-slate-400 transition-all outline-none focus:ring-2"
-                                />
-                            </div>
-
-                            <ClientNotificationDropdown />
-
-                            <Link
-                                href="/client/profile"
-                                className="group flex cursor-pointer items-center gap-2 rounded-md border-l border-slate-700 pl-2 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:pl-4"
-                            >
-                                <div className="bg-ctu-lightblue flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white ring-2 ring-transparent transition-all group-hover:ring-white/20">
-                                    {userName.charAt(0).toUpperCase()}
-                                </div>
-                                <span className="hidden text-sm font-semibold text-white lg:block">
-                                    {userName.split(' ')[0]} D.
-                                </span>
-                            </Link>
-                        </div>
-                    </div>
-                </header>
+                <ClientNavbar
+                    activePage="announcements"
+                    search={{
+                        value: search,
+                        onChange: setSearch,
+                        placeholder: 'Search announcements...',
+                        label: 'Search announcements',
+                        type: 'search',
+                    }}
+                />
 
                 <main className="relative z-10 mx-auto w-full max-w-[1400px] flex-1 px-4 py-8 sm:px-6 lg:px-8 animate-slide-up">
                     
