@@ -55,9 +55,16 @@ export default function ClientHome({
                 });
             }
         };
-        const intervalId = window.setInterval(pollForAnnouncements, 30_000);
+        const intervalId = window.setInterval(pollForAnnouncements, 15_000);
 
-        return () => window.clearInterval(intervalId);
+        document.addEventListener('visibilitychange', pollForAnnouncements);
+        window.addEventListener('focus', pollForAnnouncements);
+
+        return () => {
+            window.clearInterval(intervalId);
+            document.removeEventListener('visibilitychange', pollForAnnouncements);
+            window.removeEventListener('focus', pollForAnnouncements);
+        };
     }, []);
     
     const filteredAnnouncements = useMemo(() => {

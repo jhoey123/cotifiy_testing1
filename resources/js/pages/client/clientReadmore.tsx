@@ -1,5 +1,6 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
+import ClientNotificationDropdown from './ClientNotificationDropdown';
 
 interface Announcement {
     id: number;
@@ -39,7 +40,6 @@ interface ClientReadMoreProps {
     announcement: Announcement;
     messages: DiscussionMessage[];
     relatedAnnouncements?: Announcement[];
-    unreadCount?: number;
     user?: {
         name: string;
         course: string;
@@ -51,7 +51,6 @@ export default function ClientReadMore({
     announcement,
     messages,
     relatedAnnouncements = [],
-    unreadCount = 0,
     user = { name: 'Juan', course: 'BSIT', year_level: '3rd Year' },
 }: ClientReadMoreProps) {
     const { auth } = usePage<any>().props;
@@ -321,18 +320,7 @@ export default function ClientReadMore({
                                     />
                                 </div>
 
-                                <Link
-                                    href="/client/notifications"
-                                    aria-label={`View notifications. ${unreadCount} unread.`}
-                                    className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <i className="fa-regular fa-bell text-xl"></i>
-                                    {unreadCount > 0 && (
-                                        <span className="border-ctu-dark absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 bg-red-500 text-[10px] font-bold text-white">
-                                            {unreadCount}
-                                        </span>
-                                    )}
-                                </Link>
+                                <ClientNotificationDropdown />
 
                                 <div className="relative" ref={profileRef}>
                                     <button

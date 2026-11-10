@@ -61,6 +61,13 @@ export default function ClientNotificationDropdown() {
         });
     };
 
+    const markAllAsRead = () => {
+        router.post('/client/notifications/mark-all-read', {}, {
+            preserveScroll: true,
+            showProgress: false,
+        });
+    };
+
     return (
         <div ref={menuRef} className="relative">
             <button
@@ -95,8 +102,15 @@ export default function ClientNotificationDropdown() {
                     aria-label="Recent notifications"
                     className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-xl"
                 >
-                    <div className="border-b border-slate-100 px-4 py-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                         <h2 className="text-sm font-extrabold text-slate-900">Recent notifications</h2>
+                        <button
+                            type="button"
+                            onClick={markAllAsRead}
+                            className="rounded text-xs font-bold text-blue-600 transition-colors hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            Mark all as read
+                        </button>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
                         {recentNotifications.map((notification) => (

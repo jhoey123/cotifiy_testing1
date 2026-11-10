@@ -57,13 +57,21 @@ export default function ClientAnnouncements({
     const [search, setSearch] = useState('');
 
     useEffect(() => {
-        const intervalId = window.setInterval(() => {
+        const pollForAnnouncements = () => {
             if (document.visibilityState === 'visible') {
                 router.reload({ only: ['announcements', 'unreadCount'], showProgress: false });
             }
-        }, 15_000);
+        };
+        const intervalId = window.setInterval(pollForAnnouncements, 15_000);
 
-        return () => window.clearInterval(intervalId);
+        document.addEventListener('visibilitychange', pollForAnnouncements);
+        window.addEventListener('focus', pollForAnnouncements);
+
+        return () => {
+            window.clearInterval(intervalId);
+            document.removeEventListener('visibilitychange', pollForAnnouncements);
+            window.removeEventListener('focus', pollForAnnouncements);
+        };
     }, []);
 
     const filteredAnnouncements = useMemo(() => {

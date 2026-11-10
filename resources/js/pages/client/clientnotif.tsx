@@ -72,9 +72,10 @@ export default function ClientNotifications({
     };
 
     const NotificationRow = ({ item }: { item: Notification }) => (
-        <div 
+        <button
+            type="button"
             onClick={() => handleNotificationClick(item.id, item.link, item.is_read)}
-            className={`relative flex cursor-pointer gap-4 border-b border-slate-100 p-4 transition-colors last:border-0 sm:p-5 ${
+            className={`relative flex w-full cursor-pointer gap-4 border-b border-slate-100 p-4 text-left transition-colors last:border-0 sm:p-5 ${
                 item.is_read ? 'bg-white hover:bg-slate-50' : 'bg-slate-50 hover:bg-slate-100'
             }`}
         >
@@ -96,7 +97,7 @@ export default function ClientNotifications({
                     <span>{item.time_ago}</span>
                 </div>
             </div>
-        </div>
+        </button>
     );
 
     return (
@@ -251,14 +252,12 @@ export default function ClientNotifications({
                 <main className="relative z-10 mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6 lg:px-8 animate-slide-up">
                     <div className="mb-8 flex items-center justify-between">
                         <h1 className="text-3xl font-extrabold text-slate-900">Notifications</h1>
-                        {currentUnread > 0 && (
-                            <button 
-                                onClick={handleMarkAllRead} 
-                                className="rounded text-sm font-bold text-blue-600 transition-colors hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                Mark all as read
-                            </button>
-                        )}
+                        <button
+                            onClick={handleMarkAllRead}
+                            className="rounded text-sm font-bold text-blue-600 transition-colors hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            Mark all as read
+                        </button>
                     </div>
 
                     {items.length === 0 ? (

@@ -14,6 +14,27 @@ use Inertia\Response;
 
 class ClientPageController extends Controller
 {
+    public function welcome(): Response
+    {
+        $publicAnnouncements = Announcement::query()
+            ->select(['id', 'title', 'category', 'date', 'body'])
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->limit(3)
+            ->get()
+            ->map(fn (Announcement $announcement) => [
+                'id' => $announcement->id,
+                'title' => $announcement->title,
+                'category' => $announcement->category,
+                'date' => $announcement->date->toDateString(),
+                'summary' => Str::limit(strip_tags($announcement->body), 180),
+            ]);
+
+        return Inertia::render('welcome', [
+            'publicAnnouncements' => $publicAnnouncements,
+        ]);
+    }
+
     public function __invoke(Request $request): Response
     {
         $announcements = Announcement::query()

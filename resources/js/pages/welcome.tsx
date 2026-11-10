@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 
 interface Announcement {
@@ -20,6 +20,27 @@ export default function Welcome({ publicAnnouncements = [] }: WelcomeProps) {
     // Trigger entrance animations after the component mounts
     useEffect(() => {
         setIsLoaded(true);
+    }, []);
+
+    useEffect(() => {
+        const refreshAnnouncements = () => {
+            if (document.visibilityState === 'visible') {
+                router.reload({
+                    only: ['publicAnnouncements'],
+                    showProgress: false,
+                });
+            }
+        };
+        const intervalId = window.setInterval(refreshAnnouncements, 15_000);
+
+        document.addEventListener('visibilitychange', refreshAnnouncements);
+        window.addEventListener('focus', refreshAnnouncements);
+
+        return () => {
+            window.clearInterval(intervalId);
+            document.removeEventListener('visibilitychange', refreshAnnouncements);
+            window.removeEventListener('focus', refreshAnnouncements);
+        };
     }, []);
 
     // Format date helper
