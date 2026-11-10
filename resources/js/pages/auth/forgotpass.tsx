@@ -1,12 +1,24 @@
-import { Form, Head, Link } from '@inertiajs/react'
+import { Head, Link, useForm } from '@inertiajs/react'
 import { useState, useEffect } from 'react'
 
 export default function ForgotPassword() {
     const [isLoaded, setIsLoaded] = useState(false);
+    const [linkSent, setLinkSent] = useState(false);
+    const { data, setData, post, processing, errors } = useForm({
+        email: '',
+    });
 
     useEffect(() => {
         setIsLoaded(true);
     }, []);
+
+    function submit(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        setLinkSent(false);
+        post('/forgot-password', {
+            onSuccess: () => setLinkSent(true),
+        });
+    }
 
     return (
         <>
@@ -183,58 +195,60 @@ export default function ForgotPassword() {
                                 Enter your registered email and we'll send you a reset link.
                             </p>
 
-                            <Form method="POST" action="/forgot-password" className="space-y-5">
-                                {({ errors, processing, status }) => (
-                                    <>
-                                        {status && (
-                                            <div className="flex items-start gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
-                                                <i className="fa-solid fa-circle-check text-green-400 mt-0.5"></i>
-                                                <p className="text-sm font-semibold text-green-300">{status}</p>
-                                            </div>
-                                        )}
-
-                                        <div>
-                                            <label htmlFor="email" className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wide">
-                                                Email Address
-                                            </label>
-                                            <div className="relative group">
-                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                    <i className="fa-regular fa-envelope text-slate-400 group-focus-within:text-blue-400 transition-colors"></i>
-                                                </div>
-                                                <input
-                                                    id="email"
-                                                    type="email"
-                                                    name="email"
-                                                    placeholder="you@example.com"
-                                                    className="w-full pl-11 pr-4 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium"
-                                                    autoComplete="email"
-                                                    autoFocus
-                                                    required
-                                                />
-                                            </div>
-                                            {errors.email ? (
-                                                <p className="mt-1.5 text-xs font-bold text-red-400">{errors.email}</p>
-                                            ) : (
-                                                <p className="mt-1.5 text-[10px] font-semibold text-slate-400">
-                                                    Use the same email you registered with.
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <button
-                                            type="submit"
-                                            disabled={processing}
-                                            className="w-full block text-center bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-[0_8px_20px_-6px_rgba(37,99,235,0.5)] hover:-translate-y-0.5 hover:shadow-[0_12px_25px_-6px_rgba(37,99,235,0.6)] mt-6 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
-                                        >
-                                            {processing ? (
-                                                <span className="flex items-center justify-center gap-2">
-                                                    <i className="fa-solid fa-spinner fa-spin"></i> Sending link...
-                                                </span>
-                                            ) : 'Send reset link'}
-                                        </button>
-                                    </>
+                            <form onSubmit={submit} className="space-y-5">
+                                {linkSent && (
+                                    <div
+                                        role="status"
+                                        aria-live="polite"
+                                        className="flex items-start gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/30"
+                                    >
+                                        <i className="fa-solid fa-circle-check text-green-400 mt-0.5"></i>
+                                        <p className="text-sm font-semibold text-green-300">
+                                            If an account is associated with {data.email}, password reset instructions have been sent to that address. Please check your inbox.
+                                        </p>
+                                    </div>
                                 )}
-                            </Form>
+
+                                <div>
+                                    <label htmlFor="email" className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wide">
+                                        Email Address
+                                    </label>
+                                    <div className="relative group">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <i className="fa-regular fa-envelope text-slate-400 group-focus-within:text-blue-400 transition-colors"></i>
+                                        </div>
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            name="email"
+                                            value={data.email}
+                                            onChange={(event) => {
+                                                setData('email', event.target.value);
+                                                setLinkSent(false);
+                                            }}
+                                            placeholder="you@example.com"
+                                            className="w-full pl-11 pr-4 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium"
+                                            autoComplete="email"
+                                            required
+                                        />
+                                    </div>
+                                    {errors.email ? (
+                                        <p className="mt-1.5 text-xs font-bold text-red-400">{errors.email}</p>
+                                    ) : (
+                                        <p className="mt-1.5 text-[10px] font-semibold text-slate-400">
+                                            Use the same email you registered with.
+                                        </p>
+                                    )}
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="w-full block text-center bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-[0_8px_20px_-6px_rgba(37,99,235,0.5)] hover:-translate-y-0.5 hover:shadow-[0_12px_25px_-6px_rgba(37,99,235,0.6)] mt-6 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                                >
+                                    {processing ? 'Sending link...' : 'Send reset link'}
+                                </button>
+                            </form>
 
                             <div className="mt-8 pt-6 border-t border-white/10 space-y-3 text-center text-sm font-semibold">
                                 <p className="text-slate-300">

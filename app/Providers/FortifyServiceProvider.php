@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Fortify;
 use Inertia\Inertia;
@@ -33,6 +34,23 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::loginView(fn () => Inertia::render('auth/login'));
 
         Fortify::registerView(fn () => Inertia::render('auth/register'));
+
+        Fortify::requestPasswordResetLinkView(fn () => Inertia::render('auth/forgotpass'));
+        Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/resetpass', [
+            'email' => $request->query('email', ''),
+            'token' => $request->route('token'),
+        ]));
+
+        $this->app->singleton(FailedPasswordResetLinkRequestResponse::class, fn () => new class implements FailedPasswordResetLinkRequestResponse
+        {
+            public function toResponse($request)
+            {
+                return back()->with(
+                    'status',
+                    'If an account exists for this email, a password reset link has been sent. Check your inbox.',
+                );
+            }
+        });
 
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);

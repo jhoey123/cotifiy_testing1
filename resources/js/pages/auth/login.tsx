@@ -1,9 +1,10 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const { flash } = usePage<{ flash: { status?: string } }>().props;
 
     useEffect(() => {
         setIsLoaded(true);
@@ -215,6 +216,16 @@ export default function Login() {
 
                             <h2 className="text-3xl font-extrabold text-white mb-2">Sign In</h2>
                             <p className="text-sm font-medium text-slate-300 mb-8">Enter your credentials to continue.</p>
+
+                            {flash.status === 'Your password has been reset.' && (
+                                <div
+                                    role="status"
+                                    aria-live="polite"
+                                    className="mb-5 rounded-xl border border-green-500/30 bg-green-500/10 p-4 text-sm font-semibold text-green-300"
+                                >
+                                    Your password has been changed. Please log in again.
+                                </div>
+                            )}
 
                             <Form method="post" action="/auth/login" className="space-y-5">
                                 {({ errors, processing }) => (
