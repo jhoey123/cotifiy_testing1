@@ -32,13 +32,13 @@ const categories: Array<'All' | AnnouncementCategory> = [
     'Service',
 ];
 
-// Rule: Color has one meaning. Red is for urgent/errors. 
+// Rule: Color has one meaning. Red is for urgent/errors.
 // Service is now Purple. Academic is Blue. Event is Green. General is Gray.
 const categoryStyles: Record<AnnouncementCategory, string> = {
     Academic: 'bg-blue-50 text-blue-700 border-blue-200',
     Event: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     General: 'bg-slate-100 text-slate-700 border-slate-200',
-    Service: 'bg-purple-50 text-purple-700 border-purple-200', 
+    Service: 'bg-purple-50 text-purple-700 border-purple-200',
 };
 
 function formatDate(value: string) {
@@ -150,7 +150,7 @@ export default function ClientAnnouncements({
                     <div className="absolute top-[5%] left-[5%] w-[30rem] h-[30rem] bg-blue-500/15 rounded-full blur-3xl shape-move-1"></div>
                     <div className="absolute bottom-[5%] right-[5%] w-[35rem] h-[35rem] bg-purple-500/15 rounded-full blur-3xl shape-move-2"></div>
                     <div className="absolute top-[40%] left-[30%] w-[25rem] h-[25rem] bg-indigo-500/10 rounded-full blur-3xl shape-move-3"></div>
-                    
+
                     <div className="absolute top-[10%] right-[15%] w-64 h-64 bg-blue-600/20 clip-hexagon shape-move-3"></div>
                     <div className="absolute bottom-[15%] left-[10%] w-48 h-48 border-[6px] border-purple-500/30 clip-diamond animate-spin-slow"></div>
                     <div className="absolute top-[45%] right-[10%] w-40 h-40 border-[5px] border-blue-500/25 rotate-12 shape-move-1"></div>
@@ -173,7 +173,6 @@ export default function ClientAnnouncements({
                 />
 
                 <main className="relative z-10 mx-auto w-full max-w-[1400px] flex-1 px-4 py-8 sm:px-6 lg:px-8 animate-slide-up">
-                    
                     {/* PAGE HEADER & FILTERS */}
                     <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
                         <div>
@@ -182,9 +181,9 @@ export default function ClientAnnouncements({
                                 Stay up to date with academic notices, services, and campus news.
                             </p>
                         </div>
-                        
+
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                            
+
                             {/* Mobile Search */}
                             <div className="relative sm:hidden">
                                 <i className="fa-solid fa-magnifying-glass absolute top-1/2 left-3 -translate-y-1/2 text-sm text-slate-400"></i>
@@ -242,61 +241,75 @@ export default function ClientAnnouncements({
                             </p>
                         </div>
                     ) : (
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 animate-fade-in">
+                        <div className="animate-fade-in divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white">
                             {filteredAnnouncements.map((announcement) => (
                                 <article
                                     key={announcement.id}
-                                    className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+                                    className="group flex min-w-0 flex-wrap items-center gap-3 p-4 transition-colors hover:bg-slate-50 sm:flex-nowrap sm:gap-6 sm:p-5"
                                 >
-                                    {/* Image / Placeholder */}
                                     {announcement.image ? (
                                         <img
                                             src={announcement.image}
                                             alt={announcement.title}
                                             loading="lazy"
-                                            className="h-48 w-full bg-slate-100 object-cover"
+                                            className="h-16 w-20 shrink-0 rounded-lg bg-slate-100 object-cover"
                                         />
                                     ) : (
-                                        <div className="flex h-48 items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400">
-                                            <i className="fa-regular fa-newspaper text-4xl" aria-hidden="true"></i>
+                                        <div className="flex h-16 w-20 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+                                            <i
+                                                className="fa-regular fa-newspaper text-xl"
+                                                aria-hidden="true"
+                                            ></i>
                                         </div>
                                     )}
-                                    
-                                    <div className="flex flex-1 flex-col p-6">
-                                        <div className="mb-3 flex flex-wrap items-center gap-2">
-                                            <span className={`rounded border px-2.5 py-1 text-[12px] font-bold tracking-wider uppercase ${categoryStyles[announcement.category]}`}>
-                                                {announcement.category === 'Event' ? 'Events' : announcement.category === 'Service' ? 'Services' : announcement.category}
+
+                                    <div className="flex min-w-0 flex-1 flex-col">
+                                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                                            <span
+                                                className={`rounded border px-2.5 py-1 text-[12px] font-bold tracking-wider uppercase ${categoryStyles[announcement.category]}`}
+                                            >
+                                                {announcement.category ===
+                                                'Event'
+                                                    ? 'Events'
+                                                    : announcement.category ===
+                                                        'Service'
+                                                      ? 'Services'
+                                                      : announcement.category}
                                             </span>
-                                            <span className="text-sm font-medium text-slate-500">
+                                            <span className="text-sm text-slate-500">
                                                 {formatDate(announcement.date)}
                                             </span>
                                         </div>
-                                        
-                                        <h3 className="mb-2 text-lg leading-snug font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+
+                                        <h3 className="text-lg leading-snug font-bold text-slate-900 transition-colors group-hover:text-blue-600">
                                             {announcement.title}
                                         </h3>
-                                        
+
                                         <div
-                                            dangerouslySetInnerHTML={{ __html: announcement.content_html }}
-                                            className="line-clamp-3 flex-1 text-base leading-relaxed text-slate-900 [&_a]:text-blue-700 [&_a]:underline [&_a]:[text-shadow:0_0_8px_rgb(59_130_246_/_50%)] [&_p]:mb-0"
+                                            dangerouslySetInnerHTML={{
+                                                __html: announcement.content_html,
+                                            }}
+                                            className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-600 [&_a]:text-blue-700 [&_a]:underline [&_a]:[text-shadow:0_0_8px_rgb(59_130_246_/_50%)] [&_p]:mb-0"
                                         />
-                                        
-                                        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
-                                            <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-500">
-                                                <i className="fa-solid fa-building text-slate-400" aria-hidden="true"></i>
-                                                <span className="truncate">
-                                                    {announcement.posted_by}
-                                                </span>
+                                    </div>
+
+                                    <div className="flex shrink-0 basis-full flex-wrap items-center justify-between gap-3 sm:w-44 sm:basis-auto sm:flex-col sm:items-end sm:justify-center">
+                                        <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-500">
+                                            <i
+                                                className="fa-solid fa-building text-slate-400"
+                                                aria-hidden="true"
+                                            ></i>
+                                            <span className="truncate">
+                                                {announcement.posted_by}
                                             </span>
-                                            
-                                            {/* Rule: Primary Button */}
-                                            <Link
-                                                href={`/client/announcements/${announcement.id}`}
-                                                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                            >
-                                                Read more
-                                            </Link>
-                                        </div>
+                                        </span>
+
+                                        <Link
+                                            href={`/client/announcements/${announcement.id}`}
+                                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                                        >
+                                            Read more
+                                        </Link>
                                     </div>
                                 </article>
                             ))}
