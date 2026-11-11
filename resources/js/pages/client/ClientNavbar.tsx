@@ -1,128 +1,161 @@
 import { Link, usePage } from '@inertiajs/react';
-import ClientNotificationDropdown from './ClientNotificationDropdown';
+import { useEffect, useRef, useState } from 'react';
 
 type ClientNavPage = 'home' | 'announcements' | 'events' | 'saved' | 'settings';
 
 interface ClientNavbarProps {
-    activePage: ClientNavPage;
-    fixed?: boolean;
-    search?: {
-        value: string;
-        onChange: (value: string) => void;
-        placeholder: string;
-        label: string;
-        type?: 'search' | 'text';
-    };
+    activePage?: ClientNavPage;
 }
 
-export default function ClientNavbar({
-    activePage,
-    fixed = false,
-    search,
-}: ClientNavbarProps) {
-    const { auth } = usePage<{ auth?: { user?: { name?: string } } }>().props;
-    const userName = auth?.user?.name ?? 'Student';
-    const links: Array<{ label: string; href: string; page: ClientNavPage }> = [
-        { label: 'Home', href: '/client', page: 'home' },
+export default function ClientNavbar({ activePage }: ClientNavbarProps) {
+    const { auth } = usePage<{
+        auth?: { user?: { name?: string; course?: string | null } };
+    }>().props;
+    const userName = auth?.user?.name || 'Student';
+    const userCourse = auth?.user?.course || 'Student';
+    const [isOpen, setIsOpen] = useState(false);
+    const [isHoveredExpanded, setIsHoveredExpanded] = useState(false);
+    const collapseTimeout = useRef<number | null>(null);
+    const isExpanded = isOpen || isHoveredExpanded;
+
+    useEffect(() => () => {
+        if (collapseTimeout.current !== null) {
+            window.clearTimeout(collapseTimeout.current);
+        }
+    }, []);
+
+    const links: Array<{
+        label: string;
+        href: string;
+        page: Exclude<ClientNavPage, 'settings'>;
+        icon: string;
+    }> = [
+        { label: 'Home', href: '/client', page: 'home', icon: 'fa-solid fa-house' },
         {
             label: 'Announcements',
             href: '/client/announcements',
             page: 'announcements',
+            icon: 'fa-solid fa-bullhorn',
         },
-        { label: 'Events', href: '/client/events', page: 'events' },
-        { label: 'Saved', href: '/client/saved', page: 'saved' },
+        { label: 'Events', href: '/client/events', page: 'events', icon: 'fa-regular fa-calendar' },
+        { label: 'Saved', href: '/client/saved', page: 'saved', icon: 'fa-regular fa-bookmark' },
     ];
 
     return (
-        <header
-            className={`${fixed ? 'fixed top-0 right-0 left-0' : 'relative'} bg-ctu-dark/95 z-50 border-b border-white/10 shadow-lg backdrop-blur-xl`}
-        >
-            <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-                <div className="flex h-16 items-center justify-between gap-4 sm:h-20">
-                    <div className="flex items-center gap-8">
+        <>
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
+                aria-expanded={isOpen}
+                className="fixed top-5 left-6 z-50 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 md:hidden"
+            >
+                <i className={`fa-solid ${isOpen ? 'fa-xmark' : 'fa-bars'}`} aria-hidden="true" />
+            </button>
+
+            <aside
+                onMouseEnter={() => {
+                    if (collapseTimeout.current !== null) {
+                        window.clearTimeout(collapseTimeout.current);
+                        collapseTimeout.current = null;
+                    }
+                    setIsHoveredExpanded(true);
+                }}
+                onMouseLeave={() => {
+                    collapseTimeout.current = window.setTimeout(() => {
+                        setIsHoveredExpanded(false);
+                        collapseTimeout.current = null;
+                    }, 120);
+                }}
+                className={`bg-ctu-dark absolute z-40 flex h-full shrink-0 flex-col justify-between shadow-2xl transition-[width,transform] duration-300 ease-in-out md:relative
+                    ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'}
+                    ${isExpanded ? 'md:w-64' : 'md:w-20'}`}
+            >
+                <div className="flex min-h-0 flex-1 flex-col">
+                    <div className="flex h-20 items-center border-b border-slate-800/50">
                         <Link
                             href="/client"
                             aria-label="Cotify Home"
-                            className="group flex shrink-0 items-center rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="flex h-full w-full items-center"
                         >
-                            <img
-                                src="/images/3rdLogo.png"
-                                alt="Cotify Logo"
-                                className="-mr-6 -ml-4 h-20 w-20 object-contain sm:-mr-8 sm:-ml-6 sm:h-28 sm:w-28"
-                            />
-                            <div className="hidden sm:block">
-                                <span className="block text-xl leading-tight font-extrabold text-white">
-                                    Cotify
-                                </span>
-                                <span className="block text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-                                    College of Technology
-                                </span>
+                            <span className="flex h-full w-20 shrink-0 items-center justify-center">
+                                <img
+                                    src="/images/3rdLogo.png"
+                                    alt="Cotify Logo"
+                                    className="h-20 w-20 max-w-none object-contain sm:h-28 sm:w-28"
+                                />
+                            </span>
+                            <div className={`whitespace-nowrap text-white transition-opacity duration-300 ${isExpanded ? 'ml-2 opacity-100' : 'hidden'}`}>
+                                <h1 className="text-xl leading-tight font-extrabold tracking-tight">Cotify</h1>
+                                <p className="mt-0.5 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                                    Student Portal
+                                </p>
                             </div>
                         </Link>
-
-                        <nav
-                            aria-label="Client navigation"
-                            className="hidden items-center gap-6 md:flex"
-                        >
-                            {links.map(({ label, href, page }) => (
-                                <Link
-                                    key={page}
-                                    href={href}
-                                    aria-current={
-                                        activePage === page ? 'page' : undefined
-                                    }
-                                    className={
-                                        activePage === page
-                                            ? 'border-ctu-lightblue rounded-t-md border-b-2 px-1 py-1 text-sm font-bold text-white focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                                            : 'rounded-md px-1 py-1 text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                                    }
-                                >
-                                    {label}
-                                </Link>
-                            ))}
-                        </nav>
                     </div>
 
-                    <div className="flex items-center gap-3 sm:gap-4">
-                        {search && (
-                            <div className="relative hidden sm:block">
+                    <nav className="no-scrollbar mt-4 flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-3" aria-label="Client navigation">
+                        {links.map(({ label, href, page, icon }) => (
+                            <Link
+                                key={page}
+                                href={href}
+                                aria-current={activePage === page ? 'page' : undefined}
+                                className={`group flex items-center gap-3 rounded-xl px-3 py-3 transition-colors ${
+                                    activePage === page
+                                        ? 'bg-ctu-lightblue text-white shadow-md'
+                                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                }`}
+                                title={!isExpanded ? label : undefined}
+                            >
                                 <i
-                                    className="fa-solid fa-magnifying-glass absolute top-1/2 left-3 -translate-y-1/2 text-sm text-slate-400"
+                                    className={`${icon} w-5 shrink-0 text-center text-lg transition-transform duration-300 ease-in-out ${isExpanded ? 'translate-x-0' : 'translate-x-1.5'}`}
                                     aria-hidden="true"
                                 />
-                                <input
-                                    type={search.type ?? 'text'}
-                                    value={search.value}
-                                    onChange={(event) =>
-                                        search.onChange(event.target.value)
-                                    }
-                                    placeholder={search.placeholder}
-                                    aria-label={search.label}
-                                    className="focus:ring-ctu-lightblue w-64 rounded-lg border border-slate-700 bg-slate-800/50 py-2 pr-4 pl-9 text-sm text-white placeholder-slate-400 transition-all outline-none focus:ring-2"
-                                />
-                            </div>
-                        )}
-
-                        <ClientNotificationDropdown />
-
-                        <Link
-                            href="/client/profile"
-                            aria-label="Profile settings"
-                            aria-current={
-                                activePage === 'settings' ? 'page' : undefined
-                            }
-                            className="group flex cursor-pointer items-center gap-2 rounded-md border-l border-slate-700 pl-2 focus:ring-2 focus:ring-blue-500 focus:outline-none sm:pl-4"
-                        >
-                            <div className="bg-ctu-lightblue flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white ring-2 ring-transparent transition-all group-hover:ring-white/20">
-                                {userName.charAt(0).toUpperCase()}
-                            </div>
-                            <span className="hidden text-sm font-semibold text-white lg:block">
-                                {userName.split(' ')[0]} D.
-                            </span>
-                        </Link>
-                    </div>
+                                <span className={`min-w-0 whitespace-nowrap text-sm font-semibold transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'w-0 overflow-hidden opacity-0'}`}>
+                                    {label}
+                                </span>
+                            </Link>
+                        ))}
+                    </nav>
                 </div>
-            </div>
-        </header>
+
+                <div className="border-t border-slate-800/50 p-4">
+                    <div className="mb-2 flex items-center gap-3 px-1 py-2">
+                        <div className="bg-ctu-lightblue flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ring-2 ring-transparent">
+                            {userName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className={`whitespace-nowrap transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'w-0 overflow-hidden opacity-0'}`}>
+                            <p className="max-w-[120px] truncate text-sm font-bold text-white">{userName.split(' ')[0]}</p>
+                            <p className="max-w-[120px] truncate text-[11px] font-medium text-slate-400">{userCourse}</p>
+                        </div>
+                    </div>
+
+                    <Link
+                        href="/logout"
+                        method="post"
+                        as="button"
+                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-400 transition-colors hover:bg-red-600 hover:text-white"
+                        title={!isExpanded ? 'Log Out' : undefined}
+                    >
+                        <i
+                            className={`fa-solid fa-arrow-right-from-bracket w-5 shrink-0 text-center text-lg transition-transform duration-300 ease-in-out ${isExpanded ? 'translate-x-0' : 'translate-x-0.5'}`}
+                            aria-hidden="true"
+                        />
+                        <span className={`min-w-0 whitespace-nowrap transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'w-0 overflow-hidden opacity-0'}`}>
+                            Log Out
+                        </span>
+                    </Link>
+                </div>
+            </aside>
+
+            {isOpen && (
+                <button
+                    type="button"
+                    aria-label="Close sidebar"
+                    className="animate-fade-in fixed inset-0 z-30 bg-slate-900/60 backdrop-blur-sm md:hidden"
+                    onClick={() => setIsOpen(false)}
+                />
+            )}
+        </>
     );
 }

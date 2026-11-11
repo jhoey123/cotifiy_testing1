@@ -1,5 +1,7 @@
-import { Head, Link, useForm, router, usePage, Form } from '@inertiajs/react';
+import { Head, Link, useForm, router, Form } from '@inertiajs/react';
 import { useState } from 'react';
+import ClientNotificationDropdown from './ClientNotificationDropdown';
+import ClientNavbar from './ClientNavbar';
 
 interface ClientProfileProps {
     user: {
@@ -20,13 +22,7 @@ interface ClientProfileProps {
 }
 
 export default function ClientProfile({ user }: ClientProfileProps) {
-    const { auth } = usePage<any>().props;
-    const userName = auth?.user?.name || user.name;
-    const userCourse = auth?.user?.course || user.course || 'Student';
-
     const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'notifications'>('profile');
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
     // Profile Form
     const profileForm = useForm({
@@ -80,13 +76,6 @@ export default function ClientProfile({ user }: ClientProfileProps) {
         prefsForm.setData('preferences', { ...prefsForm.data.preferences, categories: updated });
     };
 
-    // Navigation Links
-    const navLinks = [
-        { href: '/client', label: 'Home', icon: 'fa-solid fa-house', active: false },
-        { href: '/client/announcements', label: 'Announcements', icon: 'fa-solid fa-bullhorn', active: false },
-        { href: '/client/events', label: 'Events', icon: 'fa-regular fa-calendar', active: false },
-        { href: '/client/saved', label: 'Saved', icon: 'fa-regular fa-bookmark', active: false },
-    ];
 
     return (
         <>
@@ -132,86 +121,7 @@ export default function ClientProfile({ user }: ClientProfileProps) {
                     </div>
                 </div>
 
-                {/* COLLAPSIBLE SIDEBAR */}
-                <aside 
-                    onMouseEnter={() => setIsSidebarExpanded(true)}
-                    onMouseLeave={() => setIsSidebarExpanded(false)}
-                    className={`bg-ctu-dark flex flex-col justify-between shrink-0 absolute md:relative z-40 h-full transition-all duration-300 ease-in-out shadow-2xl
-                    ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'}
-                    ${isSidebarExpanded ? 'md:w-64' : 'md:w-20'}`}
-                >
-                    <div className="flex-1 overflow-y-auto no-scrollbar overflow-x-hidden">
-                        
-                        {/* Logo Section */}
-                        <div className="p-4 flex items-center h-20 border-b border-slate-800/50">
-                            <Link href="/client" className="flex items-center shrink-0">
-                                <img src="/images/3rdLogo.png" alt="Cotify Logo" className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8"  />
-                                <div className={`text-white whitespace-nowrap transition-opacity duration-300 ml-2 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0'}`}>
-                                    <h1 className="font-extrabold text-xl leading-tight tracking-tight">Cotify</h1>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Student Portal</p>
-                                </div>
-                            </Link>
-                        </div>
-
-                        {/* Navigation Links */}
-                        <nav className="mt-4 space-y-2 px-3">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all group ${
-                                        link.active
-                                            ? 'bg-ctu-lightblue text-white shadow-md'
-                                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                    }`}
-                                    title={!isSidebarExpanded ? link.label : undefined}
-                                >
-                                    <i className={`${link.icon} w-5 text-center text-lg shrink-0`}></i>
-                                    <span className={`whitespace-nowrap font-semibold text-sm transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0'}`}>
-                                        {link.label}
-                                    </span>
-                                </Link>
-                            ))}
-                        </nav>
-                    </div>
-
-                    {/* Bottom Profile / Logout */}
-                    <div className="p-4 border-t border-slate-800/50">
-                        <div className="flex items-center gap-3 px-1 py-2 mb-2">
-                            <div className="w-10 h-10 rounded-full bg-ctu-lightblue flex items-center justify-center text-white font-bold text-sm shrink-0 ring-2 ring-transparent">
-                                {userName.charAt(0).toUpperCase()}
-                            </div>
-                            <div className={`whitespace-nowrap transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0'}`}>
-                                <p className="text-white text-sm font-bold truncate max-w-[120px]">{userName.split(' ')[0]}</p>
-                                <p className="text-slate-400 text-[11px] font-medium truncate max-w-[120px]">{userCourse}</p>
-                            </div>
-                        </div>
-                        
-                        <Form method="post" action="/logout">
-                            {({ processing }) => (
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-bold rounded-xl transition-all text-slate-400 hover:bg-red-600 hover:text-white group disabled:opacity-60"
-                                    title={!isSidebarExpanded ? "Log Out" : undefined}
-                                >
-                                    <i className="fa-solid fa-arrow-right-from-bracket w-5 text-center text-lg shrink-0"></i>
-                                    <span className={`whitespace-nowrap transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0'}`}>
-                                        {processing ? 'Logging out...' : 'Log Out'}
-                                    </span>
-                                </button>
-                            )}
-                        </Form>
-                    </div>
-                </aside>
-
-                {/* Overlay for mobile */}
-                {isSidebarOpen && (
-                    <div 
-                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 md:hidden animate-fade-in"
-                        onClick={() => setIsSidebarOpen(false)}
-                    ></div>
-                )}
+                <ClientNavbar activePage="settings" />
 
                 {/* MAIN CONTENT */}
                 <div className="flex-1 flex flex-col bg-transparent overflow-hidden relative w-full z-10">
@@ -219,15 +129,10 @@ export default function ClientProfile({ user }: ClientProfileProps) {
                     {/* TOP BAR */}
                     <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-20">
                         <div className="flex items-center gap-4">
-                            <button 
-                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                                aria-label="Toggle sidebar"
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors md:hidden" 
-                            >
-                                <i className="fa-solid fa-bars"></i>
-                            </button>
+
                             <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight hidden sm:block">Settings</h2>
                         </div>
+                        <ClientNotificationDropdown variant="light" />
                     </header>
 
                     <main className="flex-1 p-6 lg:p-8 overflow-y-auto">

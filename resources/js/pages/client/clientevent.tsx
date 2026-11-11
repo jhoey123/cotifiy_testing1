@@ -1,5 +1,7 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import ClientNotificationDropdown from './ClientNotificationDropdown';
+import ClientNavbar from './ClientNavbar';
 
 interface EventAnnouncement {
     id: number;
@@ -18,7 +20,6 @@ interface EventAnnouncement {
 
 interface ClientEventsProps {
     events?: EventAnnouncement[];
-    unreadCount?: number;
     isLoading?: boolean;
     user?: {
         name: string;
@@ -27,17 +28,9 @@ interface ClientEventsProps {
 
 export default function ClientEvents({
     events = [],
-    unreadCount = 0,
     isLoading = false,
 }: ClientEventsProps) {
-    const { auth } = usePage<any>().props;
-    const userName = auth?.user?.name || 'Student';
-    const userCourse = auth?.user?.course || 'Student';
-
-    const [view, setView] = useState<'calendar' | 'list'>('calendar');
     const [searchTerm, setSearchTerm] = useState('');
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
     useEffect(() => {
         const intervalId = window.setInterval(() => {
@@ -95,17 +88,6 @@ export default function ClientEvents({
         ? new Date(`1970-01-01T${time}`).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
         : '';
         
-    const formatShortDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
-        month: 'short', day: 'numeric', year: 'numeric'
-    });
-
-    // Navigation Links
-    const navLinks = [
-        { href: '/client', label: 'Home', icon: 'fa-solid fa-house', active: false },
-        { href: '/client/announcements', label: 'Announcements', icon: 'fa-solid fa-bullhorn', active: false },
-        { href: '/client/events', label: 'Events', icon: 'fa-regular fa-calendar', active: true },
-        { href: '/client/saved', label: 'Saved', icon: 'fa-regular fa-bookmark', active: false },
-    ];
 
     return (
         <>
@@ -152,83 +134,7 @@ export default function ClientEvents({
                     </div>
                 </div>
 
-                {/* COLLAPSIBLE SIDEBAR */}
-                <aside 
-                    onMouseEnter={() => setIsSidebarExpanded(true)}
-                    onMouseLeave={() => setIsSidebarExpanded(false)}
-                    className={`bg-ctu-dark flex flex-col justify-between shrink-0 absolute md:relative z-40 h-full transition-all duration-300 ease-in-out shadow-2xl
-                    ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'}
-                    ${isSidebarExpanded ? 'md:w-64' : 'md:w-20'}`}
-                >
-                    <div className="flex-1 overflow-y-auto no-scrollbar overflow-x-hidden">
-                        
-                        {/* Logo Section */}
-                        <div className="p-4 flex items-center h-20 border-b border-slate-800/50">
-                            <Link href="/client" className="flex items-center shrink-0">
-                                <img src="/images/3rdLogo.png" alt="Cotify Logo" className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8"  />
-                                <div className={`text-white whitespace-nowrap transition-opacity duration-300 ml-2 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0'}`}>
-                                    <h1 className="font-extrabold text-xl leading-tight tracking-tight">Cotify</h1>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Student Portal</p>
-                                </div>
-                            </Link>
-                        </div>
-
-                        {/* Navigation Links */}
-                        <nav className="mt-4 space-y-2 px-3">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all group ${
-                                        link.active
-                                            ? 'bg-ctu-lightblue text-white shadow-md'
-                                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                    }`}
-                                    title={!isSidebarExpanded ? link.label : undefined}
-                                >
-                                    <i className={`${link.icon} w-5 text-center text-lg shrink-0`}></i>
-                                    <span className={`whitespace-nowrap font-semibold text-sm transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0'}`}>
-                                        {link.label}
-                                    </span>
-                                </Link>
-                            ))}
-                        </nav>
-                    </div>
-
-                    {/* Bottom Profile / Logout */}
-                    <div className="p-4 border-t border-slate-800/50">
-                        <div className="flex items-center gap-3 px-1 py-2 mb-2">
-                            <div className="w-10 h-10 rounded-full bg-ctu-lightblue flex items-center justify-center text-white font-bold text-sm shrink-0 ring-2 ring-transparent">
-                                {userName.charAt(0).toUpperCase()}
-                            </div>
-                            <div className={`whitespace-nowrap transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0'}`}>
-                                <p className="text-white text-sm font-bold truncate max-w-[120px]">{userName.split(' ')[0]}</p>
-                                <p className="text-slate-400 text-[11px] font-medium truncate max-w-[120px]">{userCourse}</p>
-                            </div>
-                        </div>
-                        
-                        <Link
-                            href="/logout"
-                            method="post"
-                            as="button"
-                            className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-bold rounded-xl transition-all text-slate-400 hover:bg-red-600 hover:text-white group"
-                            title={!isSidebarExpanded ? "Log Out" : undefined}
-                        >
-                            <i className="fa-solid fa-arrow-right-from-bracket w-5 text-center text-lg shrink-0"></i>
-                            <span className={`whitespace-nowrap transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0'}`}>
-                                Log Out
-                            </span>
-                        </Link>
-                    </div>
-                </aside>
-
-                {/* Overlay for mobile */}
-                {isSidebarOpen && (
-                    <div 
-                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 md:hidden animate-fade-in"
-                        onClick={() => setIsSidebarOpen(false)}
-                    ></div>
-                )}
+                <ClientNavbar activePage="events" />
 
                 {/* MAIN CONTENT */}
                 <div className="flex-1 flex flex-col bg-transparent overflow-hidden relative w-full z-10">
@@ -236,13 +142,7 @@ export default function ClientEvents({
                     {/* TOP BAR */}
                     <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-20">
                         <div className="flex items-center gap-4">
-                            <button 
-                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                                aria-label="Toggle sidebar"
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors md:hidden" 
-                            >
-                                <i className="fa-solid fa-bars"></i>
-                            </button>
+
                             <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight hidden sm:block">Events</h2>
                         </div>
                         
@@ -258,14 +158,7 @@ export default function ClientEvents({
                                 />
                             </div>
 
-                            <button aria-label="View notifications" className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-ctu-lightblue hover:bg-slate-50 transition-colors shadow-sm">
-                                <i className="fa-regular fa-bell text-lg"></i>
-                                {unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm border border-white animate-pop-in">
-                                        {unreadCount > 99 ? '99+' : unreadCount}
-                                    </span>
-                                )}
-                            </button>
+                            <ClientNotificationDropdown variant="light" />
                         </div>
                     </header>
 
@@ -278,26 +171,6 @@ export default function ClientEvents({
                                     <p className="mt-2 text-base text-slate-500">Discover what's happening on campus.</p>
                                 </div>
                                 
-                                <div className="flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
-                                    <button 
-                                        onClick={() => setView('calendar')}
-                                        aria-pressed={view === 'calendar'}
-                                        className={`rounded-md px-5 py-2 text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                            view === 'calendar' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'
-                                        }`}
-                                    >
-                                        Calendar
-                                    </button>
-                                    <button 
-                                        onClick={() => setView('list')}
-                                        aria-pressed={view === 'list'}
-                                        className={`rounded-md px-5 py-2 text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                            view === 'list' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'
-                                        }`}
-                                    >
-                                        List
-                                    </button>
-                                </div>
                             </div>
 
                             {isLoading ? (
@@ -308,9 +181,7 @@ export default function ClientEvents({
                             ) : (
                                 <div className="animate-fade-in">
                                     
-                                    {/* --- CALENDAR VIEW --- */}
-                                    {view === 'calendar' && (
-                                        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+                                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
                                             
                                             {/* Calendar Grid */}
                                             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-8">
@@ -452,58 +323,7 @@ export default function ClientEvents({
                                                     )}
                                                 </div>
                                             </aside>
-                                        </div>
-                                    )}
-
-                                    {/* --- LIST VIEW --- */}
-                                    {view === 'list' && (
-                                        <div className="mx-auto max-w-4xl space-y-4">
-                                            {filteredEvents.length === 0 ? (
-                                                <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-                                                    <h3 className="text-lg font-bold text-slate-800">No upcoming events found.</h3>
-                                                </div>
-                                            ) : (
-                                                filteredEvents.map(event => (
-                                                    <div key={event.id} className="flex flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row">
-                                                        
-                                                        <div className="flex h-32 w-full shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-100 sm:w-48">
-                                                            {event.image ? (
-                                                                <img src={event.image} alt={event.title} className="h-full w-full object-cover" />
-                                                            ) : (
-                                                                <i className="fa-regular fa-image text-3xl text-slate-300"></i>
-                                                            )}
-                                                        </div>
-                                                        
-                                                        <div className="flex flex-1 flex-col justify-between">
-                                                            <div>
-                                                                <div className="mb-2 flex items-center gap-2">
-                                                                    <span className="rounded border border-emerald-200 bg-emerald-100 px-2.5 py-1 text-[10px] font-extrabold tracking-wider text-emerald-700 uppercase">Event</span>
-                                                                    <span className="text-sm font-bold text-slate-500">{formatShortDate(event.event_date)}</span>
-                                                                </div>
-                                                                <h3 className="mb-2 text-xl font-bold text-slate-900">{event.title}</h3>
-                                                                <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-slate-600">{event.content}</p>
-                                                                <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-slate-500">
-                                                                    <span><i className="fa-regular fa-clock mr-1.5 text-slate-400"></i> {formatTime(event.start_time)}</span>
-                                                                    <span><i className="fa-solid fa-location-dot mr-1.5 text-slate-400"></i> {event.location}</span>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-                                                                <p className="text-sm font-semibold text-slate-500">{event.posted_by_office}</p>
-                                                                {/* Rule: Primary button */}
-                                                                <Link 
-                                                                    href={`/client/announcements/${event.id}`} 
-                                                                    className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                                                >
-                                                                    Details
-                                                                </Link>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    )}
+                                    </div>
 
                                 </div>
                             )}

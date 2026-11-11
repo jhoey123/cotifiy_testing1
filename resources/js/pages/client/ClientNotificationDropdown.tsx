@@ -16,10 +16,19 @@ type SharedProps = {
     recentNotifications?: RecentNotification[];
 };
 
-export default function ClientNotificationDropdown() {
+interface ClientNotificationDropdownProps {
+    variant?: 'dark' | 'light';
+}
+
+export default function ClientNotificationDropdown({
+    variant = 'dark',
+}: ClientNotificationDropdownProps) {
     const { unreadCount = 0, recentNotifications = [] } = usePage<SharedProps>().props;
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const buttonClassName = variant === 'light'
+        ? 'relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:bg-slate-50 hover:text-ctu-lightblue focus:outline-none focus:ring-2 focus:ring-blue-500'
+        : 'relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500';
 
     useEffect(() => {
         if (!isOpen) {
@@ -85,7 +94,7 @@ export default function ClientNotificationDropdown() {
                         });
                     }
                 }}
-                className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={buttonClassName}
             >
                 <i className="fa-regular fa-bell text-xl" aria-hidden="true"></i>
                 {unreadCount > 0 && (
