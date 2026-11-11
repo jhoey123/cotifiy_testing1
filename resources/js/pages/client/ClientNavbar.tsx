@@ -27,7 +27,7 @@ export default function ClientNavbar({ activePage }: ClientNavbarProps) {
     const links: Array<{
         label: string;
         href: string;
-        page: Exclude<ClientNavPage, 'settings'>;
+        page: ClientNavPage;
         icon: string;
     }> = [
         { label: 'Home', href: '/client', page: 'home', icon: 'fa-solid fa-house' },
@@ -85,11 +85,13 @@ export default function ClientNavbar({ activePage }: ClientNavbarProps) {
                                     className="h-20 w-20 max-w-none object-contain sm:h-28 sm:w-28"
                                 />
                             </span>
-                            <div className={`whitespace-nowrap text-white transition-opacity duration-300 ${isExpanded ? 'ml-2 opacity-100' : 'hidden'}`}>
-                                <h1 className="text-xl leading-tight font-extrabold tracking-tight">Cotify</h1>
-                                <p className="mt-0.5 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-                                    Student Portal
-                                </p>
+                            <div className={`flex-none overflow-hidden whitespace-nowrap transition-[width,margin] duration-300 ease-in-out ${isExpanded ? 'ml-2 w-40' : 'ml-0 w-0'}`}>
+                                <div className={`text-white transition-opacity duration-150 ${isExpanded ? 'delay-200 opacity-100' : 'opacity-0'}`}>
+                                    <h1 className="text-xl leading-tight font-extrabold tracking-tight">Cotify</h1>
+                                    <p className="mt-0.5 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                                        Student Portal
+                                    </p>
+                                </div>
                             </div>
                         </Link>
                     </div>
@@ -108,7 +110,7 @@ export default function ClientNavbar({ activePage }: ClientNavbarProps) {
                                 title={!isExpanded ? label : undefined}
                             >
                                 <i
-                                    className={`${icon} w-5 shrink-0 text-center text-lg transition-transform duration-300 ease-in-out ${isExpanded ? 'translate-x-0' : 'translate-x-1.5'}`}
+                                    className={`${icon} w-5 shrink-0 translate-x-1.5 text-center text-lg`}
                                     aria-hidden="true"
                                 />
                                 <span className={`min-w-0 whitespace-nowrap text-sm font-semibold transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'w-0 overflow-hidden opacity-0'}`}>
@@ -120,6 +122,25 @@ export default function ClientNavbar({ activePage }: ClientNavbarProps) {
                 </div>
 
                 <div className="border-t border-slate-800/50 p-4">
+                    <Link
+                        href="/client/profile"
+                        aria-current={activePage === 'settings' ? 'page' : undefined}
+                        className={`group mb-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
+                            activePage === 'settings'
+                                ? 'bg-ctu-lightblue text-white shadow-md'
+                                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                        }`}
+                        title={!isExpanded ? 'Settings' : undefined}
+                    >
+                        <i
+                            className="fa-solid fa-gear w-5 shrink-0 translate-x-0.5 text-center text-lg"
+                            aria-hidden="true"
+                        />
+                        <span className={`min-w-0 whitespace-nowrap transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'w-0 overflow-hidden opacity-0'}`}>
+                            Settings
+                        </span>
+                    </Link>
+
                     <div className="mb-2 flex items-center gap-3 px-1 py-2">
                         <div className="bg-ctu-lightblue flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ring-2 ring-transparent">
                             {userName.charAt(0).toUpperCase()}
@@ -138,7 +159,7 @@ export default function ClientNavbar({ activePage }: ClientNavbarProps) {
                         title={!isExpanded ? 'Log Out' : undefined}
                     >
                         <i
-                            className={`fa-solid fa-arrow-right-from-bracket w-5 shrink-0 text-center text-lg transition-transform duration-300 ease-in-out ${isExpanded ? 'translate-x-0' : 'translate-x-0.5'}`}
+                            className="fa-solid fa-arrow-right-from-bracket w-5 shrink-0 translate-x-0.5 text-center text-lg"
                             aria-hidden="true"
                         />
                         <span className={`min-w-0 whitespace-nowrap transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'w-0 overflow-hidden opacity-0'}`}>

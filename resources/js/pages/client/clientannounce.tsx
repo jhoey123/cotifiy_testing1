@@ -233,46 +233,45 @@ export default function ClientAnnouncements({
                                     </p>
                                 </div>
                             ) : (
-                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 animate-fade-in">
+                                <div className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm divide-y divide-slate-100">
                                     {filteredAnnouncements.map((announcement) => (
                                         <article
                                             key={announcement.id}
-                                            className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+                                            className="group flex min-w-0 gap-4 p-4 transition-colors hover:bg-slate-50 sm:gap-6 sm:p-5"
                                         >
-                                            {/* Image / Placeholder */}
                                             {announcement.image ? (
                                                 <img
                                                     src={announcement.image}
-                                                    alt={announcement.title}
+                                                    alt=""
                                                     loading="lazy"
-                                                    className="h-48 w-full bg-slate-100 object-cover"
+                                                    className="mt-1 h-16 w-16 shrink-0 rounded-lg bg-slate-100 object-cover sm:h-20 sm:w-20"
                                                 />
                                             ) : (
-                                                <div className="flex h-48 items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400">
-                                                    <i className="fa-regular fa-newspaper text-4xl" aria-hidden="true"></i>
+                                                <div className="mt-1 flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 sm:h-20 sm:w-20">
+                                                    <i className="fa-regular fa-newspaper text-2xl" aria-hidden="true"></i>
                                                 </div>
                                             )}
-                                            
-                                            <div className="flex flex-1 flex-col p-6">
-                                                <div className="mb-3 flex flex-wrap items-center gap-2">
+
+                                            <div className="min-w-0 flex-1">
+                                                <div className="mb-2 flex flex-wrap items-center gap-2">
                                                     <span className={`rounded border px-2.5 py-1 text-[12px] font-bold tracking-wider uppercase ${categoryStyles[announcement.category]}`}>
                                                         {announcement.category === 'Event' ? 'Events' : announcement.category === 'Service' ? 'Services' : announcement.category}
                                                     </span>
-                                                    <span className="text-sm font-medium text-slate-500">
+                                                    <span className="text-xs font-medium text-slate-500 sm:text-sm">
                                                         {formatDate(announcement.date)}
                                                     </span>
                                                 </div>
                                                 
-                                                <h3 className="mb-2 text-lg leading-snug font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                                                <h3 className="mb-1 text-base leading-snug font-bold text-slate-900 transition-colors group-hover:text-blue-600 sm:text-lg">
                                                     {announcement.title}
                                                 </h3>
                                                 
                                                 <div
                                                     dangerouslySetInnerHTML={{ __html: announcement.content_html }}
-                                                    className="line-clamp-3 flex-1 text-base leading-relaxed text-slate-900 [&_a]:text-blue-700 [&_a]:underline [&_a]:[text-shadow:0_0_8px_rgb(59_130_246_/_50%)] [&_p]:mb-0"
+                                                    className="line-clamp-2 text-sm leading-relaxed text-slate-600 [&_a]:text-blue-700 [&_a]:underline [&_a]:[text-shadow:0_0_8px_rgb(59_130_246_/_50%)] [&_p]:mb-0 sm:text-base"
                                                 />
                                                 
-                                                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                                                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                                                     <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-500">
                                                         <i className="fa-solid fa-building text-slate-400" aria-hidden="true"></i>
                                                         <span className="truncate">
@@ -282,9 +281,9 @@ export default function ClientAnnouncements({
                                                     
                                                     <Link
                                                         href={`/client/announcements/${announcement.id}`}
-                                                        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                                        className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-blue-600 transition-colors hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                     >
-                                                        Read more
+                                                        Read more <i className="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i>
                                                     </Link>
                                                 </div>
                                             </div>
