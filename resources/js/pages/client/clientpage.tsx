@@ -231,7 +231,7 @@ export default function ClientHome({
                                 {!isLoading && !hasError && (
                                     <div className="space-y-4">
                                         {filteredAnnouncements.map((ann) => (
-                                            <div key={ann.id} className="flex gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+                                            <div key={ann.id} className="group relative flex gap-5 overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
                                                 <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
                                                     {ann.image ? (
                                                         <img src={ann.image} alt={`Thumbnail for ${ann.title}`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
@@ -264,13 +264,21 @@ export default function ClientHome({
                                                             </div>
                                                             {ann.posted_by_office}
                                                         </div>
-                                                        <div className="flex items-center gap-3">
-                                                            <Link href={`/client/announcements/${ann.id}`} className="rounded-lg border border-slate-300 px-4 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                                                Read more
-                                                            </Link>
-                                                        </div>
+                                                        <Link
+                                                            href={`/client/announcements/${ann.id}`}
+                                                            className="text-xs font-bold text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:hidden"
+                                                        >
+                                                            Read more
+                                                        </Link>
                                                     </div>
                                                 </div>
+                                                <Link
+                                                    href={`/client/announcements/${ann.id}`}
+                                                    aria-label={`Read more: ${ann.title}`}
+                                                    className="absolute inset-y-0 right-0 z-10 hidden w-48 translate-x-4 items-center justify-center gap-2 rounded-r-2xl border-y-4 border-r-4 border-l-0 border-transparent [background-clip:padding-box,border-box] [background-image:linear-gradient(to_left,rgba(37,99,235,0.3)_0%,rgba(59,130,246,0.2)_30%,rgba(96,165,250,0.11)_60%,rgba(191,219,254,0.04)_85%,rgba(255,255,255,0)_100%),linear-gradient(to_left,rgba(30,64,175,0.9)_0%,rgba(59,130,246,0.65)_35%,rgba(147,197,253,0.35)_70%,rgba(191,219,254,0.03)_100%)] [background-origin:padding-box,border-box] text-base font-extrabold text-white drop-shadow-[0_1px_3px_rgba(15,23,42,0.9)] opacity-0 transition-[opacity,transform] duration-300 group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:translate-x-0 group-focus-within:opacity-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-300 sm:flex"
+                                                >
+                                                    Read more <i className="fa-solid fa-arrow-right text-xs" aria-hidden="true" />
+                                                </Link>
                                             </div>
                                         ))}
 

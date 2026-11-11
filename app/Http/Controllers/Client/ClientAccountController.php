@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
@@ -30,6 +31,9 @@ class ClientAccountController extends Controller
                 'student_id' => $user->studentId,
                 'course' => $user->course,
                 'year_level' => $user->year_level,
+                'profile_photo_url' => $user->profile_photo_path
+                    ? Storage::disk('public')->url($user->profile_photo_path)
+                    : null,
                 'created_at' => $user->created_at?->toDateString() ?? '',
             ],
             'stats' => [
@@ -75,6 +79,28 @@ class ClientAccountController extends Controller
 
         if ($emailChanged) {
             $user->sendEmailVerificationNotification();
+        }
+
+        return back();
+    }
+
+    public function updateProfilePhoto(Request $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $validated = $request->validate([
+            'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ]);
+
+        $oldPhotoPath = $user->profile_photo_path;
+        $photoPath = $validated['photo']->store('profile-photos', 'public');
+
+        $user->forceFill([
+            'profile_photo_path' => $photoPath,
+        ])->save();
+
+        if ($oldPhotoPath !== null && ! Storage::disk('public')->delete($oldPhotoPath)) {
+            throw new \RuntimeException('Unable to remove the previous profile photo.');
         }
 
         return back();

@@ -1,7 +1,15 @@
 import { Link, usePage } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 type ClientNavPage = 'home' | 'announcements' | 'events' | 'saved' | 'settings';
+
+let isClientSidebarHovered = false;
+let isClientSidebarNavigationPending = false;
+let lastPointerPosition: { x: number; y: number } | null = null;
+
+function rememberPointerPosition(event: { clientX: number; clientY: number }) {
+    lastPointerPosition = { x: event.clientX, y: event.clientY };
+}
 
 interface ClientNavbarProps {
     activePage?: ClientNavPage;
@@ -9,14 +17,30 @@ interface ClientNavbarProps {
 
 export default function ClientNavbar({ activePage }: ClientNavbarProps) {
     const { auth } = usePage<{
-        auth?: { user?: { name?: string; course?: string | null } };
+        auth?: { user?: { name?: string; course?: string | null; profile_photo_url?: string | null } };
     }>().props;
     const userName = auth?.user?.name || 'Student';
     const userCourse = auth?.user?.course || 'Student';
     const [isOpen, setIsOpen] = useState(false);
-    const [isHoveredExpanded, setIsHoveredExpanded] = useState(false);
+    const [isHoveredExpanded, setIsHoveredExpanded] = useState(isClientSidebarHovered);
     const collapseTimeout = useRef<number | null>(null);
+    const sidebarRef = useRef<HTMLElement>(null);
     const isExpanded = isOpen || isHoveredExpanded;
+
+    useLayoutEffect(() => {
+        const sidebarBounds = sidebarRef.current?.getBoundingClientRect();
+        const isHovered = Boolean(
+            sidebarBounds &&
+                lastPointerPosition &&
+                lastPointerPosition.x >= sidebarBounds.left &&
+                lastPointerPosition.x <= sidebarBounds.right &&
+                lastPointerPosition.y >= sidebarBounds.top &&
+                lastPointerPosition.y <= sidebarBounds.bottom,
+        );
+        isClientSidebarHovered = isHovered;
+        isClientSidebarNavigationPending = false;
+        setIsHoveredExpanded(isHovered);
+    }, []);
 
     useEffect(() => () => {
         if (collapseTimeout.current !== null) {
@@ -54,15 +78,24 @@ export default function ClientNavbar({ activePage }: ClientNavbarProps) {
             </button>
 
             <aside
-                onMouseEnter={() => {
+                ref={sidebarRef}
+                onMouseEnter={(event) => {
+                    rememberPointerPosition(event);
                     if (collapseTimeout.current !== null) {
                         window.clearTimeout(collapseTimeout.current);
                         collapseTimeout.current = null;
                     }
+                    isClientSidebarHovered = true;
                     setIsHoveredExpanded(true);
                 }}
-                onMouseLeave={() => {
+                onMouseMove={rememberPointerPosition}
+                onMouseLeave={(event) => {
+                    rememberPointerPosition(event);
+                    if (isClientSidebarNavigationPending) {
+                        return;
+                    }
                     collapseTimeout.current = window.setTimeout(() => {
+                        isClientSidebarHovered = false;
                         setIsHoveredExpanded(false);
                         collapseTimeout.current = null;
                     }, 120);
@@ -101,6 +134,15 @@ export default function ClientNavbar({ activePage }: ClientNavbarProps) {
                             <Link
                                 key={page}
                                 href={href}
+                                onClick={(event) => {
+                                    rememberPointerPosition(event);
+                                    isClientSidebarNavigationPending = true;
+                                    isClientSidebarHovered = true;
+                                    setIsHoveredExpanded(true);
+                                }}
+                                onFinish={() => {
+                                    isClientSidebarNavigationPending = false;
+                                }}
                                 aria-current={activePage === page ? 'page' : undefined}
                                 className={`group flex items-center gap-3 rounded-xl px-3 py-3 transition-colors ${
                                     activePage === page
@@ -124,6 +166,15 @@ export default function ClientNavbar({ activePage }: ClientNavbarProps) {
                 <div className="border-t border-slate-800/50 p-4">
                     <Link
                         href="/client/profile"
+                        onClick={(event) => {
+                            rememberPointerPosition(event);
+                            isClientSidebarNavigationPending = true;
+                            isClientSidebarHovered = true;
+                            setIsHoveredExpanded(true);
+                        }}
+                        onFinish={() => {
+                            isClientSidebarNavigationPending = false;
+                        }}
                         aria-current={activePage === 'settings' ? 'page' : undefined}
                         className={`group mb-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
                             activePage === 'settings'
@@ -142,9 +193,17 @@ export default function ClientNavbar({ activePage }: ClientNavbarProps) {
                     </Link>
 
                     <div className="mb-2 flex items-center gap-3 px-1 py-2">
-                        <div className="bg-ctu-lightblue flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ring-2 ring-transparent">
-                            {userName.charAt(0).toUpperCase()}
-                        </div>
+                        {auth?.user?.profile_photo_url ? (
+                            <img
+                                src={auth.user.profile_photo_url}
+                                alt=""
+                                className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-transparent"
+                            />
+                        ) : (
+                            <div className="bg-ctu-lightblue flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ring-2 ring-transparent">
+                                {userName.charAt(0).toUpperCase()}
+                            </div>
+                        )}
                         <div className={`whitespace-nowrap transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'w-0 overflow-hidden opacity-0'}`}>
                             <p className="max-w-[120px] truncate text-sm font-bold text-white">{userName.split(' ')[0]}</p>
                             <p className="max-w-[120px] truncate text-[11px] font-medium text-slate-400">{userCourse}</p>

@@ -19,7 +19,10 @@ function createDiscussionAnnouncement(): Announcement
 
 test('client messages are saved to a conversation for that client and announcement', function () {
     $announcement = createDiscussionAnnouncement();
-    $client = User::factory()->create(['name' => 'Taylor Student']);
+    $client = User::factory()->create([
+        'name' => 'Taylor Student',
+        'profile_photo_path' => 'profile-photos/taylor.jpg',
+    ]);
 
     $this->actingAs($client, 'web')
         ->post(route('client.announcements.messages.store', $announcement), [
@@ -37,6 +40,7 @@ test('client messages are saved to a conversation for that client and announceme
             ->where('messages.0.author', 'Taylor Student')
             ->where('messages.0.content', 'Is registration required?')
             ->where('messages.0.role', 'Client')
+            ->where('messages.0.author_photo_url', '/storage/profile-photos/taylor.jpg')
             ->where('messages.0.parent_message_id', null)
             ->where('messages.0.is_mine', true));
 });

@@ -30,6 +30,7 @@ interface DiscussionMessage {
     id: number;
     parent_message_id: number | null;
     author: string;
+    author_photo_url?: string | null;
     role: 'Client' | 'Admin' | 'Staff';
     content: string;
     sent_at: string | null;
@@ -457,6 +458,17 @@ export default function ClientReadMore({
                                                             }`}
                                                             >
                                                             <div className="mb-3 flex flex-wrap items-center gap-2">
+                                                                {message.author_photo_url ? (
+                                                                    <img
+                                                                        src={message.author_photo_url}
+                                                                        alt=""
+                                                                        className="h-8 w-8 shrink-0 rounded-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-600">
+                                                                        {message.author.charAt(0).toUpperCase()}
+                                                                    </div>
+                                                                )}
                                                                 <span className="text-sm font-bold text-slate-900">
                                                                     {message.author}
                                                                 </span>

@@ -166,6 +166,9 @@ class ClientPageController extends Controller
                     : ($message->sender_admin_id !== null
                         ? $message->adminSender->name
                         : $message->sender->name),
+                'author_photo_url' => $message->sender_id !== null && $message->sender?->profile_photo_path !== null
+                    ? Storage::disk('public')->url($message->sender->profile_photo_path)
+                    : null,
                 'role' => $message->sender_staff_id !== null
                     ? 'Staff'
                     : ($message->sender_admin_id === null ? 'Client' : 'Admin'),
@@ -184,6 +187,9 @@ class ClientPageController extends Controller
                     : ($message->sender_admin_id !== null
                         ? $message->adminSender->name
                         : $message->sender->name),
+                'author_photo_url' => $message->sender_id !== null && $message->sender?->profile_photo_path !== null
+                    ? Storage::disk('public')->url($message->sender->profile_photo_path)
+                    : null,
                 'role' => $message->sender_staff_id !== null
                     ? 'Staff'
                     : ($message->sender_admin_id === null ? 'Client' : 'Admin'),

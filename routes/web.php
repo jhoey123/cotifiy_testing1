@@ -38,6 +38,9 @@ Route::get('/client/profile', [ClientAccountController::class, 'profile'])
 Route::put('/client/profile', [ClientAccountController::class, 'updateProfile'])
     ->middleware(['auth:web', 'private-cache'])
     ->name('client.profile.update');
+Route::post('/client/profile/photo', [ClientAccountController::class, 'updateProfilePhoto'])
+    ->middleware(['auth:web', 'private-cache'])
+    ->name('client.profile.photo.update');
 Route::put('/client/profile/password', [ClientAccountController::class, 'updatePassword'])
     ->middleware(['auth:web', 'private-cache'])
     ->name('client.profile.password');

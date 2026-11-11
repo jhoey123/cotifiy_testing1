@@ -237,7 +237,7 @@ export default function ClientAnnouncements({
                                     {filteredAnnouncements.map((announcement) => (
                                         <article
                                             key={announcement.id}
-                                            className="group flex min-w-0 gap-4 p-4 transition-colors hover:bg-slate-50 sm:gap-6 sm:p-5"
+                                            className="group relative flex min-w-0 gap-4 overflow-hidden p-4 transition-colors hover:bg-slate-50 sm:gap-6 sm:p-5"
                                         >
                                             {announcement.image ? (
                                                 <img
@@ -281,12 +281,19 @@ export default function ClientAnnouncements({
                                                     
                                                     <Link
                                                         href={`/client/announcements/${announcement.id}`}
-                                                        className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-blue-600 transition-colors hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:hidden"
                                                     >
                                                         Read more <i className="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i>
                                                     </Link>
                                                 </div>
                                             </div>
+                                            <Link
+                                                href={`/client/announcements/${announcement.id}`}
+                                                aria-label={`Read more: ${announcement.title}`}
+                                                className="absolute inset-y-0 right-0 z-10 hidden w-52 translate-x-4 items-center justify-center gap-2 rounded-r-2xl border-y-4 border-r-4 border-l-0 border-transparent [background-clip:padding-box,border-box] [background-image:linear-gradient(to_left,rgba(37,99,235,0.3)_0%,rgba(59,130,246,0.2)_30%,rgba(96,165,250,0.11)_60%,rgba(191,219,254,0.04)_85%,rgba(255,255,255,0)_100%),linear-gradient(to_left,rgba(30,64,175,0.9)_0%,rgba(59,130,246,0.65)_35%,rgba(147,197,253,0.35)_70%,rgba(191,219,254,0.03)_100%)] [background-origin:padding-box,border-box] text-base font-extrabold text-white drop-shadow-[0_1px_3px_rgba(15,23,42,0.9)] opacity-0 transition-[opacity,transform] duration-300 group-hover:translate-x-0 group-hover:opacity-100 group-focus-within:translate-x-0 group-focus-within:opacity-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-300 sm:flex"
+                                            >
+                                                Read more <i className="fa-solid fa-arrow-right text-xs" aria-hidden="true" />
+                                            </Link>
                                         </article>
                                     ))}
                                 </div>

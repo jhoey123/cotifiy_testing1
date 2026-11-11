@@ -1,5 +1,5 @@
 import { Head, Link, useForm, router, Form } from '@inertiajs/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import ClientNotificationDropdown from './ClientNotificationDropdown';
 import ClientNavbar from './ClientNavbar';
 
@@ -11,7 +11,7 @@ interface ClientProfileProps {
         course?: string | null;
         year_level?: string | null;
         section?: string | null;
-        student_number?: string | null; 
+        profile_photo_url?: string | null;
         preferences?: {
             email_all: boolean;
             email_urgent: boolean;
@@ -23,6 +23,7 @@ interface ClientProfileProps {
 
 export default function ClientProfile({ user }: ClientProfileProps) {
     const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'notifications'>('profile');
+    const photoInput = useRef<HTMLInputElement>(null);
 
     // Profile Form
     const profileForm = useForm({
@@ -30,7 +31,6 @@ export default function ClientProfile({ user }: ClientProfileProps) {
         course: user.course || 'BSIT',
         year_level: user.year_level || '3rd Year',
         section: user.section || '',
-        student_number: user.student_number || '',
     });
 
     // Password Form
@@ -38,6 +38,10 @@ export default function ClientProfile({ user }: ClientProfileProps) {
         current_password: '',
         password: '',
         password_confirmation: '',
+    });
+
+    const photoForm = useForm<{ photo: File | null }>({
+        photo: null,
     });
 
     // Notifications Form
@@ -155,12 +159,6 @@ export default function ClientProfile({ user }: ClientProfileProps) {
                                         >
                                             Password
                                         </button>
-                                        <button
-                                            onClick={() => setActiveTab('notifications')}
-                                            className={`flex items-center px-5 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'notifications' ? 'bg-ctu-dark text-white shadow-md' : 'text-slate-600 hover:bg-white/60 hover:text-slate-900'}`}
-                                        >
-                                            Notifications
-                                        </button>
                                     </nav>
                                 </aside>
 
@@ -175,9 +173,17 @@ export default function ClientProfile({ user }: ClientProfileProps) {
                                                 
                                                 {/* Header & Avatar */}
                                                 <div className="flex items-center gap-5 pb-6 border-b border-slate-100">
-                                                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-ctu-lightblue to-blue-600 flex items-center justify-center text-white font-extrabold text-2xl shadow-lg ring-4 ring-white">
-                                                        {user.name.charAt(0).toUpperCase()}
-                                                    </div>
+                                                    {user.profile_photo_url ? (
+                                                        <img
+                                                            src={user.profile_photo_url}
+                                                            alt={`${user.name}'s profile`}
+                                                            className="h-20 w-20 rounded-full object-cover shadow-lg ring-4 ring-white"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-ctu-lightblue to-blue-600 flex items-center justify-center text-white font-extrabold text-2xl shadow-lg ring-4 ring-white">
+                                                            {user.name.charAt(0).toUpperCase()}
+                                                        </div>
+                                                    )}
                                                     <div>
                                                         <h2 className="text-2xl font-extrabold text-slate-900">{user.name}</h2>
                                                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mt-1">
@@ -185,9 +191,35 @@ export default function ClientProfile({ user }: ClientProfileProps) {
                                                             <span>·</span>
                                                             <span>{user.email}</span>
                                                         </div>
-                                                        <button type="button" className="mt-3 px-4 py-1.5 border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                                                            Change photo
+                                                        <input
+                                                            ref={photoInput}
+                                                            type="file"
+                                                            accept="image/jpeg,image/png,image/webp"
+                                                            className="hidden"
+                                                            onChange={(event) => {
+                                                                const photo = event.currentTarget.files?.[0];
+                                                                if (!photo) return;
+
+                                                                photoForm.transform(() => ({ photo }));
+                                                                photoForm.post('/client/profile/photo', {
+                                                                    forceFormData: true,
+                                                                    preserveScroll: true,
+                                                                    onSuccess: () => photoForm.reset(),
+                                                                });
+                                                                event.currentTarget.value = '';
+                                                            }}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            disabled={photoForm.processing}
+                                                            onClick={() => photoInput.current?.click()}
+                                                            className="mt-3 px-4 py-1.5 border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                                                        >
+                                                            {photoForm.processing ? 'Uploading...' : 'Change photo'}
                                                         </button>
+                                                        {photoForm.errors.photo && (
+                                                            <p className="mt-2 text-xs font-semibold text-red-600">{photoForm.errors.photo}</p>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -233,18 +265,6 @@ export default function ClientProfile({ user }: ClientProfileProps) {
                                                             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-ctu-lightblue focus:ring-4 focus:ring-ctu-lightblue/10 outline-none transition-all"
                                                         />
                                                         {profileForm.errors.section && <p className="mt-1.5 text-xs font-bold text-red-600">{profileForm.errors.section}</p>}
-                                                    </div>
-
-                                                    <div>
-                                                        <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wide mb-2">Student Number</label>
-                                                        <input
-                                                            type="text"
-                                                            value={profileForm.data.student_number}
-                                                            onChange={e => profileForm.setData('student_number', e.target.value)}
-                                                            placeholder="e.g. 123456"
-                                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-ctu-lightblue focus:ring-4 focus:ring-ctu-lightblue/10 outline-none transition-all"
-                                                        />
-                                                        {profileForm.errors.student_number && <p className="mt-1.5 text-xs font-bold text-red-600">{profileForm.errors.student_number}</p>}
                                                     </div>
                                                 </div>
 

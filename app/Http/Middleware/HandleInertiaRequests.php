@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -35,11 +37,18 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $authUser = $user?->toArray();
+
+        if ($user instanceof User && $user->profile_photo_path !== null) {
+            $authUser['profile_photo_url'] = Storage::disk('public')->url($user->profile_photo_path);
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $authUser,
             ],
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),

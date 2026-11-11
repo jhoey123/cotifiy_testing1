@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('a client can open their account pages with their real account name', function () {
@@ -36,6 +38,18 @@ test('a client can open their account pages with their real account name', funct
             ->where('notifications', []));
 });
 
+test('the client sidebar receives the signed-in student profile photo url', function () {
+    $user = User::factory()->create([
+        'profile_photo_path' => 'profile-photos/student.jpg',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('client.clientpage'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('auth.user.profile_photo_url', '/storage/profile-photos/student.jpg'));
+});
+
 test('a client can update their profile details', function () {
     $user = User::factory()->create();
 
@@ -54,6 +68,36 @@ test('a client can update their profile details', function () {
         ->studentId->toBe('STU-2026')
         ->course->toBe('BSCS')
         ->year_level->toBe('4th Year');
+});
+
+test('a client can upload and replace their profile photo', function () {
+    Storage::fake('public');
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('client.profile.photo.update'), [
+            'photo' => UploadedFile::fake()->image('profile.jpg'),
+        ])
+        ->assertRedirect();
+
+    $firstPhotoPath = $user->fresh()->profile_photo_path;
+
+    expect($firstPhotoPath)->toStartWith('profile-photos/');
+    Storage::disk('public')->assertExists($firstPhotoPath);
+
+    $this->post(route('client.profile.photo.update'), [
+        'photo' => UploadedFile::fake()->image('new-profile.jpg'),
+    ])->assertRedirect();
+
+    $newPhotoPath = $user->fresh()->profile_photo_path;
+
+    expect($newPhotoPath)->not->toBe($firstPhotoPath);
+    Storage::disk('public')->assertMissing($firstPhotoPath);
+    Storage::disk('public')->assertExists($newPhotoPath);
+
+    $this->get(route('client.profile'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('user.profile_photo_url', Storage::disk('public')->url($newPhotoPath)));
 });
 
 test('a client can change their password with their current password', function () {
