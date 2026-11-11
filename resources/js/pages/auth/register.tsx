@@ -6,8 +6,20 @@ export default function Register() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
     
-    // Password strength state
+    // Form State for Validation
+    const [formData, setFormData] = useState({
+        name: '',
+        studentId: '',
+        college: '',
+        course: '',
+        year_level: '',
+        email: '',
+        terms: false,
+    });
+
+    // Password state
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [strength, setStrength] = useState(0);
 
     useEffect(() => {
@@ -30,6 +42,78 @@ export default function Register() {
         setPassword(val);
         setStrength(calculateStrength(val));
     };
+
+    const handleStudentIdChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+        setFormData(prev => ({ ...prev, studentId: val }));
+    };
+
+    const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target;
+        const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+        setFormData(prev => ({ ...prev, [name]: val }));
+    };
+
+    // Validation Logic
+    const passwordsMatch = password === confirmPassword;
+    const isPasswordValid = password.length >= 8 && strength >= 3; 
+    const isStudentIdValid = formData.studentId.length === 6;
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+    
+    const isFormValid = 
+        formData.name.trim() !== '' &&
+        isStudentIdValid &&
+        formData.college !== '' &&
+        formData.course !== '' &&
+        formData.year_level !== '' &&
+        isEmailValid &&
+        isPasswordValid &&
+        passwordsMatch &&
+        formData.terms;
+
+    // Course Data mapped by College
+    const colleges = {
+        education: {
+            name: "College of Education",
+            courses: [
+                { value: "BEEd", label: "Bachelor of Elementary Education (BEEd)" },
+                { value: "BTLEd", label: "Bachelor of Technology and Livelihood Education (BTLEd)" },
+                { value: "BSEd", label: "Bachelor of Secondary Education (BSEd)" },
+                { value: "DipPE", label: "Diploma in Professional Education" },
+            ]
+        },
+        engineering: {
+            name: "College of Engineering",
+            courses: [
+                { value: "BSIE", label: "BS Industrial Engineering (BSIE)" },
+                { value: "BSME", label: "BS Mechanical Engineering (BSME)" },
+                { value: "BSCE", label: "BS Civil Engineering (BSCE)" },
+                { value: "BSEE", label: "BS Electrical Engineering (BSEE)" },
+                { value: "BSCpE", label: "BS Computer Engineering (BSCpE)" },
+            ]
+        },
+        technology: {
+            name: "College of Technology",
+            courses: [
+                { value: "BSIT", label: "BS Information Technology (BSIT)" },
+                { value: "BSMx", label: "BS Mechatronics (BSMx)" },
+                { value: "BIT-Comp", label: "BIT - Computer Technology" },
+                { value: "BIT-Draft", label: "BIT - Drafting Technology" },
+                { value: "BIT-Elec", label: "BIT - Electrical Technology" },
+                { value: "BIT-Electronics", label: "BIT - Electronics Technology" },
+            ]
+        },
+        management: {
+            name: "College of Management and Entrepreneurship",
+            courses: [
+                { value: "BSHM", label: "BS Hospitality Management (BSHM)" },
+                { value: "BSTM", label: "BS Tourism Management (BSTM)" },
+                { value: "BSBA", label: "BS Business Administration (BSBA)" },
+            ]
+        },
+    };
+
+    const availableCourses = formData.college ? colleges[formData.college as keyof typeof colleges].courses : [];
 
     return (
         <>
@@ -215,6 +299,8 @@ export default function Register() {
                                                     </div>
                                                     <input 
                                                         id="name" type="text" name="name" placeholder="Juan Dela Cruz" 
+                                                        value={formData.name}
+                                                        onChange={handleInputChange}
                                                         className="w-full pl-11 pr-4 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium"
                                                         required
                                                     />
@@ -229,17 +315,55 @@ export default function Register() {
                                                         <i className="fa-regular fa-id-card text-slate-400 group-focus-within:text-blue-400 transition-colors"></i>
                                                     </div>
                                                     <input 
-                                                        id="studentId" type="text" name="studentId" placeholder="123456" 
-                                                        className="w-full pl-11 pr-4 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium"
+                                                        id="studentId" 
+                                                        type="text" 
+                                                        name="studentId" 
+                                                        placeholder="323145" 
+                                                        value={formData.studentId}
+                                                        onChange={handleStudentIdChange}
+                                                        inputMode="numeric"
+                                                        maxLength={6}
+                                                        className={`w-full pl-11 pr-4 py-3.5 bg-slate-900/60 rounded-xl border text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium ${
+                                                            formData.studentId.length > 0 && !isStudentIdValid ? 'border-red-500/50' : 'border-slate-600/50'
+                                                        }`}
                                                         required
                                                     />
                                                 </div>
                                                 {errors.studentId ? (
                                                     <p className="mt-1.5 text-xs font-bold text-red-400">{errors.studentId}</p>
+                                                ) : formData.studentId.length > 0 && !isStudentIdValid ? (
+                                                    <p className="mt-1.5 text-xs font-bold text-red-400">Must be exactly 6 digits</p>
                                                 ) : (
-                                                    <p className="mt-1.5 text-[10px] font-semibold text-slate-400">Format: 123456</p>
+                                                    <p className="mt-1.5 text-[10px] font-semibold text-slate-400">Student ID (e.g., 323145)</p>
                                                 )}
                                             </div>
+                                        </div>
+
+                                        {/* DEPARTMENT SELECTION */}
+                                        <div>
+                                            <label htmlFor="college" className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wide">Department / College</label>
+                                            <div className="relative group">
+                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                    <i className="fa-solid fa-building-columns text-slate-400 group-focus-within:text-blue-400 transition-colors"></i>
+                                                </div>
+                                                <select 
+                                                    id="college" 
+                                                    name="college" 
+                                                    value={formData.college}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                    className="w-full pl-11 pr-4 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium appearance-none cursor-pointer"
+                                                >
+                                                    <option value="" disabled>Select Department</option>
+                                                    {Object.entries(colleges).map(([key, data]) => (
+                                                        <option key={key} value={key}>{data.name}</option>
+                                                    ))}
+                                                </select>
+                                                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                                    <i className="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                                                </div>
+                                            </div>
+                                            {errors.college && <p className="mt-1.5 text-xs font-bold text-red-400">{errors.college}</p>}
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -250,40 +374,20 @@ export default function Register() {
                                                         <i className="fa-solid fa-graduation-cap text-slate-400 group-focus-within:text-blue-400 transition-colors"></i>
                                                     </div>
                                                     <select 
-                                                        id="course" name="course" defaultValue="" required
-                                                        className="w-full pl-11 pr-4 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium appearance-none cursor-pointer"
+                                                        id="course" 
+                                                        name="course" 
+                                                        value={formData.course}
+                                                        onChange={handleInputChange}
+                                                        required
+                                                        disabled={!formData.college}
+                                                        className="w-full pl-11 pr-4 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                     >
-                                                        <option value="" disabled>Select Course</option>
-                                                        
-                                                        <optgroup label="College of Education">
-                                                            <option value="BEEd">Bachelor of Elementary Education (BEEd)</option>
-                                                            <option value="BTLEd">Bachelor of Technology and Livelihood Education (BTLEd)</option>
-                                                            <option value="BSEd">Bachelor of Secondary Education (BSEd)</option>
-                                                            <option value="DipPE">Diploma in Professional Education</option>
-                                                        </optgroup>
-
-                                                        <optgroup label="College of Engineering">
-                                                            <option value="BSIE">BS Industrial Engineering (BSIE)</option>
-                                                            <option value="BSME">BS Mechanical Engineering (BSME)</option>
-                                                            <option value="BSCE">BS Civil Engineering (BSCE)</option>
-                                                            <option value="BSEE">BS Electrical Engineering (BSEE)</option>
-                                                            <option value="BSCpE">BS Computer Engineering (BSCpE)</option>
-                                                        </optgroup>
-
-                                                        <optgroup label="College of Technology">
-                                                            <option value="BSIT">BS Information Technology (BSIT)</option>
-                                                            <option value="BSMx">BS Mechatronics (BSMx)</option>
-                                                            <option value="BIT">BIT Computer </option>
-                                                            <option value="BIT">BIT Drafting </option>
-                                                            <option value="BIT">BIT Electrical </option>
-                                                            <option value="BIT">BIT Electronics </option>
-                                                        </optgroup>
-
-                                                        <optgroup label="College of Management and Entrepreneurship">
-                                                            <option value="BSHM">BS Hospitality Management (BSHM)</option>
-                                                            <option value="BSTM">BS Tourism Management (BSTM)</option>
-                                                            <option value="BSBA">BS Business Administration (BSBA)</option>
-                                                        </optgroup>
+                                                        <option value="" disabled>
+                                                            {formData.college ? 'Select Course' : 'Select Department first'}
+                                                        </option>
+                                                        {availableCourses.map((course) => (
+                                                            <option key={course.value} value={course.value}>{course.label}</option>
+                                                        ))}
                                                     </select>
                                                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                                                         <i className="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
@@ -299,7 +403,11 @@ export default function Register() {
                                                         <i className="fa-solid fa-layer-group text-slate-400 group-focus-within:text-blue-400 transition-colors"></i>
                                                     </div>
                                                     <select 
-                                                        id="year_level" name="year_level" defaultValue="" required
+                                                        id="year_level" 
+                                                        name="year_level" 
+                                                        value={formData.year_level}
+                                                        onChange={handleInputChange}
+                                                        required
                                                         className="w-full pl-11 pr-4 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium appearance-none cursor-pointer"
                                                     >
                                                         <option value="" disabled>Select Year</option>
@@ -324,11 +432,16 @@ export default function Register() {
                                                 </div>
                                                 <input 
                                                     id="email" type="email" name="email" placeholder="you@example.com" 
-                                                    className="w-full pl-11 pr-4 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium"
+                                                    value={formData.email}
+                                                    onChange={handleInputChange}
+                                                    className={`w-full pl-11 pr-4 py-3.5 bg-slate-900/60 rounded-xl border text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium ${
+                                                        formData.email.length > 0 && !isEmailValid ? 'border-red-500/50' : 'border-slate-600/50'
+                                                    }`}
                                                     required
                                                 />
                                             </div>
                                             {errors.email && <p className="mt-1.5 text-xs font-bold text-red-400">{errors.email}</p>}
+                                            {formData.email.length > 0 && !isEmailValid && <p className="mt-1.5 text-xs font-bold text-red-400">Invalid email format</p>}
                                         </div>
 
                                         <div>
@@ -343,7 +456,9 @@ export default function Register() {
                                                     name="password" 
                                                     placeholder="Create a strong password" 
                                                     onChange={handlePasswordChange}
-                                                    className="w-full pl-11 pr-11 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium"
+                                                    className={`w-full pl-11 pr-11 py-3.5 bg-slate-900/60 rounded-xl border text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium ${
+                                                        password.length > 0 && !isPasswordValid ? 'border-red-500/50' : 'border-slate-600/50'
+                                                    }`}
                                                     required
                                                 />
                                                 <button 
@@ -381,7 +496,10 @@ export default function Register() {
                                                     type={showConfirmPassword ? "text" : "password"} 
                                                     name="password_confirmation" 
                                                     placeholder="Re-enter your password" 
-                                                    className="w-full pl-11 pr-11 py-3.5 bg-slate-900/60 rounded-xl border border-slate-600/50 text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium"
+                                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                                    className={`w-full pl-11 pr-11 py-3.5 bg-slate-900/60 rounded-xl border text-white focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium ${
+                                                        confirmPassword.length > 0 && !passwordsMatch ? 'border-red-500/50' : 'border-slate-600/50'
+                                                    }`}
                                                     required
                                                 />
                                                 <button 
@@ -393,6 +511,9 @@ export default function Register() {
                                                     <i className={`fa-regular ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'} text-slate-400 hover:text-blue-400 transition-colors`}></i>
                                                 </button>
                                             </div>
+                                            {confirmPassword.length > 0 && !passwordsMatch && (
+                                                <p className="mt-1.5 text-xs font-bold text-red-400">Passwords do not match</p>
+                                            )}
                                             {errors.password_confirmation && <p className="mt-1.5 text-xs font-bold text-red-400">{errors.password_confirmation}</p>}
                                         </div>
 
@@ -402,6 +523,8 @@ export default function Register() {
                                                     <input 
                                                         type="checkbox" 
                                                         name="terms" 
+                                                        checked={formData.terms}
+                                                        onChange={handleInputChange}
                                                         required
                                                         className="peer w-5 h-5 appearance-none border-2 border-slate-500/70 rounded-md checked:bg-blue-600 checked:border-blue-600 focus:ring-4 focus:ring-blue-500/20 transition-all cursor-pointer bg-slate-900/60 shrink-0"
                                                     />
@@ -416,8 +539,12 @@ export default function Register() {
 
                                         <button 
                                             type="submit" 
-                                            disabled={processing}
-                                            className="w-full block text-center bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-[0_8px_20px_-6px_rgba(37,99,235,0.5)] hover:-translate-y-0.5 hover:shadow-[0_12px_25px_-6px_rgba(37,99,235,0.6)] mt-6"
+                                            disabled={processing || !isFormValid}
+                                            className={`w-full block text-center font-bold py-4 rounded-xl transition-all duration-300 mt-6 ${
+                                                isFormValid && !processing
+                                                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_8px_20px_-6px_rgba(37,99,235,0.5)] hover:-translate-y-0.5 hover:shadow-[0_12px_25px_-6px_rgba(37,99,235,0.6)]'
+                                                    : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-70'
+                                            }`}
                                         >
                                             {processing ? (
                                                 <span className="flex items-center justify-center gap-2">
@@ -431,7 +558,7 @@ export default function Register() {
 
                             <p className="text-center text-sm text-slate-300 mt-8 font-semibold">
                                 Already have an account? <Link href="/auth/login" className="text-blue-400 hover:text-blue-300 hover:underline font-extrabold transition-colors">Log in</Link>
-                            </p>
+                                                       </p>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,5 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage, Form } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
-import ClientNotificationDropdown from './ClientNotificationDropdown';
 
 interface Announcement {
     id: number;
@@ -40,6 +39,7 @@ interface ClientReadMoreProps {
     announcement: Announcement;
     messages: DiscussionMessage[];
     relatedAnnouncements?: Announcement[];
+    unreadCount?: number;
     user?: {
         name: string;
         course: string;
@@ -51,10 +51,12 @@ export default function ClientReadMore({
     announcement,
     messages,
     relatedAnnouncements = [],
+    unreadCount = 0,
     user = { name: 'Juan', course: 'BSIT', year_level: '3rd Year' },
 }: ClientReadMoreProps) {
     const { auth } = usePage<any>().props;
     const currentUser = auth?.user?.name || user.name;
+    const userCourse = auth?.user?.course || user.course || 'Student';
     const isLoggedIn = auth?.user !== undefined;
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -65,11 +67,10 @@ export default function ClientReadMore({
         parent_message_id: null as number | null,
     });
     const [showScrollTop, setShowScrollTop] = useState(false);
-    const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
     const commentsRef = useRef<HTMLDivElement>(null);
-    const profileRef = useRef<HTMLDivElement>(null);
 
     // Polling for new answers
     useEffect(() => {
@@ -98,26 +99,6 @@ export default function ClientReadMore({
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
 
-    useEffect(() => {
-        if (!isProfileOpen) return;
-        const onPointerDown = (e: PointerEvent) => {
-            if (
-                profileRef.current &&
-                !profileRef.current.contains(e.target as Node)
-            )
-                setIsProfileOpen(false);
-        };
-        const onEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setIsProfileOpen(false);
-        };
-        document.addEventListener('pointerdown', onPointerDown);
-        document.addEventListener('keydown', onEsc);
-        return () => {
-            document.removeEventListener('pointerdown', onPointerDown);
-            document.removeEventListener('keydown', onEsc);
-        };
-    }, [isProfileOpen]);
-
     const handleSubmitQuestion = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!data.content.trim() || processing) return;
@@ -145,8 +126,6 @@ export default function ClientReadMore({
         });
     };
 
-    // Rule: Color has one meaning. Red is for urgent/errors only.
-    // Rule: Category colors always come with the text label.
     const getCategoryColor = (cat: string) => {
         switch (cat) {
             case 'Academic':
@@ -188,45 +167,33 @@ export default function ClientReadMore({
     const isEvent =
         announcement.category === 'Event' && announcement.event_date;
 
+    // Navigation Links
+    const navLinks = [
+        { href: '/client', label: 'Home', icon: 'fa-solid fa-house', active: false },
+        { href: '/client/announcements', label: 'Announcements', icon: 'fa-solid fa-bullhorn', active: true },
+        { href: '/client/events', label: 'Events', icon: 'fa-regular fa-calendar', active: false },
+        { href: '/client/saved', label: 'Saved', icon: 'fa-regular fa-bookmark', active: false },
+    ];
+
     return (
         <>
             <Head title={`${announcement.title} | COTIFY`} />
 
-            {/* ✅ SAME ANIMATIONS & MOVEMENT AS CLIENT HOME */}
             <style>{`
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 @keyframes slideUpText { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
                 @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                @keyframes popIn { 0% { transform: scale(0); } 80% { transform: scale(1.2); } 100% { transform: scale(1); } }
                 
-                @keyframes move-around-1 { 
-                    0% { transform: translate(0, 0) rotate(0deg); } 
-                    25% { transform: translate(-35vw, 25vh) rotate(25deg); } 
-                    50% { transform: translate(-15vw, 50vh) rotate(-15deg); } 
-                    75% { transform: translate(25vw, 30vh) rotate(15deg); } 
-                    100% { transform: translate(0, 0) rotate(0deg); } 
-                }
-                @keyframes move-around-2 { 
-                    0% { transform: translate(0, 0) rotate(0deg); } 
-                    25% { transform: translate(30vw, -30vh) rotate(-25deg); } 
-                    50% { transform: translate(-40vw, -20vh) rotate(15deg); } 
-                    75% { transform: translate(-25vw, 30vh) rotate(-15deg); } 
-                    100% { transform: translate(0, 0) rotate(0deg); } 
-                }
-                @keyframes move-around-3 { 
-                    0% { transform: translate(0, 0) rotate(0deg) scale(1); } 
-                    33% { transform: translate(35vw, -40vh) rotate(55deg) scale(1.3); } 
-                    66% { transform: translate(-30vw, 25vh) rotate(110deg) scale(0.9); } 
-                    100% { transform: translate(0, 0) rotate(0deg) scale(1); } 
-                }
-                @keyframes move-around-4 {
-                    0% { transform: translate(0, 0) scale(1); }
-                    50% { transform: translate(-20vw, 30vh) scale(1.2); }
-                    100% { transform: translate(0, 0) scale(1); }
-                }
+                @keyframes move-around-1 { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(-35vw, 25vh) rotate(25deg); } 50% { transform: translate(-15vw, 50vh) rotate(-15deg); } 75% { transform: translate(25vw, 30vh) rotate(15deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
+                @keyframes move-around-2 { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(30vw, -30vh) rotate(-25deg); } 50% { transform: translate(-40vw, -20vh) rotate(15deg); } 75% { transform: translate(-25vw, 30vh) rotate(-15deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
+                @keyframes move-around-3 { 0% { transform: translate(0, 0) rotate(0deg) scale(1); } 33% { transform: translate(35vw, -40vh) rotate(55deg) scale(1.3); } 66% { transform: translate(-30vw, 25vh) rotate(110deg) scale(0.9); } 100% { transform: translate(0, 0) rotate(0deg) scale(1); } }
+                @keyframes move-around-4 { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-20vw, 30vh) scale(1.2); } 100% { transform: translate(0, 0) scale(1); } }
 
                 .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
                 .animate-slide-up { animation: slideUpText 0.5s ease-out forwards; }
                 .animate-spin-slow { animation: spin-slow 25s linear infinite; }
+                .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
                 
                 .shape-move-1 { animation: move-around-1 35s ease-in-out infinite; }
                 .shape-move-2 { animation: move-around-2 45s ease-in-out infinite; }
@@ -237,609 +204,542 @@ export default function ClientReadMore({
                 .clip-diamond { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
             `}</style>
 
-            <div className="relative flex min-h-screen flex-col overflow-hidden bg-slate-50 font-sans text-slate-800 antialiased">
+            <div className="font-sans text-slate-800 bg-slate-50 antialiased h-screen flex overflow-hidden relative">
                 
-                {/* ✅ MORE VISIBLE MOVING SHAPES ACROSS THE SCREEN */}
+                {/* MOVING SHAPES BACKGROUND */}
                 <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
                     <div className="absolute top-[5%] left-[5%] w-[30rem] h-[30rem] bg-blue-500/15 rounded-full blur-3xl shape-move-1"></div>
                     <div className="absolute bottom-[5%] right-[5%] w-[35rem] h-[35rem] bg-purple-500/15 rounded-full blur-3xl shape-move-2"></div>
                     <div className="absolute top-[40%] left-[30%] w-[25rem] h-[25rem] bg-indigo-500/10 rounded-full blur-3xl shape-move-3"></div>
-                    
                     <div className="absolute top-[10%] right-[15%] w-64 h-64 bg-blue-600/20 clip-hexagon shape-move-3"></div>
                     <div className="absolute bottom-[15%] left-[10%] w-48 h-48 border-[6px] border-purple-500/30 clip-diamond animate-spin-slow"></div>
                     <div className="absolute top-[45%] right-[10%] w-40 h-40 border-[5px] border-blue-500/25 rotate-12 shape-move-1"></div>
                     <div className="absolute bottom-[20%] right-[40%] w-56 h-56 border-[8px] border-indigo-500/20 clip-hexagon shape-move-2 bg-transparent">
                         <div className="w-full h-full bg-blue-500/10 clip-hexagon scale-[0.95]"></div>
                     </div>
-                    <div className="absolute top-[60%] left-[5%] w-32 h-32 border-[4px] border-blue-500/30 rounded-full shape-move-4"></div>
-                    <div className="absolute top-[20%] left-[40%] w-24 h-24 bg-indigo-600/15 clip-diamond shape-move-4"></div>
                 </div>
 
-                {/* ✅ SAME DARK HEADER AS CLIENT HOME */}
-                <header className="bg-ctu-dark/95 relative z-50 border-b border-white/10 shadow-lg backdrop-blur-xl">
-                    <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-                        <div className="flex h-16 items-center justify-between gap-4 sm:h-20">
-                            <div className="flex items-center gap-8">
+                {/* COLLAPSIBLE SIDEBAR */}
+                <aside 
+                    onMouseEnter={() => setIsSidebarExpanded(true)}
+                    onMouseLeave={() => setIsSidebarExpanded(false)}
+                    className={`bg-ctu-dark flex flex-col justify-between shrink-0 absolute md:relative z-40 h-full transition-all duration-300 ease-in-out shadow-2xl
+                    ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'}
+                    ${isSidebarExpanded ? 'md:w-64' : 'md:w-20'}`}
+                >
+                    <div className="flex-1 overflow-y-auto no-scrollbar overflow-x-hidden">
+                        
+                        {/* Logo Section */}
+                        <div className="p-4 flex items-center h-20 border-b border-slate-800/50">
+                            <Link href="/client" className="flex items-center shrink-0">
+                                <img src="/images/3rdLogo.png" alt="Cotify Logo" className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8"  />
+                                <div className={`text-white whitespace-nowrap transition-opacity duration-300 ml-2 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                                    <h1 className="font-extrabold text-xl leading-tight tracking-tight">Cotify</h1>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Student Portal</p>
+                                </div>
+                            </Link>
+                        </div>
+
+                        {/* Navigation Links */}
+                        <nav className="mt-4 space-y-2 px-3">
+                            {navLinks.map((link) => (
                                 <Link
-                                    href="/client"
-                                    className="flex shrink-0 items-center group focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
+                                    key={link.href}
+                                    href={link.href}
+                                    className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all group ${
+                                        link.active
+                                            ? 'bg-ctu-lightblue text-white shadow-md'
+                                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                                    }`}
+                                    title={!isSidebarExpanded ? link.label : undefined}
                                 >
-                                    <img
-                                        src="/images/3rdLogo.png"
-                                        alt="Cotify Logo"
-                                           className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8" 
-                                    />
-                                    <div className="hidden sm:block">
-                                        <span className="text-xl font-extrabold text-white leading-tight block">
-                                            Cotify
-                                        </span>
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                                            College of Technology
-                                        </span>
-                                    </div>
+                                    <i className={`${link.icon} w-5 text-center text-lg shrink-0`}></i>
+                                    <span className={`whitespace-nowrap font-semibold text-sm transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                                        {link.label}
+                                    </span>
                                 </Link>
+                            ))}
+                        </nav>
+                    </div>
 
-                                <nav className="hidden items-center gap-6 md:flex">
-                                    <Link
-                                        href="/client"
-                                        className="text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-1"
-                                    >
-                                        Home
-                                    </Link>
-                                    <Link
-                                        href="/client/announcements"
-                                        className="border-ctu-lightblue border-b-2 pb-1 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t-md px-1"
-                                    >
-                                        Announcements
-                                    </Link>
-                                    <Link
-                                        href="/client/events"
-                                        className="text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-1"
-                                    >
-                                        Events
-                                    </Link>
-                                    <Link
-                                        href="/client/saved"
-                                        className="text-sm font-semibold text-slate-400 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md px-1"
-                                    >
-                                        Saved
-                                    </Link>
-                                </nav>
+                    {/* Bottom Profile / Logout */}
+                    <div className="p-4 border-t border-slate-800/50">
+                        <div className="flex items-center gap-3 px-1 py-2 mb-2">
+                            <div className="w-10 h-10 rounded-full bg-ctu-lightblue flex items-center justify-center text-white font-bold text-sm shrink-0 ring-2 ring-transparent">
+                                {currentUser.charAt(0).toUpperCase()}
                             </div>
-
-                            <div className="flex items-center gap-3 sm:gap-4">
-                                <div className="relative hidden sm:block">
-                                    <i className="fa-solid fa-magnifying-glass absolute top-1/2 left-3 -translate-y-1/2 text-sm text-slate-400"></i>
-                                    <input
-                                        type="text"
-                                        placeholder="Search announcements..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        aria-label="Search announcements"
-                                        className="focus:ring-ctu-lightblue w-64 rounded-lg border border-slate-700 bg-slate-800/50 py-2 pr-4 pl-9 text-sm text-white placeholder-slate-400 transition-all outline-none focus:ring-2"
-                                    />
-                                </div>
-
-                                <ClientNotificationDropdown />
-
-                                <div className="relative" ref={profileRef}>
-                                    <button
-                                        onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                        aria-label="Toggle profile menu"
-                                        className="group flex cursor-pointer items-center gap-2 border-l border-slate-700 pl-2 sm:pl-4 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
-                                    >
-                                        <div className="bg-ctu-lightblue flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white ring-2 ring-transparent group-hover:ring-white/20 transition-all">
-                                            {currentUser.charAt(0).toUpperCase()}
-                                        </div>
-                                        <span className="hidden text-sm font-semibold text-white lg:block">
-                                            {currentUser.split(' ')[0]} D.
-                                        </span>
-                                        
-                                    </button>
-
-                                    {isProfileOpen && (
-                                        <div className="animate-fade-in absolute right-0 z-50 mt-3 w-56 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xl">
-                                            <div className="p-2">
-                                                <Link
-                                                    href="/client/profile"
-                                                    className="hover:text-ctu-lightblue flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                >
-                                                    <i className="fa-regular fa-user w-4 text-center"></i> My Profile
-                                                </Link>
-                                                <Link
-                                                    href="/client/settings"
-                                                    className="hover:text-ctu-lightblue flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                >
-                                                    <i className="fa-solid fa-gear w-4 text-center"></i> Settings
-                                                </Link>
-                                                <hr className="my-2 border-slate-100" />
-                                                <Link
-                                                    href="/logout"
-                                                    method="post"
-                                                    as="button"
-                                                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                                >
-                                                    <i className="fa-solid fa-arrow-right-from-bracket w-4 text-center"></i> Log Out
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                            <div className={`whitespace-nowrap transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                                <p className="text-white text-sm font-bold truncate max-w-[120px]">{currentUser.split(' ')[0]}</p>
+                                <p className="text-slate-400 text-[11px] font-medium truncate max-w-[120px]">{userCourse}</p>
                             </div>
                         </div>
+                        
+                        <Form method="post" action="/logout">
+                            {({ processing }) => (
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-bold rounded-xl transition-all text-slate-400 hover:bg-red-600 hover:text-white group disabled:opacity-60"
+                                    title={!isSidebarExpanded ? "Log Out" : undefined}
+                                >
+                                    <i className="fa-solid fa-arrow-right-from-bracket w-5 text-center text-lg shrink-0"></i>
+                                    <span className={`whitespace-nowrap transition-opacity duration-300 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                                        {processing ? 'Logging out...' : 'Log Out'}
+                                    </span>
+                                </button>
+                            )}
+                        </Form>
                     </div>
-                </header>
+                </aside>
 
-                <main className="relative z-10 mx-auto w-full max-w-[1400px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
-                    {/* BREADCRUMB */}
-                    <nav className="animate-fade-in mb-6 flex items-center gap-2 text-xs font-bold text-slate-500">
-                        <Link
-                            href="/client"
-                            className="hover:text-ctu-lightblue transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
-                        >
-                            Home
-                        </Link>
-                        <i className="fa-solid fa-chevron-right text-[8px] text-slate-400"></i>
-                        <Link
-                            href="/client/announcements"
-                            className="hover:text-ctu-lightblue transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
-                        >
-                            Announcements
-                        </Link>
-                        <i className="fa-solid fa-chevron-right text-[8px] text-slate-400"></i>
-                        <span className="max-w-[200px] truncate text-slate-700">
-                            {announcement.title}
-                        </span>
-                    </nav>
+                {/* Overlay for mobile */}
+                {isSidebarOpen && (
+                    <div 
+                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 md:hidden animate-fade-in"
+                        onClick={() => setIsSidebarOpen(false)}
+                    ></div>
+                )}
 
-                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-                        {/* LEFT COLUMN: MAIN CONTENT */}
-                        <div className="space-y-6 lg:col-span-8">
-                            <article className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
-                                
-                                <div className="mb-8 flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
-                                    <div>
-                                        <div className="mb-3 flex items-center gap-2">
-                                            <span className={`rounded border px-2.5 py-1 text-[12px] font-bold tracking-wider uppercase ${getCategoryColor(announcement.category)}`}>
-                                                {categoryLabel(announcement.category)}
-                                            </span>
-                                            {announcement.is_new && (
-                                                <span className="rounded bg-slate-800 px-2 py-1 text-[10px] font-bold text-white uppercase">
-                                                    New
-                                                </span>
+                {/* MAIN CONTENT */}
+                <div className="flex-1 flex flex-col bg-transparent overflow-hidden relative w-full z-10">
+                    
+                    {/* TOP BAR */}
+                    <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-20">
+                        <div className="flex items-center gap-4">
+                            <button 
+                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                aria-label="Toggle sidebar"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors md:hidden" 
+                            >
+                                <i className="fa-solid fa-bars"></i>
+                            </button>
+                            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight hidden sm:block">Announcement</h2>
+                        </div>
+                        
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <button aria-label="View notifications" className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-ctu-lightblue hover:bg-slate-50 transition-colors shadow-sm">
+                                <i className="fa-regular fa-bell text-lg"></i>
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm border border-white animate-pop-in">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
+                                )}
+                            </button>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
+                        <div className="max-w-[1400px] mx-auto animate-slide-up">
+                            
+                            {/* BREADCRUMB */}
+                            <nav className="mb-6 flex items-center gap-2 text-xs font-bold text-slate-500">
+                                <Link href="/client" className="hover:text-ctu-lightblue transition-colors rounded">
+                                    Home
+                                </Link>
+                                <i className="fa-solid fa-chevron-right text-[8px] text-slate-400"></i>
+                                <Link href="/client/announcements" className="hover:text-ctu-lightblue transition-colors rounded">
+                                    Announcements
+                                </Link>
+                                <i className="fa-solid fa-chevron-right text-[8px] text-slate-400"></i>
+                                <span className="max-w-[200px] truncate text-slate-700">
+                                    {announcement.title}
+                                </span>
+                            </nav>
+
+                            <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+                                {/* LEFT COLUMN: MAIN CONTENT */}
+                                <div className="space-y-6 lg:col-span-8">
+                                    <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
+                                        
+                                        <div className="mb-8 flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
+                                            <div>
+                                                <div className="mb-3 flex items-center gap-2">
+                                                    <span className={`rounded border px-2.5 py-1 text-[12px] font-bold tracking-wider uppercase ${getCategoryColor(announcement.category)}`}>
+                                                        {categoryLabel(announcement.category)}
+                                                    </span>
+                                                    {announcement.is_new && (
+                                                        <span className="rounded bg-slate-800 px-2 py-1 text-[10px] font-bold text-white uppercase">
+                                                            New
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                
+                                                <h1 className="text-3xl leading-tight font-extrabold text-slate-900">
+                                                    {announcement.title}
+                                                </h1>
+
+                                                <div className="mt-6 flex items-center gap-4">
+                                                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 font-bold text-slate-500">
+                                                        {announcement.posted_by_logo ? (
+                                                            <img src={announcement.posted_by_logo} alt={announcement.posted_by} className="h-full w-full object-cover" />
+                                                        ) : (
+                                                            announcement.posted_by.charAt(0).toUpperCase()
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-base font-extrabold text-slate-900">
+                                                            {announcement.posted_by}
+                                                        </p>
+                                                        <p className="mt-0.5 text-sm font-medium text-slate-500">
+                                                            {formatDate(announcement.date)} · {readingTime}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex shrink-0 gap-2 sm:flex-col">
+                                                <button type="button" className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 sm:flex-none">
+                                                    <i className="fa-regular fa-bookmark"></i> Save
+                                                </button>
+                                                <button type="button" className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 sm:flex-none">
+                                                    <i className="fa-solid fa-link"></i> Copy link
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="relative mb-8 flex h-64 w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-slate-100 to-slate-200 sm:h-80">
+                                            {announcement.image ? (
+                                                <img src={announcement.image} alt={announcement.title} className="h-full w-full object-cover" />
+                                            ) : (
+                                                <div className="flex flex-col items-center text-slate-400">
+                                                    <i className={`mb-3 text-5xl ${
+                                                            announcement.category === 'Academic' ? 'fa-solid fa-graduation-cap'
+                                                            : announcement.category === 'Event' ? 'fa-regular fa-calendar'
+                                                            : announcement.category === 'Service' ? 'fa-solid fa-hand-holding-heart'
+                                                            : 'fa-regular fa-newspaper'
+                                                        }`}
+                                                    ></i>
+                                                    <span className="text-sm font-bold tracking-widest uppercase">
+                                                        {categoryLabel(announcement.category)}
+                                                    </span>
+                                                </div>
                                             )}
                                         </div>
-                                        
-                                        <h1 className="text-3xl leading-tight font-extrabold text-slate-900">
-                                            {announcement.title}
-                                        </h1>
 
-                                        <div className="mt-6 flex items-center gap-4">
-                                            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 font-bold text-slate-500">
-                                                {announcement.posted_by_logo ? (
-                                                    <img
-                                                        src={announcement.posted_by_logo}
-                                                        alt={announcement.posted_by}
-                                                        className="h-full w-full object-cover"
+                                        <div
+                                            dangerouslySetInnerHTML={{ __html: announcement.content_html }}
+                                            className="mb-10 break-words text-base leading-relaxed text-slate-700 [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:my-4 [&_blockquote]:border-l-4 [&_blockquote]:border-slate-300 [&_blockquote]:pl-4 [&_h1]:mb-3 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-4 [&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-100 [&_pre]:p-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6"
+                                        />
+
+                                        {announcement.attachments && announcement.attachments.length > 0 && (
+                                            <div className="mb-10 rounded-xl border border-slate-200 bg-slate-50 p-5">
+                                                <h4 className="mb-4 text-xs font-extrabold tracking-widest text-slate-500 uppercase">
+                                                    Attachments
+                                                </h4>
+                                                <div className="flex flex-wrap gap-3">
+                                                    {announcement.attachments.map((file, idx) => (
+                                                        <a
+                                                            key={idx}
+                                                            href={file.url}
+                                                            download={file.name}
+                                                            className="group flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 transition-all hover:border-blue-400 hover:shadow-sm"
+                                                        >
+                                                            <i className="fa-solid fa-file-pdf text-rose-500"></i>
+                                                            <span className="text-sm font-bold text-slate-700 group-hover:text-blue-600">
+                                                                {file.name}
+                                                            </span>
+                                                            <span className="text-xs text-slate-400">
+                                                                {file.size}
+                                                            </span>
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* ANNOUNCEMENT DISCUSSION */}
+                                        <div ref={commentsRef} className="mt-10 border-t border-slate-200 pt-8">
+                                            <div className="mb-6">
+                                                <h3 className="text-xl font-extrabold text-slate-900">
+                                                    Comments & discussion
+                                                </h3>
+                                                <p className="mt-1 text-sm font-medium text-slate-500">
+                                                    Ask a question or join the discussion about this announcement.
+                                                </p>
+                                            </div>
+
+                                            {isLoggedIn ? (
+                                                <form onSubmit={handleSubmitQuestion} className="mb-8">
+                                                    <textarea
+                                                        value={data.content}
+                                                        onChange={(e) => setData('content', e.target.value)}
+                                                        placeholder="Write a comment..."
+                                                        rows={3}
+                                                        maxLength={5000}
+                                                        className="w-full resize-none rounded-xl border border-slate-300 bg-white p-4 text-base font-medium shadow-sm transition-all outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                                                     />
+                                                    {errors.content && (
+                                                        <p className="mt-1.5 text-sm font-bold text-red-600">{errors.content}</p>
+                                                    )}
+                                                    
+                                                    <div className="mt-3 flex items-center justify-between">
+                                                        <span className="text-xs font-semibold text-slate-400">
+                                                            {data.content.length} / 5000
+                                                        </span>
+                                                        <div className="flex items-center gap-4">
+                                                            {!data.content.trim() && (
+                                                                <span className="text-xs font-semibold text-slate-400">
+                                                                    Write something first
+                                                                </span>
+                                                            )}
+                                                            <button
+                                                                type="submit"
+                                                                disabled={!data.content.trim() || processing}
+                                                                className={`rounded-lg px-6 py-2.5 text-sm font-bold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                                                    !data.content.trim() || processing
+                                                                        ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                                                                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                                                                }`}
+                                                            >
+                                                                {processing ? 'Posting...' : 'Post comment'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            ) : (
+                                                <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
+                                                    <p className="mb-3 text-base font-bold text-slate-700">
+                                                        Log in to join the discussion.
+                                                    </p>
+                                                    <Link
+                                                        href="/auth/login"
+                                                        className="inline-block rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+                                                    >
+                                                        Log In
+                                                    </Link>
+                                                </div>
+                                            )}
+
+                                            <div className="space-y-4" aria-live="polite">
+                                                {messages.length === 0 ? (
+                                                    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center">
+                                                        <i className="fa-regular fa-comments mb-3 text-3xl text-slate-400" aria-hidden="true"></i>
+                                                        <p className="text-base font-semibold text-slate-600">No comments yet</p>
+                                                        <p className="mt-1 text-sm text-slate-500">Be the first to start the discussion.</p>
+                                                    </div>
                                                 ) : (
-                                                    announcement.posted_by.charAt(0).toUpperCase()
+                                                    messages.map((message) => {
+                                                        const parentMessage = message.parent_message_id
+                                                            ? messages.find((candidate) => candidate.id === message.parent_message_id)
+                                                            : null;
+                                                        let messageDepth = 0;
+                                                        let ancestorId = message.parent_message_id;
+                                                        const visitedIds = new Set([message.id]);
+
+                                                        while (ancestorId !== null && !visitedIds.has(ancestorId)) {
+                                                            const ancestor = messages.find((candidate) => candidate.id === ancestorId);
+                                                            if (!ancestor) break;
+
+                                                            visitedIds.add(ancestor.id);
+                                                            messageDepth += 1;
+                                                            ancestorId = ancestor.parent_message_id;
+                                                        }
+
+                                                        return (
+                                                        <div
+                                                            key={message.id}
+                                                            style={parentMessage ? { marginLeft: `${messageDepth * 16}px` } : undefined}
+                                                        >
+                                                            {parentMessage && (
+                                                                <a
+                                                                    href={`#comment-${parentMessage.id}`}
+                                                                    className="relative mb-1 flex min-h-6 items-center gap-2 pl-4 text-xs text-slate-500 before:absolute before:top-0 before:bottom-0 before:left-0 before:border-l-2 before:border-blue-200 after:absolute after:bottom-1 after:left-0 after:w-3 after:border-t-2 after:border-blue-200 hover:text-blue-700"
+                                                                >
+                                                                    <i className="fa-solid fa-reply text-blue-400" aria-hidden="true"></i>
+                                                                    <span className="shrink-0">Replying to <strong className="font-bold text-slate-700">{parentMessage.author}</strong>:</span>
+                                                                    <span className="min-w-0 truncate">{parentMessage.content}</span>
+                                                                </a>
+                                                            )}
+                                                            <article
+                                                            id={`comment-${message.id}`}
+                                                            className={`scroll-mt-24 rounded-xl border p-5 ${
+                                                                message.role !== 'Client'
+                                                                    ? 'border-blue-200 bg-blue-50/50'
+                                                                    : 'border-slate-200 bg-white'
+                                                            }`}
+                                                            >
+                                                            <div className="mb-3 flex flex-wrap items-center gap-2">
+                                                                <span className="text-sm font-bold text-slate-900">
+                                                                    {message.author}
+                                                                </span>
+                                                                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                                                                        message.role !== 'Client'
+                                                                            ? 'bg-blue-100 text-blue-700'
+                                                                            : 'bg-slate-100 text-slate-600'
+                                                                    }`}
+                                                                >
+                                                                    {message.role === 'Admin' ? announcement.posted_by : message.role}
+                                                                </span>
+                                                                {message.is_announcement_wide && (
+                                                                    <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-700">
+                                                                        All clients
+                                                                    </span>
+                                                                )}
+                                                                {message.is_mine && (
+                                                                    <span className="text-xs font-semibold text-slate-400">You</span>
+                                                                )}
+                                                                {message.sent_at && (
+                                                                    <time className="ml-auto text-xs font-medium text-slate-400" dateTime={message.sent_at}>
+                                                                        {new Date(message.sent_at).toLocaleString()}
+                                                                    </time>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-base leading-relaxed break-words whitespace-pre-wrap text-slate-700">
+                                                                {message.content}
+                                                            </p>
+                                                            
+                                                            {isLoggedIn && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (replyingTo === message.id) {
+                                                                            setReplyingTo(null);
+                                                                            replyForm.reset();
+                                                                            replyForm.clearErrors();
+                                                                            return;
+                                                                        }
+                                                                        setReplyingTo(message.id);
+                                                                        replyForm.setData({
+                                                                            content: '',
+                                                                            parent_message_id: message.id,
+                                                                        });
+                                                                        replyForm.clearErrors();
+                                                                    }}
+                                                                    className="mt-3 rounded text-sm font-bold text-blue-600 transition hover:text-blue-800"
+                                                                >
+                                                                    {replyingTo === message.id ? 'Cancel reply' : 'Reply'}
+                                                                </button>
+                                                            )}
+                                                            
+                                                            {replyingTo === message.id && (
+                                                                <form onSubmit={handleSubmitReply} className="mt-4 border-t border-slate-200/60 pt-4">
+                                                                    <label className="sr-only" htmlFor={`reply-${message.id}`}>
+                                                                        Reply to {message.author}
+                                                                    </label>
+                                                                    <textarea
+                                                                        id={`reply-${message.id}`}
+                                                                        value={replyForm.data.content}
+                                                                        onChange={(event) => replyForm.setData('content', event.target.value)}
+                                                                        placeholder={`Reply to ${message.author}...`}
+                                                                        rows={2}
+                                                                        maxLength={5000}
+                                                                        className="w-full resize-none rounded-lg border border-slate-300 bg-white p-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                                                                    />
+                                                                    {replyForm.errors.content && (
+                                                                        <p className="mt-1.5 text-xs font-bold text-red-600">{replyForm.errors.content}</p>
+                                                                    )}
+                                                                    <div className="mt-3 flex justify-end">
+                                                                        <button
+                                                                            type="submit"
+                                                                            disabled={!replyForm.data.content.trim() || replyForm.processing}
+                                                                            className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+                                                                        >
+                                                                            {replyForm.processing ? 'Posting...' : 'Post reply'}
+                                                                        </button>
+                                                                    </div>
+                                                                </form>
+                                                            )}
+                                                            </article>
+                                                        </div>
+                                                        );
+                                                    })
                                                 )}
                                             </div>
-                                            <div>
-                                                <p className="text-base font-extrabold text-slate-900">
-                                                    {announcement.posted_by}
-                                                </p>
-                                                <p className="mt-0.5 text-sm font-medium text-slate-500">
-                                                    {formatDate(announcement.date)} · {readingTime}
-                                                </p>
-                                            </div>
                                         </div>
-                                    </div>
-
-                                    {/* Rule: Buttons set (Primary + Secondary) */}
-                                    <div className="flex shrink-0 gap-2 sm:flex-col">
-                                        <button
-                                            type="button"
-                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:flex-none"
-                                        >
-                                            <i className="fa-regular fa-bookmark"></i> Save
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:flex-none"
-                                        >
-                                            <i className="fa-solid fa-link"></i> Copy link
-                                        </button>
-                                    </div>
+                                    </article>
                                 </div>
 
-                                <div className="relative mb-8 flex h-64 w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-slate-100 to-slate-200 sm:h-80">
-                                    {announcement.image ? (
-                                        <img
-                                            src={announcement.image}
-                                            alt={announcement.title}
-                                            className="h-full w-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="flex flex-col items-center text-slate-400">
-                                            <i className={`mb-3 text-5xl ${
-                                                    announcement.category === 'Academic' ? 'fa-solid fa-graduation-cap'
-                                                    : announcement.category === 'Event' ? 'fa-regular fa-calendar'
-                                                    : announcement.category === 'Service' ? 'fa-solid fa-hand-holding-heart'
-                                                    : 'fa-regular fa-newspaper'
-                                                }`}
-                                            ></i>
-                                            <span className="text-sm font-bold tracking-widest uppercase">
-                                                {categoryLabel(announcement.category)}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div
-                                    dangerouslySetInnerHTML={{ __html: announcement.content_html }}
-                                    className="mb-10 break-words text-base leading-relaxed text-slate-700 [&_a]:text-blue-600 [&_a]:underline [&_blockquote]:my-4 [&_blockquote]:border-l-4 [&_blockquote]:border-slate-300 [&_blockquote]:pl-4 [&_h1]:mb-3 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-bold [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-4 [&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-100 [&_pre]:p-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6"
-                                />
-
-                                {announcement.attachments && announcement.attachments.length > 0 && (
-                                    <div className="mb-10 rounded-xl border border-slate-200 bg-slate-50 p-5">
-                                        <h4 className="mb-4 text-xs font-extrabold tracking-widest text-slate-500 uppercase">
-                                            Attachments
-                                        </h4>
-                                        <div className="flex flex-wrap gap-3">
-                                            {announcement.attachments.map((file, idx) => (
-                                                <a
-                                                    key={idx}
-                                                    href={file.url}
-                                                    download={file.name}
-                                                    className="group flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 transition-all hover:border-blue-400 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                >
-                                                    <i className="fa-solid fa-file-pdf text-rose-500"></i>
-                                                    <span className="text-sm font-bold text-slate-700 group-hover:text-blue-600">
-                                                        {file.name}
-                                                    </span>
-                                                    <span className="text-xs text-slate-400">
-                                                        {file.size}
-                                                    </span>
-                                                </a>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* ANNOUNCEMENT DISCUSSION */}
-                                <div ref={commentsRef} className="mt-10 border-t border-slate-200 pt-8">
-                                    <div className="mb-6">
-                                        <h3 className="text-xl font-extrabold text-slate-900">
-                                            Comments & discussion
+                                {/* RIGHT COLUMN: SIDEBAR */}
+                                <aside className="space-y-6 lg:col-span-4">
+                                    
+                                    {/* AUDIENCE */}
+                                    <div className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                                        <h3 className="mb-2 text-xs font-extrabold tracking-widest text-slate-400 uppercase">
+                                            For
                                         </h3>
-                                        <p className="mt-1 text-sm font-medium text-slate-500">
-                                            Ask a question or join the discussion about this announcement.
+                                        <p className="text-base font-bold text-slate-900">
+                                            {announcement.audience || 'All Students'}
                                         </p>
                                     </div>
 
-                                    {isLoggedIn ? (
-                                        <form onSubmit={handleSubmitQuestion} className="mb-8">
-                                            <textarea
-                                                value={data.content}
-                                                onChange={(e) => setData('content', e.target.value)}
-                                                placeholder="Write a comment..."
-                                                rows={3}
-                                                maxLength={5000}
-                                                className="w-full resize-none rounded-xl border border-slate-300 bg-white p-4 text-base font-medium shadow-sm transition-all outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                                            />
-                                            {errors.content && (
-                                                <p className="mt-1.5 text-sm font-bold text-red-600">{errors.content}</p>
-                                            )}
-                                            
-                                            <div className="mt-3 flex items-center justify-between">
-                                                <span className="text-xs font-semibold text-slate-400">
-                                                    {data.content.length} / 5000
-                                                </span>
-                                                <div className="flex items-center gap-4">
-                                                    {!data.content.trim() && (
-                                                        <span className="text-xs font-semibold text-slate-400">
-                                                            Write something first
-                                                        </span>
+                                    {/* EVENT BOX */}
+                                    {isEvent && (
+                                        <div className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                                            <h3 className="mb-4 text-xs font-extrabold tracking-widest text-slate-400 uppercase">
+                                                Event details
+                                            </h3>
+
+                                            <div className="mb-5 flex gap-4">
+                                                <div className="h-fit min-w-[56px] shrink-0 rounded-lg border border-slate-200 bg-slate-100 p-2.5 text-center">
+                                                    <p className="text-[10px] font-extrabold text-slate-500 uppercase">
+                                                        {new Date(`${announcement.event_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}
+                                                    </p>
+                                                    <p className="mt-0.5 text-xl leading-none font-black text-slate-800">
+                                                        {new Date(`${announcement.event_date}T00:00:00`).getDate()}
+                                                    </p>
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-base font-bold text-slate-900">
+                                                        {formatDate(announcement.event_date!)}
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-medium text-slate-500">
+                                                        {formatTime(announcement.start_time)}
+                                                        {announcement.end_time && ` – ${formatTime(announcement.end_time)}`}
+                                                    </p>
+                                                    {announcement.location && (
+                                                        <p className="mt-1 text-sm font-medium text-slate-500">
+                                                            <i className="fa-solid fa-location-dot mr-1.5"></i>
+                                                            {announcement.location}
+                                                        </p>
                                                     )}
-                                                    <button
-                                                        type="submit"
-                                                        disabled={!data.content.trim() || processing}
-                                                        className={`rounded-lg px-6 py-2.5 text-sm font-bold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                                                            !data.content.trim() || processing
-                                                                ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-                                                                : 'bg-blue-600 text-white hover:bg-blue-700'
-                                                        }`}
-                                                    >
-                                                        {processing ? 'Posting...' : 'Post comment'}
-                                                    </button>
                                                 </div>
                                             </div>
-                                        </form>
-                                    ) : (
-                                        <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
-                                            <p className="mb-3 text-base font-bold text-slate-700">
-                                                Log in to join the discussion.
-                                            </p>
-                                            <Link
-                                                href="/auth/login"
-                                                className="inline-block rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+
+                                            <button
+                                                disabled
+                                                className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500"
                                             >
-                                                Log In
-                                            </Link>
+                                                RSVP coming soon
+                                            </button>
                                         </div>
                                     )}
 
-                                    <div className="space-y-4" aria-live="polite">
-                                        {messages.length === 0 ? (
-                                            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center">
-                                                <i className="fa-regular fa-comments mb-3 text-3xl text-slate-400" aria-hidden="true"></i>
-                                                <p className="text-base font-semibold text-slate-600">No comments yet</p>
-                                                <p className="mt-1 text-sm text-slate-500">Be the first to start the discussion.</p>
-                                            </div>
+                                    {/* RELATED ANNOUNCEMENTS */}
+                                    <div className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                                        <h3 className="mb-4 text-xs font-extrabold tracking-widest text-slate-400 uppercase">
+                                            Related
+                                        </h3>
+                                        {relatedAnnouncements.length === 0 ? (
+                                            <p className="text-sm text-slate-500">
+                                                No related posts found.
+                                            </p>
                                         ) : (
-                                            messages.map((message) => {
-                                                const parentMessage = message.parent_message_id
-                                                    ? messages.find((candidate) => candidate.id === message.parent_message_id)
-                                                    : null;
-                                                let messageDepth = 0;
-                                                let ancestorId = message.parent_message_id;
-                                                const visitedIds = new Set([message.id]);
-
-                                                while (ancestorId !== null && !visitedIds.has(ancestorId)) {
-                                                    const ancestor = messages.find((candidate) => candidate.id === ancestorId);
-                                                    if (!ancestor) break;
-
-                                                    visitedIds.add(ancestor.id);
-                                                    messageDepth += 1;
-                                                    ancestorId = ancestor.parent_message_id;
-                                                }
-
-                                                return (
-                                                <div
-                                                    key={message.id}
-                                                    style={parentMessage ? { marginLeft: `${messageDepth * 16}px` } : undefined}
-                                                >
-                                                    {parentMessage && (
-                                                        <a
-                                                            href={`#comment-${parentMessage.id}`}
-                                                            className="relative mb-1 flex min-h-6 items-center gap-2 pl-4 text-xs text-slate-500 before:absolute before:top-0 before:bottom-0 before:left-0 before:border-l-2 before:border-blue-200 after:absolute after:bottom-1 after:left-0 after:w-3 after:border-t-2 after:border-blue-200 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        >
-                                                            <i className="fa-solid fa-reply text-blue-400" aria-hidden="true"></i>
-                                                            <span className="shrink-0">Replying to <strong className="font-bold text-slate-700">{parentMessage.author}</strong>:</span>
-                                                            <span className="min-w-0 truncate">{parentMessage.content}</span>
-                                                        </a>
-                                                    )}
-                                                    <article
-                                                    id={`comment-${message.id}`}
-                                                    className={`scroll-mt-24 rounded-xl border p-5 ${
-                                                        message.role !== 'Client'
-                                                            ? 'border-blue-200 bg-blue-50/50'
-                                                            : 'border-slate-200 bg-white'
-                                                    }`}
+                                            <div className="space-y-3">
+                                                {relatedAnnouncements.map((related) => (
+                                                    <Link
+                                                        key={related.id}
+                                                        href={`/client/announcements/${related.id}`}
+                                                        className="group block rounded"
                                                     >
-                                                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                                                        <span className="text-sm font-bold text-slate-900">
-                                                            {message.author}
-                                                        </span>
-                                                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
-                                                                message.role !== 'Client'
-                                                                    ? 'bg-blue-100 text-blue-700'
-                                                                    : 'bg-slate-100 text-slate-600'
-                                                            }`}
-                                                        >
-                                                            {message.role === 'Admin' ? announcement.posted_by : message.role}
-                                                        </span>
-                                                        {message.is_announcement_wide && (
-                                                            <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-700">
-                                                                All clients
-                                                            </span>
-                                                        )}
-                                                        {message.is_mine && (
-                                                            <span className="text-xs font-semibold text-slate-400">You</span>
-                                                        )}
-                                                        {message.sent_at && (
-                                                            <time className="ml-auto text-xs font-medium text-slate-400" dateTime={message.sent_at}>
-                                                                {new Date(message.sent_at).toLocaleString()}
-                                                            </time>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-base leading-relaxed break-words whitespace-pre-wrap text-slate-700">
-                                                        {message.content}
-                                                    </p>
-                                                    
-                                                    {isLoggedIn && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                if (replyingTo === message.id) {
-                                                                    setReplyingTo(null);
-                                                                    replyForm.reset();
-                                                                    replyForm.clearErrors();
-                                                                    return;
-                                                                }
-                                                                setReplyingTo(message.id);
-                                                                replyForm.setData({
-                                                                    content: '',
-                                                                    parent_message_id: message.id,
-                                                                });
-                                                                replyForm.clearErrors();
-                                                            }}
-                                                            className="mt-3 rounded text-sm font-bold text-blue-600 transition hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        >
-                                                            {replyingTo === message.id ? 'Cancel reply' : 'Reply'}
-                                                        </button>
-                                                    )}
-                                                    
-                                                    {replyingTo === message.id && (
-                                                        <form onSubmit={handleSubmitReply} className="mt-4 border-t border-slate-200/60 pt-4">
-                                                            <label className="sr-only" htmlFor={`reply-${message.id}`}>
-                                                                Reply to {message.author}
-                                                            </label>
-                                                            <textarea
-                                                                id={`reply-${message.id}`}
-                                                                value={replyForm.data.content}
-                                                                onChange={(event) => replyForm.setData('content', event.target.value)}
-                                                                placeholder={`Reply to ${message.author}...`}
-                                                                rows={2}
-                                                                maxLength={5000}
-                                                                className="w-full resize-none rounded-lg border border-slate-300 bg-white p-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                                                            />
-                                                            {replyForm.errors.content && (
-                                                                <p className="mt-1.5 text-xs font-bold text-red-600">{replyForm.errors.content}</p>
-                                                            )}
-                                                            <div className="mt-3 flex justify-end">
-                                                                <button
-                                                                    type="submit"
-                                                                    disabled={!replyForm.data.content.trim() || replyForm.processing}
-                                                                    className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                                                >
-                                                                    {replyForm.processing ? 'Posting...' : 'Post reply'}
-                                                                </button>
-                                                            </div>
-                                                        </form>
-                                                    )}
-                                                    </article>
-                                                </div>
-                                                );
-                                            })
+                                                        <p className="line-clamp-2 text-sm font-bold text-slate-700 transition-colors group-hover:text-blue-600">
+                                                            {related.title}
+                                                        </p>
+                                                    </Link>
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
-                                </div>
-                            </article>
-                        </div>
-
-                        {/* RIGHT COLUMN: SIDEBAR */}
-                        <aside className="space-y-6 lg:col-span-4">
-                            
-                            {/* AUDIENCE */}
-                            <div className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" style={{ animationDelay: '0.1s' }}>
-                                <h3 className="mb-2 text-xs font-extrabold tracking-widest text-slate-400 uppercase">
-                                    For
-                                </h3>
-                                <p className="text-base font-bold text-slate-900">
-                                    {announcement.audience || 'All Students'}
-                                </p>
+                                </aside>
                             </div>
-
-                            {/* EVENT BOX */}
-                            {isEvent && (
-                                <div
-                                    className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-                                    style={{ animationDelay: '0.15s' }}
-                                >
-                                    <h3 className="mb-4 text-xs font-extrabold tracking-widest text-slate-400 uppercase">
-                                        Event details
-                                    </h3>
-
-                                    <div className="mb-5 flex gap-4">
-                                        <div className="h-fit min-w-[56px] shrink-0 rounded-lg border border-slate-200 bg-slate-100 p-2.5 text-center">
-                                            <p className="text-[10px] font-extrabold text-slate-500 uppercase">
-                                                {new Date(`${announcement.event_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}
-                                            </p>
-                                            <p className="mt-0.5 text-xl leading-none font-black text-slate-800">
-                                                {new Date(`${announcement.event_date}T00:00:00`).getDate()}
-                                            </p>
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-base font-bold text-slate-900">
-                                                {formatDate(announcement.event_date!)}
-                                            </p>
-                                            <p className="mt-1 text-sm font-medium text-slate-500">
-                                                {formatTime(announcement.start_time)}
-                                                {announcement.end_time && ` – ${formatTime(announcement.end_time)}`}
-                                            </p>
-                                            {announcement.location && (
-                                                <p className="mt-1 text-sm font-medium text-slate-500">
-                                                    <i className="fa-solid fa-location-dot mr-1.5"></i>
-                                                    {announcement.location}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        disabled
-                                        className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500"
-                                    >
-                                        RSVP coming soon
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* RELATED ANNOUNCEMENTS */}
-                            <div
-                                className="animate-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-                                style={{ animationDelay: '0.1s' }}
-                            >
-                                <h3 className="mb-4 text-xs font-extrabold tracking-widest text-slate-400 uppercase">
-                                    Related
-                                </h3>
-                                {relatedAnnouncements.length === 0 ? (
-                                    <p className="text-sm text-slate-500">
-                                        No related posts found.
-                                    </p>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {relatedAnnouncements.map((related) => (
-                                            <Link
-                                                key={related.id}
-                                                href={`/client/announcements/${related.id}`}
-                                                className="group block focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
-                                            >
-                                                <p className="line-clamp-2 text-sm font-bold text-slate-700 transition-colors group-hover:text-blue-600">
-                                                    {related.title}
-                                                </p>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </aside>
-                    </div>
-                </main>
-
-                {/* ✅ SAME FOOTER AS CLIENT HOME */}
-                <footer className="bg-ctu-dark relative z-10 mt-auto border-t border-slate-800 py-6 text-white">
-                    <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
-                        <div className="flex items-center gap-2">
-                            <p className="text-xs text-slate-400">
-                                &copy; 2026 Cotify · College of Technology
-                            </p>
                         </div>
-                        <div className="flex items-center gap-4 text-xs font-semibold text-slate-400">
-                            <a
-                                href="#"
-                                className="transition-colors hover:text-white"
-                            >
-                                About
-                            </a>
-                            <span>·</span>
-                            <a
-                                href="#"
-                                className="transition-colors hover:text-white"
-                            >
-                                Contact
-                            </a>
-                            <span>·</span>
-                            <a
-                                href="#"
-                                className="transition-colors hover:text-white"
-                            >
-                                Privacy
-                            </a>
-                        </div>
-                    </div>
-                </footer>
+                    </main>
+                </div>
 
                 {/* Back-to-top with aria-label (accessibility) */}
                 {showScrollTop && (
                     <button
                         type="button"
-                        onClick={() =>
-                            window.scrollTo({ top: 0, behavior: 'smooth' })
-                        }
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                         className="bg-ctu-dark hover:bg-ctu-lightblue animate-fade-in fixed right-6 bottom-6 z-40 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-2xl transition-all hover:-translate-y-1"
                         aria-label="Scroll back to top"
                     >
