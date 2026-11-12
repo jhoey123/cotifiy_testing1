@@ -21,7 +21,7 @@ interface Announcement {
 interface ClientHomeProps {
     announcements?: Announcement[];
     upcomingEvents?: Announcement[];
-    unreadCount?: number;
+    newAnnouncementCount?: number;
     isLoading?: boolean;
     hasError?: boolean;
     user?: {
@@ -34,17 +34,26 @@ interface ClientHomeProps {
 export default function ClientHome({
     announcements = [],
     upcomingEvents = [],
-    unreadCount = 0, // Defaults to 0, but uses the prop passed from backend
+    newAnnouncementCount = 0,
     isLoading = false,
     hasError = false,
     user = { name: 'Juan', course: 'BSIT', year_level: '3rd Year' },
 }: ClientHomeProps) {
     const { auth } = usePage<any>().props;
     const userName = auth?.user?.name || user.name;
+    const [currentTime, setCurrentTime] = useState(() => new Date());
+    const hour = currentTime.getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
     const [activeFilter, setActiveFilter] = useState<
         'all' | 'Academic' | 'Event' | 'General' | 'Service'
     >('all');
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => setCurrentTime(new Date()), 60_000);
+
+        return () => window.clearInterval(intervalId);
+    }, []);
 
     useEffect(() => {
         const pollForAnnouncements = () => {
@@ -170,12 +179,12 @@ export default function ClientHome({
                     <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
                         <div className="mb-8 animate-slide-up max-w-[1400px] mx-auto">
                             <h1 className="text-3xl font-extrabold text-slate-900">
-                                Good morning, {userName.split(' ')[0]}
+                                {greeting}, {userName.split(' ')[0]}
                             </h1>
                             <p className="mt-2 text-base text-slate-500 leading-relaxed">
                                 {user.course || 'Course not set'} · {user.year_level || 'Year level not set'} ·{' '}
                                 <span className="text-blue-600 font-bold">
-                                    {unreadCount} new announcements
+                                    {newAnnouncementCount} new announcements
                                 </span>{' '}
                                 since your last visit · 1 event this week
                             </p>

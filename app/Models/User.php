@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property int|null $last_announcement_id
  * @property string $name
  * @property string|null $course
  * @property string|null $year_level

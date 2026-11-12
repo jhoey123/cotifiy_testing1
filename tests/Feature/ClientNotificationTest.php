@@ -63,3 +63,28 @@ test('clients can view and manage persisted announcement notifications', functio
         ->assertRedirect();
     expect($user->fresh()->unreadNotifications()->count())->toBe(0);
 });
+
+test('opening an announcement marks only the signed-in user notifications for it as read', function () {
+    $user = User::factory()->create();
+    $anotherUser = User::factory()->create();
+    $announcement = Announcement::create([
+        'title' => 'Campus closure',
+        'category' => 'General',
+        'posted_by' => 'Registrar',
+        'date' => now()->toDateString(),
+        'body' => 'The campus will be closed tomorrow.',
+    ]);
+
+    Notification::sendNow($user, new AnnouncementPublished($announcement), ['database']);
+    Notification::sendNow($anotherUser, new AnnouncementPublished($announcement), ['database']);
+    $userNotification = $user->notifications()->firstOrFail();
+    $anotherUsersNotification = $anotherUser->notifications()->firstOrFail();
+
+    $this->actingAs($user, 'web')
+        ->get(route('client.announcements.show', $announcement))
+        ->assertOk();
+
+    expect($userNotification->fresh()->read_at)->not->toBeNull()
+        ->and($anotherUsersNotification->fresh()->read_at)->toBeNull()
+        ->and($user->fresh()->unreadNotifications()->count())->toBe(0);
+});

@@ -34,6 +34,56 @@ test('the client page displays announcements from the database', function () {
             ->where('announcements.1.id', $olderAnnouncement->id));
 });
 
+test('the client home counts announcements posted since their previous visit', function () {
+    $user = User::factory()->create();
+    $firstAnnouncement = Announcement::create([
+        'title' => 'First announcement',
+        'category' => 'General',
+        'posted_by' => 'Student Affairs',
+        'date' => now()->toDateString(),
+        'body' => 'First update.',
+    ]);
+
+    $this->actingAs($user, 'web')
+        ->get(route('client.clientpage'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('client/clientpage')
+            ->where('newAnnouncementCount', 0));
+
+    expect($user->fresh()->last_announcement_id)->toBe($firstAnnouncement->id);
+
+    foreach (range(1, 2) as $number) {
+        Announcement::create([
+            'title' => "New announcement {$number}",
+            'category' => 'General',
+            'posted_by' => 'Student Affairs',
+            'date' => now()->toDateString(),
+            'body' => 'A new update.',
+        ]);
+    }
+
+    $this->withHeaders([
+        'X-Inertia-Partial-Data' => 'announcements,upcomingEvents,unreadCount',
+    ])->get(route('client.clientpage'))
+        ->assertOk();
+
+    expect($user->fresh()->last_announcement_id)->toBe($firstAnnouncement->id);
+    $this->flushHeaders();
+
+    $this->get(route('client.clientpage'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('client/clientpage')
+            ->where('newAnnouncementCount', 2));
+
+    $this->get(route('client.clientpage'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('client/clientpage')
+            ->where('newAnnouncementCount', 0));
+});
+
 test('the client announcement list renders markdown in announcement previews', function () {
     $user = User::factory()->create();
     Announcement::create([

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -37,6 +39,32 @@ class ClientPageController extends Controller
 
     public function __invoke(Request $request): Response
     {
+        $newAnnouncementCount = 0;
+        if (! $request->headers->has('X-Inertia-Partial-Data')) {
+            /** @var User $user */
+            $user = $request->user();
+            $newAnnouncementCount = DB::transaction(function () use ($user): int {
+                $user = User::query()->lockForUpdate()->findOrFail($user->id);
+                $latestAnnouncementId = (int) (Announcement::query()->max('id') ?? 0);
+                $lastAnnouncementId = $user->last_announcement_id;
+
+                $count = $lastAnnouncementId === null
+                    ? 0
+                    : Announcement::query()
+                        ->where('id', '>', $lastAnnouncementId)
+                        ->where('id', '<=', $latestAnnouncementId)
+                        ->count();
+
+                if ($latestAnnouncementId > ($lastAnnouncementId ?? 0)) {
+                    DB::table('users')
+                        ->where('id', $user->id)
+                        ->update(['last_announcement_id' => $latestAnnouncementId]);
+                }
+
+                return $count;
+            });
+        }
+
         $announcements = Announcement::query()
             ->select([
                 'id',
@@ -90,6 +118,7 @@ class ClientPageController extends Controller
         return Inertia::render('client/clientpage', [
             'announcements' => $announcements,
             'upcomingEvents' => $upcomingEvents,
+            'newAnnouncementCount' => $newAnnouncementCount,
             'userName' => $request->user()->name,
             'user' => [
                 'name' => $request->user()->name,
@@ -136,9 +165,16 @@ class ClientPageController extends Controller
 
     public function show(Request $request, Announcement $announcement): Response
     {
+        /** @var User $user */
+        $user = $request->user();
+        $user->notifications()
+            ->where('announcement_id', $announcement->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
         $conversation = Conversation::query()
             ->where('announcement_id', $announcement->id)
-            ->where('client_id', $request->user()->id)
+            ->where('client_id', $user->id)
             ->with([
                 'messages' => fn ($query) => $query
                     ->with(['sender', 'adminSender', 'staffSender'])
@@ -174,7 +210,7 @@ class ClientPageController extends Controller
                     : ($message->sender_admin_id === null ? 'Client' : 'Admin'),
                 'content' => $message->content,
                 'sent_at' => $message->created_at?->toIso8601String(),
-                'is_mine' => $message->sender_id === $request->user()->id,
+                'is_mine' => $message->sender_id === $user->id,
                 'is_announcement_wide' => true,
             ]) ?? collect();
 
@@ -195,7 +231,7 @@ class ClientPageController extends Controller
                     : ($message->sender_admin_id === null ? 'Client' : 'Admin'),
                 'content' => $message->content,
                 'sent_at' => $message->created_at?->toIso8601String(),
-                'is_mine' => $message->sender_id === $request->user()->id,
+                'is_mine' => $message->sender_id === $user->id,
                 'is_announcement_wide' => false,
             ])
             ->values() ?? collect();
