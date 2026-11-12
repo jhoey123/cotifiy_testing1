@@ -216,3 +216,45 @@ test('the client can open an announcement in the read more page', function () {
             ->where('announcement.image', '/storage/announcements/event.jpg')
             ->where('announcement.location', 'Main Hall'));
 });
+
+test('the client can save and remove an announcement from their saved page', function () {
+    $user = User::factory()->create();
+    $announcement = Announcement::create([
+        'title' => 'Campus event',
+        'category' => 'Event',
+        'posted_by' => 'Student Affairs',
+        'date' => now()->toDateString(),
+        'body' => 'Event details.',
+        'event_date' => now()->addWeek()->toDateString(),
+    ]);
+
+    $this->actingAs($user, 'web')
+        ->post(route('client.saved.store', $announcement))
+        ->assertRedirect();
+
+    $this->get(route('client.announcements.show', $announcement))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('announcement.is_saved', true));
+
+    $this->get(route('client.saved'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('savedItems.0.id', $announcement->id)
+            ->where('savedItems.0.title', 'Campus event')
+            ->where('savedItems.0.category', 'Event')
+            ->where('savedItems.0.link', route('client.announcements.show', $announcement)));
+
+    $this->delete(route('client.saved.destroy', $announcement))
+        ->assertRedirect();
+
+    $this->get(route('client.announcements.show', $announcement))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('announcement.is_saved', false));
+
+    $this->get(route('client.saved'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('savedItems', []));
+});

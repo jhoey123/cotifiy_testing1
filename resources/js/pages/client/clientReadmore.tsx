@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm, usePage, Form } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import ClientNotificationDropdown from './ClientNotificationDropdown';
 import ClientNavbar from './ClientNavbar';
@@ -23,6 +23,7 @@ interface Announcement {
     audience: string | null;
     reading_time?: string | null;
     has_rsvped?: boolean;
+    is_saved?: boolean;
     attachments?: { name: string; url: string; size: string }[] | null;
 }
 
@@ -42,21 +43,14 @@ interface ClientReadMoreProps {
     announcement: Announcement;
     messages: DiscussionMessage[];
     relatedAnnouncements?: Announcement[];
-    user?: {
-        name: string;
-        course: string;
-        year_level: string;
-    };
 }
 
 export default function ClientReadMore({
     announcement,
     messages,
     relatedAnnouncements = [],
-    user = { name: 'Juan', course: 'BSIT', year_level: '3rd Year' },
 }: ClientReadMoreProps) {
     const { auth } = usePage<any>().props;
-    const currentUser = auth?.user?.name || user.name;
     const isLoggedIn = auth?.user !== undefined;
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -67,6 +61,7 @@ export default function ClientReadMore({
         parent_message_id: null as number | null,
     });
     const [showScrollTop, setShowScrollTop] = useState(false);
+    const [isSaved, setIsSaved] = useState(announcement.is_saved ?? false);
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
     const commentsRef = useRef<HTMLDivElement>(null);
 
@@ -122,6 +117,20 @@ export default function ClientReadMore({
                 setReplyingTo(null);
             },
         });
+    };
+
+    const handleToggleSaved = () => {
+        const options = {
+            preserveScroll: true,
+            onSuccess: () => setIsSaved(!isSaved),
+        };
+
+        if (isSaved) {
+            router.delete(`/client/saved/${announcement.id}`, options);
+            return;
+        }
+
+        router.post(`/client/saved/${announcement.id}`, {}, options);
     };
 
     const getCategoryColor = (cat: string) => {
@@ -287,11 +296,18 @@ export default function ClientReadMore({
                                             </div>
 
                                             <div className="flex shrink-0 gap-2 sm:flex-col">
-                                                <button type="button" className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 sm:flex-none">
-                                                    <i className="fa-regular fa-bookmark"></i> Save
-                                                </button>
-                                                <button type="button" className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 sm:flex-none">
-                                                    <i className="fa-solid fa-link"></i> Copy link
+                                                <button
+                                                    type="button"
+                                                    onClick={handleToggleSaved}
+                                                    aria-pressed={isSaved}
+                                                    className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:flex-none ${
+                                                        isSaved
+                                                            ? 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                                                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                                                    }`}
+                                                >
+                                                    <i className={`${isSaved ? 'fa-solid' : 'fa-regular'} fa-bookmark`} aria-hidden="true"></i>
+                                                    {isSaved ? 'Saved' : 'Save'}
                                                 </button>
                                             </div>
                                         </div>

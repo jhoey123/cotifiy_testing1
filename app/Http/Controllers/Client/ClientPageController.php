@@ -7,6 +7,7 @@ use App\Models\Announcement;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -156,11 +157,41 @@ class ClientPageController extends Controller
         ]);
     }
 
-    public function saved(): Response
+    public function saved(Request $request): Response
     {
+        /** @var User $user */
+        $user = $request->user();
+
         return Inertia::render('client/clientSaved', [
-            'savedItems' => [],
+            'savedItems' => $user->savedAnnouncements()
+                ->orderByPivot('created_at', 'desc')
+                ->get()
+                ->map(fn (Announcement $announcement) => [
+                    'id' => $announcement->id,
+                    'title' => $announcement->title,
+                    'subtitle' => $announcement->posted_by.' · '.$announcement->date->format('M j, Y'),
+                    'category' => $announcement->category,
+                    'link' => route('client.announcements.show', $announcement),
+                ]),
         ]);
+    }
+
+    public function saveAnnouncement(Request $request, Announcement $announcement): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $user->savedAnnouncements()->syncWithoutDetaching([$announcement->id]);
+
+        return back();
+    }
+
+    public function unsaveAnnouncement(Request $request, Announcement $announcement): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $user->savedAnnouncements()->detach($announcement->id);
+
+        return back();
     }
 
     public function show(Request $request, Announcement $announcement): Response
@@ -237,7 +268,10 @@ class ClientPageController extends Controller
             ->values() ?? collect();
 
         return Inertia::render('client/clientReadmore', [
-            'announcement' => $this->announcementData($announcement),
+            'announcement' => [
+                ...$this->announcementData($announcement),
+                'is_saved' => $user->savedAnnouncements()->whereKey($announcement->id)->exists(),
+            ],
             'messages' => $announcementComments
                 ->concat($clientMessages)
                 ->sortBy('sent_at')

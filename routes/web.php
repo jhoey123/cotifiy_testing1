@@ -33,6 +33,12 @@ Route::get('/client/events', [ClientPageController::class, 'events'])
 Route::get('/client/saved', [ClientPageController::class, 'saved'])
     ->middleware(['auth:web', 'private-cache'])
     ->name('client.saved');
+Route::post('/client/saved/{announcement}', [ClientPageController::class, 'saveAnnouncement'])
+    ->middleware(['auth:web', 'private-cache'])
+    ->name('client.saved.store');
+Route::delete('/client/saved/{announcement}', [ClientPageController::class, 'unsaveAnnouncement'])
+    ->middleware(['auth:web', 'private-cache'])
+    ->name('client.saved.destroy');
 Route::get('/client/profile', [ClientAccountController::class, 'profile'])
     ->middleware(['auth:web', 'private-cache'])
     ->name('client.profile');
