@@ -96,7 +96,7 @@ export default function ClientSaved({
                         <div className="max-w-4xl mx-auto animate-slide-up">
                             
                             {/* PAGE HEADER & TABS */}
-                            <div className="mb-8 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+                            <div className="mb-8 flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
                                 <div>
                                     <p className="mt-2 text-base text-slate-500">
                                         {items.length} {items.length === 1 ? 'item' : 'items'} kept for later.
@@ -132,8 +132,8 @@ export default function ClientSaved({
                                         <i className="fa-regular fa-bookmark text-2xl text-slate-300" aria-hidden="true"></i>
                                     </div>
                                     <h3 className="text-lg font-bold text-slate-800">Nothing else saved</h3>
-                                    <p className="mt-2 text-base text-slate-500 flex items-center justify-center gap-1.5">
-                                        Tap <i className="fa-regular fa-bookmark text-slate-400"></i> on any announcement to keep it here.
+                                    <p className="mt-2 text-center text-base text-slate-500">
+                                        Tap <i className="fa-regular fa-bookmark mx-1 inline-block align-middle text-slate-400" aria-hidden="true"></i> on any announcement to keep it here.
                                     </p>
                                 </div>
                             ) : (

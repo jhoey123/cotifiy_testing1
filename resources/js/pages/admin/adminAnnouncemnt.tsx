@@ -1,6 +1,7 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import AnnouncementPage, { type Announcement } from '../announcementpage';
+import StaffSidebar from '../staff/StaffSidebar';
 
 type DiscussionMessage = {
     id: number;
@@ -195,7 +196,15 @@ export default function AdminAnnouncements({
                     <div className="absolute bottom-[10%] left-[40%] w-16 h-16 bg-indigo-500/5 rotate-12 shape-move-3"></div>
                 </div>
 
-                {/* FULL SIDEBAR (Matching admin.tsx) */}
+                {staffMode ? (
+                    <StaffSidebar
+                        activePage="announcements"
+                        isOpen={isSidebarOpen}
+                        onClose={() => setIsSidebarOpen(false)}
+                        userName={staffName}
+                    />
+                ) : (
+                    <>
                 <aside 
                     className={`bg-ctu-dark flex flex-col justify-between shrink-0 absolute md:relative z-40 h-full transition-transform duration-300 shadow-2xl w-64 
                     ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
@@ -272,6 +281,8 @@ export default function AdminAnnouncements({
                 </aside>
 
                 {isSidebarOpen && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 md:hidden animate-fade-in" onClick={() => setIsSidebarOpen(false)}></div>}
+                    </>
+                )}
 
                 {/* MAIN CONTENT */}
                 <div className="flex-1 flex flex-col bg-transparent overflow-hidden relative w-full z-10">

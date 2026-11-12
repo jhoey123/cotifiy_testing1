@@ -180,7 +180,7 @@ export default function ClientEvents({
                             ) : (
                                 <div className="animate-fade-in">
                                     
-                                    <div className="space-y-8">
+                                    <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.38fr)]">
                                             
                                             {/* Calendar Grid */}
                                             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -219,7 +219,6 @@ export default function ClientEvents({
                                                             scrollLeft: event.currentTarget.scrollLeft,
                                                         };
                                                         calendarDraggedRef.current = false;
-                                                        event.currentTarget.setPointerCapture(event.pointerId);
                                                     }}
                                                     onPointerMove={(event) => {
                                                         const drag = calendarDragRef.current;
@@ -230,13 +229,18 @@ export default function ClientEvents({
                                                         const distance = event.clientX - drag.startX;
                                                         if (Math.abs(distance) > 5) {
                                                             calendarDraggedRef.current = true;
+                                                            if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+                                                                event.currentTarget.setPointerCapture(event.pointerId);
+                                                            }
                                                             event.currentTarget.scrollLeft = drag.scrollLeft - distance;
                                                         }
                                                     }}
                                                     onPointerUp={(event) => {
                                                         if (calendarDragRef.current?.pointerId === event.pointerId) {
                                                             calendarDragRef.current = null;
-                                                            event.currentTarget.releasePointerCapture(event.pointerId);
+                                                            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                                                                event.currentTarget.releasePointerCapture(event.pointerId);
+                                                            }
                                                         }
                                                     }}
                                                     onPointerCancel={() => {
@@ -250,7 +254,7 @@ export default function ClientEvents({
                                                         }
                                                     }}
                                                 >
-                                                <div className="min-w-[700px]">
+                                                <div className="min-w-[700px] xl:min-w-0">
 
                                                 {/* Days of Week */}
                                                 <div className="mb-2 grid grid-cols-7 gap-1 text-center">

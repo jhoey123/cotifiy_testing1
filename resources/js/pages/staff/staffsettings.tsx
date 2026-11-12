@@ -1,9 +1,9 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import { useState } from 'react';
+import StaffSidebar from './StaffSidebar';
 
 export default function StaffSettings() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isLogoutHovered, setIsLogoutHovered] = useState(false);
     const [activeTab, setActiveTab] = useState<'password' | 'notifications'>('password');
 
     return (
@@ -44,73 +44,11 @@ export default function StaffSettings() {
                     </div>
                 </div>
 
-                {/* STAFF SIDEBAR */}
-                <aside 
-                    className={`bg-ctu-dark flex flex-col justify-between shrink-0 absolute md:relative z-40 h-full transition-transform duration-300 shadow-2xl w-64 
-                    ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
-                >
-                    <div className="flex-1 overflow-y-auto no-scrollbar w-64">
-                        <div className="p-6 flex items-center">
-                            <img src="/images/3rdLogo.png" alt="Cotify Logo" className="w-16 h-16 object-contain -ml-2 -mr-4" />
-                            <div className="text-white">
-                                <h1 className="font-extrabold text-xl leading-tight tracking-tight">Cotify</h1>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Staff Portal</p>
-                            </div>
-                        </div>
-
-                        <nav className="mt-2 space-y-6 px-3">
-                            <div>
-                                <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Main</p>
-                                <Link href="/staff" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
-                                    <i className="fa-solid fa-house w-5 text-center group-hover:scale-110 transition-transform"></i> Dashboard
-                                </Link>
-                                <Link href="/staff/announcements" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
-                                    <i className="fa-solid fa-bullhorn w-5 text-center group-hover:scale-110 transition-transform"></i> My Announcements
-                                </Link>
-                                <Link href="/staff/events" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group">
-                                    <i className="fa-regular fa-calendar w-5 text-center group-hover:scale-110 transition-transform"></i> My Events
-                                </Link>
-                            </div>
-
-                            <div>
-                                <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Account</p>
-                                <Link href="/staff/settings" className="flex items-center gap-3 px-3 py-2.5 bg-ctu-lightblue text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-900/30">
-                                    <i className="fa-solid fa-gear w-5 text-center"></i> Settings
-                                </Link>
-                            </div>
-                        </nav>
-                    </div>
-
-                    <div className="p-4 border-t border-slate-800/50 w-64">
-                        <div className="flex items-center gap-3 px-3 py-2 mb-2">
-                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 text-sm ring-2 ring-slate-700">
-                                <i className="fa-solid fa-user"></i>
-                            </div>
-                            <div>
-                                <p className="text-white text-sm font-bold">J. Cruz</p>
-                                <p className="text-slate-400 text-[11px] font-medium">Registrar's Office</p>
-                            </div>
-                        </div> 
-                        <Form method="post" action="/staff/logout">
-                            {({ processing }) => (
-                                <button 
-                                    type="submit" 
-                                    disabled={processing} 
-                                    onMouseEnter={() => setIsLogoutHovered(true)}
-                                    onMouseLeave={() => setIsLogoutHovered(false)}
-                                    className={`flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-bold rounded-xl transition-all disabled:opacity-60
-                                        ${isLogoutHovered ? 'bg-red-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
-                                    `}
-                                >
-                                    <i className={`fa-solid fa-arrow-right-from-bracket w-5 text-center transition-colors ${isLogoutHovered ? 'text-white' : 'text-slate-400'}`}></i> 
-                                    {processing ? 'Logging Out...' : 'Log Out'}
-                                </button>
-                            )}
-                        </Form>
-                    </div>
-                </aside>
-
-                {isSidebarOpen && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 md:hidden animate-fade-in" onClick={() => setIsSidebarOpen(false)}></div>}
+                <StaffSidebar
+                    activePage="settings"
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                />
 
                 {/* MAIN CONTENT */}
                 <div className="flex-1 flex flex-col bg-transparent overflow-hidden relative w-full z-10">

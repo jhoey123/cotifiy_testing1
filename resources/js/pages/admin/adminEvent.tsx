@@ -1,5 +1,6 @@
 import { Head, Link, router, useForm, Form } from '@inertiajs/react';
 import { useState } from 'react';
+import StaffSidebar from '../staff/StaffSidebar';
 
 type AdminEvent = {
     id: number;
@@ -309,7 +310,15 @@ export default function AdminEvents({
                     <div className="absolute bottom-[10%] left-[40%] w-16 h-16 bg-indigo-500/5 rotate-12 shape-move-3"></div>
                 </div>
 
-                {/* FULL SIDEBAR */}
+                {staffMode ? (
+                    <StaffSidebar
+                        activePage="events"
+                        isOpen={isSidebarOpen}
+                        onClose={() => setIsSidebarOpen(false)}
+                        userName={staffName}
+                    />
+                ) : (
+                    <>
                 <aside 
                     className={`bg-ctu-dark flex flex-col justify-between shrink-0 absolute md:relative z-40 h-full transition-transform duration-300 shadow-2xl w-64 
                     ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
@@ -386,6 +395,8 @@ export default function AdminEvents({
                 </aside>
 
                 {isSidebarOpen && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 md:hidden animate-fade-in" onClick={() => setIsSidebarOpen(false)}></div>}
+                    </>
+                )}
 
                 {/* MAIN CONTENT */}
                 <div className="flex-1 flex flex-col bg-transparent overflow-hidden relative w-full z-10">

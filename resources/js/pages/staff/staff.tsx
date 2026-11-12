@@ -1,5 +1,6 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
+import StaffSidebar from './StaffSidebar';
 
 type UpcomingEvent = {
     id: number;
@@ -41,7 +42,6 @@ export default function StaffDashboard({
     userName?: string;
 }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isLogoutHovered, setIsLogoutHovered] = useState(false);
 
     return (
         <>
@@ -88,73 +88,12 @@ export default function StaffDashboard({
                     <div className="absolute top-[45%] left-[15%] w-32 h-32 bg-indigo-500/5 clip-octagon shape-move-3"></div>
                 </div>
 
-                {/* STAFF SIDEBAR */}
-                <aside 
-                    className={`bg-ctu-dark flex flex-col justify-between shrink-0 absolute md:relative z-40 h-full transition-transform duration-300 shadow-2xl w-64 
-                    ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
-                >
-                    <div className="flex-1 overflow-y-auto no-scrollbar w-64">
-                        <div className="p-6 flex items-center">
-                            <img src="/images/3rdLogo.png" alt="Cotify Logo" className="w-16 h-16 object-contain -ml-2 -mr-4" />
-                            <div className="text-white">
-                                <h1 className="font-extrabold text-xl leading-tight tracking-tight">Cotify</h1>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Staff Portal</p>
-                            </div>
-                        </div>
-
-                        <nav className="mt-2 space-y-6 px-3">
-                            <div>
-                                <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Main</p>
-                                <Link href="/staff" className="flex items-center gap-3 px-3 py-2.5 bg-ctu-lightblue text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-blue-900/30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-ctu-dark">
-                                    <i className="fa-solid fa-house w-5 text-center"></i> Dashboard
-                                </Link>
-                                <Link href="/staff/announcements" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-ctu-dark">
-                                    <i className="fa-solid fa-bullhorn w-5 text-center group-hover:scale-110 transition-transform"></i> My Announcements
-                                </Link>
-                                <Link href="/staff/events" className="mt-1 flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-ctu-dark">
-                                    <i className="fa-regular fa-calendar w-5 text-center group-hover:scale-110 transition-transform"></i> My Events
-                                </Link>
-                            </div>
-
-                            <div>
-                                <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Account</p>
-                                <Link href="/staff/settings" prefetch="mount" className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-ctu-dark">
-                                    <i className="fa-solid fa-gear w-5 text-center group-hover:rotate-90 transition-transform duration-300"></i> Settings
-                                </Link>
-                            </div>
-                        </nav>
-                    </div>
-
-                    <div className="p-4 border-t border-slate-800/50 w-64">
-                        <div className="flex items-center gap-3 px-3 py-2 mb-2">
-                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 text-sm ring-2 ring-slate-700">
-                                <i className="fa-solid fa-user"></i>
-                            </div>
-                            <div>
-                                <p className="text-white text-sm font-bold">{userName}</p>
-                                <p className="text-slate-400 text-[11px] font-medium">Registrar's Office</p>
-                            </div>
-                        </div> 
-                        <Form method="post" action="/staff/logout">
-                            {({ processing }) => (
-                                <button 
-                                    type="submit" 
-                                    disabled={processing} 
-                                    onMouseEnter={() => setIsLogoutHovered(true)}
-                                    onMouseLeave={() => setIsLogoutHovered(false)}
-                                    className={`flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-bold rounded-xl transition-all disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-ctu-dark
-                                        ${isLogoutHovered ? 'bg-red-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
-                                    `}
-                                >
-                                    <i className={`fa-solid fa-arrow-right-from-bracket w-5 text-center transition-colors ${isLogoutHovered ? 'text-white' : 'text-slate-400'}`}></i> 
-                                    {processing ? 'Logging Out...' : 'Log Out'}
-                                </button>
-                            )}
-                        </Form>
-                    </div>
-                </aside>
-
-                {isSidebarOpen && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 md:hidden animate-fade-in" onClick={() => setIsSidebarOpen(false)}></div>}
+                <StaffSidebar
+                    activePage="dashboard"
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                    userName={userName}
+                />
 
                 {/* MAIN CONTENT */}
                 <div className="flex-1 flex flex-col bg-transparent overflow-hidden relative w-full z-10">
@@ -169,11 +108,6 @@ export default function StaffDashboard({
                         </div>
                         
                         <div className="flex items-center gap-3 sm:gap-4">
-                            <div className="relative w-64 hidden md:block group">
-                                <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm group-focus-within:text-ctu-lightblue transition-colors"></i>
-                                <input type="text" placeholder="Search..." className="w-full pl-11 pr-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl text-sm focus:border-ctu-lightblue focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder-slate-400 font-medium shadow-sm" />
-                            </div>
-
                             <button aria-label="View notifications" className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-ctu-lightblue hover:bg-slate-50 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <i className="fa-regular fa-bell text-lg"></i>
                                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
@@ -220,7 +154,7 @@ export default function StaffDashboard({
                                 {/* RECENT ANNOUNCEMENTS */}
                                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                                     <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
-                                        <h4 className="font-extrabold text-lg text-slate-900">My Recent Announcements</h4>
+                                        <h4 className="font-extrabold text-lg text-slate-900">Recent Announcements</h4>
                                         <Link href="/staff/announcements" className="text-sm font-bold text-blue-600 hover:text-blue-700 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
                                             View all
                                         </Link>
@@ -269,7 +203,7 @@ export default function StaffDashboard({
                                 {/* UPCOMING EVENTS */}
                                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                                     <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
-                                        <h4 className="font-extrabold text-lg text-slate-900">My Upcoming Events</h4>
+                                        <h4 className="font-extrabold text-lg text-slate-900">Upcoming Events</h4>
                                         <Link href="/staff/events" className="text-sm font-bold text-purple-600 hover:text-purple-700 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 rounded">
                                             + New event
                                         </Link>
