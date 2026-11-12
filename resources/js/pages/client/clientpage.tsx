@@ -231,7 +231,26 @@ export default function ClientHome({
                                 {!isLoading && !hasError && (
                                     <div className="space-y-4">
                                         {filteredAnnouncements.map((ann) => (
-                                            <div key={ann.id} className="group relative flex gap-5 overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+                                            <div
+                                                key={ann.id}
+                                                role="link"
+                                                tabIndex={0}
+                                                aria-label={`Read announcement: ${ann.title}`}
+                                                className="group relative flex cursor-pointer gap-5 overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+                                                onClick={(event) => {
+                                                    if (event.target instanceof Element && event.target.closest('a, button')) {
+                                                        return;
+                                                    }
+
+                                                    router.visit(`/client/announcements/${ann.id}`);
+                                                }}
+                                                onKeyDown={(event) => {
+                                                    if (event.target === event.currentTarget && event.key === 'Enter') {
+                                                        event.preventDefault();
+                                                        router.visit(`/client/announcements/${ann.id}`);
+                                                    }
+                                                }}
+                                            >
                                                 <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
                                                     {ann.image ? (
                                                         <img src={ann.image} alt={`Thumbnail for ${ann.title}`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
@@ -313,7 +332,26 @@ export default function ClientHome({
 
                                     <div className="space-y-5 p-5">
                                         {upcomingEvents.map((event) => (
-                                            <div key={event.id} className="flex gap-3">
+                                            <div
+                                                key={event.id}
+                                                role="link"
+                                                tabIndex={0}
+                                                aria-label={`Read announcement: ${event.title}`}
+                                                className="flex cursor-pointer gap-3"
+                                                onClick={(clickEvent) => {
+                                                    if (clickEvent.target instanceof Element && clickEvent.target.closest('a, button')) {
+                                                        return;
+                                                    }
+
+                                                    router.visit(`/client/announcements/${event.id}`);
+                                                }}
+                                                onKeyDown={(keyEvent) => {
+                                                    if (keyEvent.target === keyEvent.currentTarget && keyEvent.key === 'Enter') {
+                                                        keyEvent.preventDefault();
+                                                        router.visit(`/client/announcements/${event.id}`);
+                                                    }
+                                                }}
+                                            >
                                                 <div className="h-fit min-w-[50px] shrink-0 rounded-lg bg-slate-100 p-2 text-center">
                                                     <p className="text-[9px] font-extrabold text-slate-500 uppercase" aria-hidden="true">
                                                         {new Date(`${event.event_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}

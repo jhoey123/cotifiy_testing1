@@ -24,6 +24,10 @@ test('clients can view and manage persisted announcement notifications', functio
     $notification = $notifications->firstOrFail();
     $anotherUsersNotification = $anotherUser->notifications()->firstOrFail();
 
+    expect($notification->announcement_id)->toBe($announcement->id)
+        ->and($notification->announcement->is($announcement))->toBeTrue()
+        ->and($announcement->notifications()->count())->toBe(3);
+
     $this->actingAs($user, 'web')
         ->get(route('client.notifications'))
         ->assertOk()

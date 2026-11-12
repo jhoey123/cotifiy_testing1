@@ -233,11 +233,27 @@ export default function ClientAnnouncements({
                                     </p>
                                 </div>
                             ) : (
-                                <div className="animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm divide-y divide-slate-100">
+                                <div className="animate-fade-in space-y-4">
                                     {filteredAnnouncements.map((announcement) => (
                                         <article
                                             key={announcement.id}
-                                            className="group relative flex min-w-0 gap-4 overflow-hidden p-4 transition-colors hover:bg-slate-50 sm:gap-6 sm:p-5"
+                                            role="link"
+                                            tabIndex={0}
+                                            aria-label={`Read announcement: ${announcement.title}`}
+                                            className="group relative flex min-w-0 cursor-pointer gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:bg-slate-50 sm:gap-6 sm:p-5"
+                                            onClick={(event) => {
+                                                if (event.target instanceof Element && event.target.closest('a, button')) {
+                                                    return;
+                                                }
+
+                                                router.visit(`/client/announcements/${announcement.id}`);
+                                            }}
+                                            onKeyDown={(event) => {
+                                                if (event.target === event.currentTarget && event.key === 'Enter') {
+                                                    event.preventDefault();
+                                                    router.visit(`/client/announcements/${announcement.id}`);
+                                                }
+                                            }}
                                         >
                                             {announcement.image ? (
                                                 <img

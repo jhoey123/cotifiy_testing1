@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Spatie\LaravelMarkdown\MarkdownRenderer;
 
@@ -30,6 +31,12 @@ class Announcement extends Model
     public function adminAuthor(): BelongsTo
     {
         return $this->belongsTo(AdminUser::class, 'author_admin_id');
+    }
+
+    /** @return HasMany<DatabaseNotification, $this> */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(DatabaseNotification::class);
     }
 
     public function bodyAsHtml(): string

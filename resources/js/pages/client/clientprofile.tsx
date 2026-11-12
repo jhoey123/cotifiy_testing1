@@ -1,4 +1,4 @@
-import { Head, Link, useForm, router, Form } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import ClientNotificationDropdown from './ClientNotificationDropdown';
 import ClientNavbar from './ClientNavbar';
@@ -34,11 +34,7 @@ export default function ClientProfile({ user }: ClientProfileProps) {
     });
 
     // Password Form
-    const passwordForm = useForm({
-        current_password: '',
-        password: '',
-        password_confirmation: '',
-    });
+    const passwordResetForm = useForm({});
 
     const photoForm = useForm<{ photo: File | null }>({
         photo: null,
@@ -59,11 +55,11 @@ export default function ClientProfile({ user }: ClientProfileProps) {
         profileForm.put('/client/profile', { preserveScroll: true });
     };
 
-    const handleUpdatePassword = (e: React.FormEvent) => {
+    const handleSendPasswordResetLink = (e: React.FormEvent) => {
         e.preventDefault();
-        passwordForm.put('/client/profile/password', {
+        passwordResetForm.post('/client/profile/password/reset-link', {
             preserveScroll: true,
-            onSuccess: () => passwordForm.reset(),
+            onSuccess: () => passwordResetForm.reset(),
         });
     };
 
@@ -282,53 +278,35 @@ export default function ClientProfile({ user }: ClientProfileProps) {
 
                                         {/* PASSWORD TAB */}
                                         {activeTab === 'password' && (
-                                            <form onSubmit={handleUpdatePassword} className="animate-fade-in space-y-6">
+                                            <form onSubmit={handleSendPasswordResetLink} className="animate-fade-in space-y-6">
                                                 <div className="border-b border-slate-100 pb-4 mb-6">
                                                     <h2 className="text-xl font-extrabold text-slate-900">Change Password</h2>
-                                                    <p className="text-sm text-slate-500 mt-1">Ensure your account is using a long, random password to stay secure.</p>
+                                                    <p className="text-sm text-slate-500 mt-1">We’ll email you a secure link to choose a new password.</p>
                                                 </div>
 
-                                                <div>
-                                                    <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wide mb-2">Current Password</label>
-                                                    <input
-                                                        type="password"
-                                                        value={passwordForm.data.current_password}
-                                                        onChange={e => passwordForm.setData('current_password', e.target.value)}
-                                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-ctu-lightblue focus:ring-4 focus:ring-ctu-lightblue/10 outline-none transition-all"
-                                                    />
-                                                    {passwordForm.errors.current_password && <p className="mt-1.5 text-xs font-bold text-red-600">{passwordForm.errors.current_password}</p>}
+                                                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                                    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Account email</p>
+                                                    <p className="mt-1 text-sm font-semibold text-slate-800">{user.email}</p>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                                    <div>
-                                                        <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wide mb-2">New Password</label>
-                                                        <input
-                                                            type="password"
-                                                            value={passwordForm.data.password}
-                                                            onChange={e => passwordForm.setData('password', e.target.value)}
-                                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-ctu-lightblue focus:ring-4 focus:ring-ctu-lightblue/10 outline-none transition-all"
-                                                        />
-                                                        {passwordForm.errors.password && <p className="mt-1.5 text-xs font-bold text-red-600">{passwordForm.errors.password}</p>}
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wide mb-2">Confirm Password</label>
-                                                        <input
-                                                            type="password"
-                                                            value={passwordForm.data.password_confirmation}
-                                                            onChange={e => passwordForm.setData('password_confirmation', e.target.value)}
-                                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:border-ctu-lightblue focus:ring-4 focus:ring-ctu-lightblue/10 outline-none transition-all"
-                                                        />
-                                                        {passwordForm.errors.password_confirmation && <p className="mt-1.5 text-xs font-bold text-red-600">{passwordForm.errors.password_confirmation}</p>}
-                                                    </div>
-                                                </div>
+                                                {passwordResetForm.recentlySuccessful && (
+                                                    <p role="status" className="text-sm font-semibold text-emerald-700">
+                                                        A password reset link has been sent to your email address.
+                                                    </p>
+                                                )}
+                                                {passwordResetForm.errors.password_reset && (
+                                                    <p role="alert" className="text-sm font-semibold text-red-600">
+                                                        {passwordResetForm.errors.password_reset}
+                                                    </p>
+                                                )}
 
                                                 <div className="flex justify-end pt-4">
                                                     <button
                                                         type="submit"
-                                                        disabled={passwordForm.processing}
+                                                        disabled={passwordResetForm.processing}
                                                         className="bg-ctu-dark text-white hover:bg-slate-800 text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-md disabled:opacity-50"
                                                     >
-                                                        {passwordForm.processing ? 'Updating...' : 'Update Password'}
+                                                        {passwordResetForm.processing ? 'Sending...' : 'Send password reset link'}
                                                     </button>
                                                 </div>
                                             </form>

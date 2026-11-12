@@ -12,6 +12,7 @@ use App\Http\Controllers\Client\ClientPageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Laravel\Fortify\Http\Controllers\NewPasswordController;
 
 Route::get('/', [ClientPageController::class, 'welcome'])->name('home');
 Route::inertia('/announcementpage', 'announcementpage')->name('announcementpage');
@@ -41,9 +42,14 @@ Route::put('/client/profile', [ClientAccountController::class, 'updateProfile'])
 Route::post('/client/profile/photo', [ClientAccountController::class, 'updateProfilePhoto'])
     ->middleware(['auth:web', 'private-cache'])
     ->name('client.profile.photo.update');
-Route::put('/client/profile/password', [ClientAccountController::class, 'updatePassword'])
-    ->middleware(['auth:web', 'private-cache'])
-    ->name('client.profile.password');
+Route::post('/client/profile/password/reset-link', [ClientAccountController::class, 'sendPasswordResetLink'])
+    ->middleware(['auth:web', 'private-cache', 'throttle:6,1'])
+    ->name('client.profile.password.reset-link');
+Route::get('/account/password/reset/{token}', [NewPasswordController::class, 'create'])
+    ->name('client.password.reset.form');
+Route::post('/account/password/reset', [NewPasswordController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('client.password.reset');
 Route::get('/client/settings', [ClientAccountController::class, 'settings'])
     ->middleware(['auth:web', 'private-cache'])
     ->name('client.settings');

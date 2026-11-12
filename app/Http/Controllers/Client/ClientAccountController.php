@@ -10,10 +10,9 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -106,20 +105,21 @@ class ClientAccountController extends Controller
         return back();
     }
 
-    public function updatePassword(Request $request): RedirectResponse
+    public function sendPasswordResetLink(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'current_password' => ['required', 'string', 'current_password:web'],
-            'password' => ['required', 'string', Password::default(), 'confirmed'],
-        ], [
-            'current_password.current_password' => __('The provided password does not match your current password.'),
+        /** @var User $user */
+        $user = $request->user();
+        $status = Password::broker()->sendResetLink([
+            'email' => $user->email,
         ]);
 
-        $request->user()->forceFill([
-            'password' => Hash::make($validated['password']),
-        ])->save();
+        if ($status !== Password::RESET_LINK_SENT) {
+            return back()->withErrors([
+                'password_reset' => __($status),
+            ]);
+        }
 
-        return back();
+        return back()->with('status', __('A password reset link has been sent to your email address.'));
     }
 
     public function settings(Request $request): Response

@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ClientNotificationDropdown from './ClientNotificationDropdown';
 import ClientNavbar from './ClientNavbar';
 
@@ -45,6 +45,9 @@ export default function ClientEvents({
     // Calendar state
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
+    const calendarViewportRef = useRef<HTMLDivElement>(null);
+    const calendarDragRef = useRef<{ pointerId: number; startX: number; scrollLeft: number } | null>(null);
+    const calendarDraggedRef = useRef(false);
 
     // --- Filtering & Sorting ---
     const filteredEvents = events.filter(e =>
@@ -61,14 +64,11 @@ export default function ClientEvents({
 
     const daysInMonth = getDaysInMonth(currentYear, currentMonth);
     const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     const prevMonth = () => setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
     const nextMonth = () => setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
-    const goToToday = () => {
-        const today = new Date();
-        setCurrentDate(today);
-        setSelectedDate(today.toISOString().split('T')[0]);
-    };
 
     const getEventsForDate = (dateStr: string) => filteredEvents.filter(e =>
         e.event_date <= dateStr && (e.event_end_date || e.event_date) >= dateStr
@@ -174,39 +174,30 @@ export default function ClientEvents({
                             </div>
 
                             {isLoading ? (
-                                <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 animate-pulse">
-                                    <div className="h-96 rounded-2xl bg-slate-200 lg:col-span-8"></div>
-                                    <div className="h-96 rounded-2xl bg-slate-200 lg:col-span-4"></div>
+                                <div className="animate-pulse">
+                                    <div className="h-96 rounded-2xl bg-slate-200"></div>
                                 </div>
                             ) : (
                                 <div className="animate-fade-in">
                                     
-                                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+                                    <div className="space-y-8">
                                             
                                             {/* Calendar Grid */}
-                                            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-8">
-                                                
-                                                {/* Calendar Header */}
-                                                <div className="mb-6 flex items-center justify-between">
+                                            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                                                <div className="-mx-6 -mt-6 mb-4 flex items-center justify-between rounded-t-2xl bg-white px-6 pt-6 pb-3">
                                                     <h2 className="text-xl font-extrabold text-slate-900">
                                                         {currentDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
                                                     </h2>
                                                     <div className="flex items-center gap-2">
-                                                        <button 
-                                                            onClick={prevMonth} 
+                                                        <button
+                                                            onClick={prevMonth}
                                                             aria-label="Previous month"
                                                             className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                         >
                                                             <i className="fa-solid fa-chevron-left text-sm"></i>
                                                         </button>
-                                                        <button 
-                                                            onClick={goToToday} 
-                                                            className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                        >
-                                                            Today
-                                                        </button>
-                                                        <button 
-                                                            onClick={nextMonth} 
+                                                        <button
+                                                            onClick={nextMonth}
                                                             aria-label="Next month"
                                                             className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                         >
@@ -214,6 +205,52 @@ export default function ClientEvents({
                                                         </button>
                                                     </div>
                                                 </div>
+                                                <div
+                                                    ref={calendarViewportRef}
+                                                    className="cursor-grab overflow-x-auto active:cursor-grabbing"
+                                                    onPointerDown={(event) => {
+                                                        if (event.pointerType !== 'mouse' || event.button !== 0 || (event.target instanceof Element && event.target.closest('button'))) {
+                                                            return;
+                                                        }
+
+                                                        calendarDragRef.current = {
+                                                            pointerId: event.pointerId,
+                                                            startX: event.clientX,
+                                                            scrollLeft: event.currentTarget.scrollLeft,
+                                                        };
+                                                        calendarDraggedRef.current = false;
+                                                        event.currentTarget.setPointerCapture(event.pointerId);
+                                                    }}
+                                                    onPointerMove={(event) => {
+                                                        const drag = calendarDragRef.current;
+                                                        if (!drag || drag.pointerId !== event.pointerId) {
+                                                            return;
+                                                        }
+
+                                                        const distance = event.clientX - drag.startX;
+                                                        if (Math.abs(distance) > 5) {
+                                                            calendarDraggedRef.current = true;
+                                                            event.currentTarget.scrollLeft = drag.scrollLeft - distance;
+                                                        }
+                                                    }}
+                                                    onPointerUp={(event) => {
+                                                        if (calendarDragRef.current?.pointerId === event.pointerId) {
+                                                            calendarDragRef.current = null;
+                                                            event.currentTarget.releasePointerCapture(event.pointerId);
+                                                        }
+                                                    }}
+                                                    onPointerCancel={() => {
+                                                        calendarDragRef.current = null;
+                                                    }}
+                                                    onClickCapture={(event) => {
+                                                        if (calendarDraggedRef.current) {
+                                                            event.preventDefault();
+                                                            event.stopPropagation();
+                                                            calendarDraggedRef.current = false;
+                                                        }
+                                                    }}
+                                                >
+                                                <div className="min-w-[700px]">
 
                                                 {/* Days of Week */}
                                                 <div className="mb-2 grid grid-cols-7 gap-1 text-center">
@@ -235,15 +272,15 @@ export default function ClientEvents({
                                                         const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                         const dayEvents = getEventsForDate(dateStr);
                                                         const isSelected = selectedDate === dateStr;
-                                                        const isToday = dateStr === new Date().toISOString().split('T')[0];
+                                                        const isToday = dateStr === todayStr;
 
                                                         return (
                                                             <div 
                                                                 key={day} 
                                                                 onClick={() => setSelectedDate(dateStr)}
                                                                 className={`flex h-24 cursor-pointer flex-col overflow-hidden rounded-lg border p-1.5 transition-colors ${
-                                                                    isSelected ? 'border-blue-500 bg-blue-50/50' : 
-                                                                    isToday ? 'border-slate-300 bg-slate-50' : 
+                                                                    isToday ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-200' :
+                                                                    isSelected ? 'border-blue-500 bg-blue-50/50' :
                                                                     'border-transparent hover:bg-slate-50'
                                                                 }`}
                                                             >
@@ -268,10 +305,12 @@ export default function ClientEvents({
                                                         );
                                                     })}
                                                 </div>
+                                                </div>
+                                                </div>
                                             </div>
 
                                             {/* Side Panel for Selected Date */}
-                                            <aside className="space-y-4 lg:col-span-4">
+                                            <aside className="space-y-4">
                                                 <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                                                     <h3 className="mb-4 border-b border-slate-100 pb-3 text-lg font-extrabold text-slate-900">
                                                         {activeDateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}

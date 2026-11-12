@@ -16,7 +16,7 @@ export default function ResetPassword({ email, token }: ResetPasswordProps) {
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        post('/reset-password');
+        post('/account/password/reset');
     }
 
     return (

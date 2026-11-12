@@ -217,7 +217,7 @@ export default function Login() {
                             <h2 className="text-3xl font-extrabold text-white mb-2">Sign In</h2>
                             <p className="text-sm font-medium text-slate-300 mb-8">Enter your credentials to continue.</p>
 
-                            {flash.status === 'Your password has been reset.' && (
+                            {flash.status === 'Your password has been changed. Please log in again.' && (
                                 <div
                                     role="status"
                                     aria-live="polite"

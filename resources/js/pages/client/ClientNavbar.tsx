@@ -67,15 +67,17 @@ export default function ClientNavbar({ activePage }: ClientNavbarProps) {
 
     return (
         <>
-            <button
-                type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
-                aria-expanded={isOpen}
-                className="fixed top-5 left-6 z-50 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 md:hidden"
-            >
-                <i className={`fa-solid ${isOpen ? 'fa-xmark' : 'fa-bars'}`} aria-hidden="true" />
-            </button>
+            {!isOpen && (
+                <button
+                    type="button"
+                    onClick={() => setIsOpen(true)}
+                    aria-label="Open sidebar"
+                    aria-expanded={false}
+                    className="fixed top-5 left-6 z-50 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 md:hidden"
+                >
+                    <i className="fa-solid fa-bars" aria-hidden="true" />
+                </button>
+            )}
 
             <aside
                 ref={sidebarRef}
@@ -100,8 +102,8 @@ export default function ClientNavbar({ activePage }: ClientNavbarProps) {
                         collapseTimeout.current = null;
                     }, 120);
                 }}
-                className={`bg-ctu-dark absolute z-40 flex h-full shrink-0 flex-col justify-between shadow-2xl transition-[width,transform] duration-300 ease-in-out md:relative
-                    ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'}
+                className={`bg-ctu-dark absolute z-40 flex h-full shrink-0 flex-col justify-between overflow-hidden shadow-2xl transition-[width] duration-300 ease-in-out md:relative
+                    ${isOpen ? 'w-64' : 'w-0'}
                     ${isExpanded ? 'md:w-64' : 'md:w-20'}`}
             >
                 <div className="flex min-h-0 flex-1 flex-col">

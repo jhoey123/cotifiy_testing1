@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\AccountPasswordReset;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 
@@ -21,7 +21,7 @@ test('a regular user can request a password reset link', function () {
         ->assertSessionHas('status', 'We have emailed your password reset link.')
         ->assertSessionHasNoErrors();
 
-    Notification::assertSentTo($user, ResetPassword::class);
+    Notification::assertSentTo($user, AccountPasswordReset::class);
 });
 
 test('password reset requests do not reveal whether an email is registered', function () {
@@ -51,8 +51,8 @@ test('a regular user can reset their password with a valid token', function () {
     $token = null;
     Notification::assertSentTo(
         $user,
-        ResetPassword::class,
-        function (ResetPassword $notification) use (&$token): bool {
+        AccountPasswordReset::class,
+        function (AccountPasswordReset $notification) use (&$token): bool {
             $token = $notification->token;
 
             return true;
@@ -69,18 +69,18 @@ test('a regular user can reset their password with a valid token', function () {
             ->where('email', $user->email)
             ->where('token', $token));
 
-    $this->post(route('password.update'), [
+    $this->post(route('client.password.reset'), [
         'token' => $token,
         'email' => $user->email,
         'password' => 'new-secure-password',
         'password_confirmation' => 'new-secure-password',
     ])->assertRedirect(route('login'))
-        ->assertSessionHas('status', 'Your password has been reset.');
+        ->assertSessionHas('status', 'Your password has been changed. Please log in again.');
 
     expect(Hash::check('new-secure-password', $user->fresh()->password))->toBeTrue();
 
     $this->get(route('login'))
         ->assertInertia(fn ($page) => $page
             ->component('auth/login')
-            ->where('flash.status', 'Your password has been reset.'));
+            ->where('flash.status', 'Your password has been changed. Please log in again.'));
 });

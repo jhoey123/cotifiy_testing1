@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use App\Notifications\AccountPasswordReset;
+use App\Notifications\AnnouncementPublished;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\Notification as BaseNotification;
 use Illuminate\Support\Carbon;
 
 /**
@@ -30,6 +34,31 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new AccountPasswordReset($token));
+    }
+
+    /** @return MorphMany<DatabaseNotification, $this> */
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(DatabaseNotification::class, 'notifiable')->latest();
+    }
+
+    /** @return MorphMany<DatabaseNotification, $this> */
+    public function routeNotificationForDatabase(?BaseNotification $notification = null): MorphMany
+    {
+        $notifications = $this->notifications();
+
+        if ($notification instanceof AnnouncementPublished) {
+            $notifications->getQuery()->withAttributes([
+                'announcement_id' => $notification->announcement->getKey(),
+            ]);
+        }
+
+        return $notifications;
+    }
 
     /**
      * Get the attributes that should be cast.
