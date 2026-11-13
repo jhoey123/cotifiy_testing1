@@ -374,7 +374,7 @@ export default function Welcome({ publicAnnouncements = [] }: WelcomeProps) {
                                     <img 
                                         src="/images/3rdLogo.png" 
                                         alt="Cotify Logo" 
-                                        className="w-12 h-12 object-contain -ml-2 -mr-4" 
+                                       className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8" 
                                     />
                                     <span className="font-bold text-2xl tracking-wide">Cotify</span>
                                 </div>

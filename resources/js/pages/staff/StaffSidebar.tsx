@@ -1,143 +1,112 @@
-import { Form, Link } from '@inertiajs/react';
+import { Link, Form } from '@inertiajs/react';
 import { useState } from 'react';
 
-type StaffPage = 'dashboard' | 'announcements' | 'events' | 'settings';
-
 interface StaffSidebarProps {
-    activePage: StaffPage;
+    activePage: 'dashboard' | 'announcements' | 'events';
     isOpen: boolean;
     onClose: () => void;
     userName?: string;
+    userCourse?: string;
 }
-
-const activeLinkClass =
-    'bg-ctu-lightblue text-white font-bold shadow-md shadow-blue-900/30';
-const inactiveLinkClass =
-    'text-slate-400 hover:bg-slate-800 hover:text-white';
-const linkClass =
-    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all group focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-ctu-dark';
 
 export default function StaffSidebar({
     activePage,
     isOpen,
     onClose,
-    userName = 'J. Cruz',
+    userName = 'Staff User',
+    userCourse = 'Staff',
 }: StaffSidebarProps) {
-    const [isLogoutHovered, setIsLogoutHovered] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
 
-    const navigation = [
-        { page: 'dashboard' as const, label: 'Dashboard', href: '/staff', icon: 'fa-solid fa-house' },
-        { page: 'announcements' as const, label: 'Announcements', href: '/staff/announcements', icon: 'fa-solid fa-bullhorn' },
-        { page: 'events' as const, label: 'Events', href: '/staff/events', icon: 'fa-regular fa-calendar' },
+    const navLinks = [
+        { href: '/staff', label: 'Dashboard', icon: 'fa-solid fa-house', id: 'dashboard' },
+        { href: '/staff/announcements', label: 'Announcements', icon: 'fa-solid fa-bullhorn', id: 'announcements' },
+        { href: '/staff/events', label: 'Events', icon: 'fa-regular fa-calendar', id: 'events' },
     ];
 
     return (
         <>
-            <aside
-                className={`absolute z-40 flex h-full w-64 shrink-0 flex-col justify-between bg-ctu-dark shadow-2xl transition-transform duration-300 md:relative ${
-                    isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-                }`}
+            {/* Mobile Overlay */}
+            {isOpen && (
+                <div 
+                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 md:hidden animate-fade-in"
+                    onClick={onClose}
+                ></div>
+            )}
+
+            {/* Sidebar */}
+            <aside 
+                onMouseEnter={() => setIsExpanded(true)}
+                onMouseLeave={() => setIsExpanded(false)}
+                className={`bg-ctu-dark flex flex-col justify-between shrink-0 absolute md:relative z-40 h-full transition-all duration-300 ease-in-out shadow-2xl
+                ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'}
+                ${isExpanded ? 'md:w-64' : 'md:w-20'}`}
             >
-                <div className="no-scrollbar w-64 flex-1 overflow-y-auto">
-                    <div className="flex items-center p-6">
-                        <img
-                            src="/images/3rdLogo.png"
-                            alt="Cotify Logo"
-                            className="-mr-4 -ml-2 h-16 w-16 object-contain"
-                        />
-                        <div className="text-white">
-                            <h1 className="text-xl leading-tight font-extrabold tracking-tight">Cotify</h1>
-                            <p className="mt-0.5 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-                                Staff Portal
-                            </p>
-                        </div>
+                <div className="flex-1 overflow-y-auto no-scrollbar overflow-x-hidden pt-6">
+                    
+                    {/* Logo Section */}
+                    <div className="px-4 flex items-center h-20 mb-4">
+                        <Link href="/staff" className="flex items-center shrink-0">
+                            <img src="/images/3rdLogo.png" alt="Cotify Logo" className="w-20 h-20 sm:w-28 sm:h-28 object-contain -ml-4 sm:-ml-6 -mr-6 sm:-mr-8"  />
+                            <div className={`text-white whitespace-nowrap transition-opacity duration-300 ml-2 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                                <h1 className="font-extrabold text-xl leading-tight tracking-tight">Cotify</h1>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Staff Portal</p>
+                            </div>
+                        </Link>
                     </div>
 
-                    <nav className="mt-2 space-y-6 px-3" aria-label="Staff navigation">
-                        <div>
-                            <p className="mb-2 px-3 text-[10px] font-bold tracking-widest text-slate-500 uppercase">
-                                Main
-                            </p>
-                            {navigation.map(({ page, label, href, icon }) => (
-                                <Link
-                                    key={page}
-                                    href={href}
-                                    onClick={onClose}
-                                    aria-current={activePage === page ? 'page' : undefined}
-                                    className={`${linkClass} ${page === 'dashboard' ? '' : 'mt-1'} ${
-                                        activePage === page ? activeLinkClass : inactiveLinkClass
-                                    }`}
-                                >
-                                    <i className={`${icon} w-5 text-center group-hover:scale-110 transition-transform`} aria-hidden="true" />
-                                    {label}
-                                </Link>
-                            ))}
-                        </div>
-
-                        <div>
-                            <p className="mb-2 px-3 text-[10px] font-bold tracking-widest text-slate-500 uppercase">
-                                Account
-                            </p>
+                    {/* Main Navigation Links */}
+                    <nav className="space-y-1 px-3">
+                        {navLinks.map((link) => (
                             <Link
-                                href="/staff/settings"
-                                prefetch="mount"
-                                onClick={onClose}
-                                aria-current={activePage === 'settings' ? 'page' : undefined}
-                                className={`${linkClass} ${
-                                    activePage === 'settings' ? activeLinkClass : inactiveLinkClass
+                                key={link.href}
+                                href={link.href}
+                                className={`flex items-center gap-4 px-3 py-3.5 rounded-xl transition-all group ${
+                                    activePage === link.id
+                                        ? 'bg-[#3b82f6] text-white shadow-sm'
+                                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                                 }`}
+                                title={!isExpanded ? link.label : undefined}
                             >
-                                <i className="fa-solid fa-gear w-5 text-center transition-transform duration-300 group-hover:rotate-90" aria-hidden="true" />
-                                Settings
+                                <i className={`${link.icon} w-5 text-center text-lg shrink-0`}></i>
+                                <span className={`whitespace-nowrap font-bold text-[15px] transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                                    {link.label}
+                                </span>
                             </Link>
-                        </div>
+                        ))}
                     </nav>
                 </div>
 
-                <div className="w-64 border-t border-slate-800/50 p-4">
-                    <div className="mb-2 flex items-center gap-3 px-3 py-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-sm text-slate-300 ring-2 ring-slate-700">
-                            <i className="fa-solid fa-user" aria-hidden="true" />
+                {/* Bottom Section: Profile, Logout */}
+                <div className="p-3">
+
+                    <div className="flex items-center gap-4 px-3 py-3 mb-1 rounded-xl border border-transparent">
+                        <div className="w-10 h-10 rounded-full bg-ctu-lightblue flex items-center justify-center text-white font-bold text-sm shrink-0 ring-2 ring-transparent">
+                            {userName.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                            <p className="text-sm font-bold text-white">{userName}</p>
-                            <p className="text-[11px] font-medium text-slate-400">Registrar&apos;s Office</p>
+                        <div className={`whitespace-nowrap transition-opacity duration-300 overflow-hidden ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                            <p className="text-white text-[15px] font-extrabold truncate">{userName.split(' ')[0]}</p>
+                            <p className="text-slate-400 text-xs font-semibold truncate">{userCourse}</p>
                         </div>
                     </div>
+                    
                     <Form method="post" action="/staff/logout">
                         {({ processing }) => (
                             <button
                                 type="submit"
                                 disabled={processing}
-                                onMouseEnter={() => setIsLogoutHovered(true)}
-                                onMouseLeave={() => setIsLogoutHovered(false)}
-                                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-ctu-dark disabled:opacity-60 ${
-                                    isLogoutHovered
-                                        ? 'bg-red-600 text-white'
-                                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                                }`}
+                                className="flex w-full items-center gap-4 px-3 py-3.5 text-left font-bold text-[15px] rounded-xl transition-all text-slate-400 hover:bg-slate-800/50 hover:text-white group disabled:opacity-60"
+                                title={!isExpanded ? "Log Out" : undefined}
                             >
-                                <i
-                                    className={`fa-solid fa-arrow-right-from-bracket w-5 text-center transition-colors ${
-                                        isLogoutHovered ? 'text-white' : 'text-slate-400'
-                                    }`}
-                                    aria-hidden="true"
-                                />
-                                {processing ? 'Logging Out...' : 'Log Out'}
+                                <i className="fa-solid fa-arrow-right-from-bracket w-5 text-center text-lg shrink-0"></i>
+                                <span className={`whitespace-nowrap transition-opacity duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
+                                    {processing ? 'Logging out...' : 'Log Out'}
+                                </span>
                             </button>
                         )}
                     </Form>
                 </div>
             </aside>
-
-            {isOpen && (
-                <button
-                    type="button"
-                    aria-label="Close sidebar"
-                    className="animate-fade-in fixed inset-0 z-30 bg-slate-900/60 backdrop-blur-sm md:hidden"
-                    onClick={onClose}
-                />
-            )}
         </>
     );
 }
